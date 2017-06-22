@@ -63,14 +63,14 @@ end
 % Apply homography to points
 board_points_is = {};
 for i = 1:length(cb_imgs)
-    board_points_is{i} = alg.apply_homography(homographies_four_points{i},board_points_w);
+    board_points_is{i} = alg.apply_homography(homographies_four_points{i},board_points_w); %#ok<SAGROW>
 end
 
 % Refine points
 for i = 1:length(cb_imgs)
     board_points_is{i} = alg.refine_corners(board_points_is{i}, ...
                                             cb_imgs(i), ...
-                                            alg.refine_window(four_points_is{i},cb_config)); 
+                                            alg.refine_window(four_points_is{i},cb_config));  %#ok<SAGROW>
 end
 
 % Debug

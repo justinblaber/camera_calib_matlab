@@ -1,9 +1,9 @@
 --- 
 calibration: four_point_manual
-four_point_height: 20*13
-four_point_width: 20*13
-num_rects_height: 11
-num_rects_width: 11
+four_point_height: 20*11
+four_point_width: 20*11
+num_rects_height: 9
+num_rects_width: 9
 rect_height: 20
 rect_width: 20
 units: mm

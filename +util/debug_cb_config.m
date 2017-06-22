@@ -1,13 +1,16 @@
-function debug_cb_config(cb_config)
+function debug_cb_config(cb_config,a)
     % This will plot the points in world coordinates specified in 
     % cb_config.
+        
+    if ~exist('a','var')
+        f = figure(); 
+        a = axes(f);
+    end
     
     % Get board points in world coordinates
-    [board_points, four_points] = util.cb_points(cb_config);
+    [board_points, four_points] = alg.cb_points(cb_config);
     
-    % Plot board points
-    f = figure(); 
-    a = axes(f);
+    % Plot board points    
     plot(board_points(:,1),board_points(:,2),'bo','parent',a,'MarkerSize',10);
     text(board_points(:,1),board_points(:,2),cellstr(num2str([1:size(board_points,1)]')),'parent',a,'FontSize',6,'HorizontalAlignment','center'); %#ok<NBRAK>
     axis(a,'equal');

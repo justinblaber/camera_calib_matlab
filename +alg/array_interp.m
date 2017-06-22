@@ -1,4 +1,4 @@
-function gs_points = interp_array(array,points,method)
+function gs_points = array_interp(array,points,method)
     % Interpolates array at specified points.
     %
     % Inputs:

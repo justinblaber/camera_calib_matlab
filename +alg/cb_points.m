@@ -27,6 +27,7 @@ function [board_points, four_points] = cb_points(cb_config)
     [board_y, board_x] = ndgrid(0:cb_config.rect_height:board_height, ...
                                 0:cb_config.rect_width:board_width);
     
+    % Assume board is centered between four points 
     board_points = [board_x(:)-board_width/2+cb_config.four_point_width/2 ...
                     board_y(:)-board_height/2+cb_config.four_point_height/2];
 end

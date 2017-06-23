@@ -8,14 +8,14 @@ function cb_config = load_cb_config(cb_config_path)
     %
     %   cb_config - struct containing the following fields:
     %       calibration - string; type of calibration
-    %       four_point_height - int; height of the "four point" box
-    %       four_point_width - int; width of the "four point" box
+    %       four_point_height - scalar; height of the "four point" box
+    %       four_point_width - scalar; width of the "four point" box
     %       num_rects_height - int; number of rectangles in the "height" 
     %           dimension
     %       num_rects_width - int; number of rectangles in the "width"
     %           dimension
-    %       rect_height - int; height of an individual rectangle
-    %       rect_width - int; width of an individual rectangle
+    %       rect_height - scalar; height of an individual rectangle
+    %       rect_width - scalar; width of an individual rectangle
     %       units - string; units in the calibration board
 
     % Check to make sure config file exists

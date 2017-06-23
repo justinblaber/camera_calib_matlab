@@ -12,7 +12,7 @@ function homography_w_i = linear_homography(points_w, points_i)
     
     % TODO: validate inputs. They must be the same size and there must be
     % least four non-collinear points (I think...)
-    
+        
     % Perform normalization first
     T_w = norm_mat(points_w);
     points_w_aug = [points_w ones(size(points_w,1),1)]';

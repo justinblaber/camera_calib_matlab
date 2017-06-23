@@ -1,6 +1,6 @@
 function debug_cb_config(cb_config,a)
-    % This will plot the points in world coordinates specified in 
-    % cb_config.
+    % This will plot the calibration board points in world coordinates 
+    % specified in cb_config.
         
     if ~exist('a','var')
         f = figure(); 

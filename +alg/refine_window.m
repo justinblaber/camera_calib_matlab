@@ -10,7 +10,10 @@ function rw = refine_window(four_points_i,cb_config)
     %
     % Outputs:
     %   rw - refinement window parameter (note that width of refinement 
-    %       window will be 2*rw+1
+    %       window will be 2*rw+1)
+    
+    % TODO: instead of having a fixed window per calibration board,
+    % possibly decide on the window on a per point basis.
     
     % Get calibration board points
     [board_points_w, four_points_w] = alg.cb_points(cb_config);

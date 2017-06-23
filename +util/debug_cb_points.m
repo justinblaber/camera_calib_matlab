@@ -7,7 +7,7 @@ function debug_cb_points(points,cb_img,a)
     end
     
     % Show image
-    imshow(cb_img.get_gs(),[],'parent',a);
+    cb_img.imshow(a);
     hold(a,'on');
     
     % Plot points

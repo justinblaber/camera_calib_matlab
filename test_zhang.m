@@ -16,42 +16,57 @@ cb_config = util.load_cb_config('ncorr_board.yaml');
 % Debug
 util.debug_cb_config(cb_config,subplot(2,2,1,'parent',f));
 
-%% Get four points in image coordinates per image
+%% Get four points in image coordinates per calibration board image
 four_points_is = {};
 switch cb_config.calibration
     case 'four_point_auto'
         error('Automatic four point detection has not been implemented yet');
     case 'four_point_manual'
+        % Four points are selected manually; Do refinement of four points 
+        % here since automatic detection may not be on corners.
+        [~, four_points_w] = alg.cb_points(cb_config);
+
+        % Board 1 --------------------------------------------------------%      
+        % Manual
         four_points_is{1} = [168 179;
                              135 376;
                              415 194;
                              472 385];
                          
+        % Refine
         four_points_is{1} = alg.refine_points(four_points_is{1}, ...
                                               cb_imgs(1), ...
-                                              alg.refine_window(four_points_is{1},cb_config));    
-        
+                                              alg.linear_homography(four_points_w,four_points_is{1}), ...
+                                              cb_config);    
+                                                  
+        % Board 2 --------------------------------------------------------%      
+        % Manual
         four_points_is{2} = [173 106;
                              138 378;
                              443 127;
                              481 389];
-                                            
+                               
+        % Refine                      
         four_points_is{2} = alg.refine_points(four_points_is{2}, ...
                                               cb_imgs(2), ...
-                                              alg.refine_window(four_points_is{2},cb_config)); 
+                                              alg.linear_homography(four_points_w,four_points_is{2}), ...
+                                              cb_config); 
         
+        % Board 3 --------------------------------------------------------%                                          
+        % Manual
         four_points_is{3} = [199 97;
                              117 354;
                              472 142;
                              461 412]; 
-                                                            
+                             
+        % Refine                                     
         four_points_is{3} = alg.refine_points(four_points_is{3}, ...
                                               cb_imgs(3), ...
-                                              alg.refine_window(four_points_is{3},cb_config)); 
+                                              alg.linear_homography(four_points_w,four_points_is{3}), ...
+                                              cb_config); 
 end
 
 %% Get homographies for four points
-% Get four points and board points in world coordinates
 [board_points_w, four_points_w] = alg.cb_points(cb_config);
 
 homographies_four_points = {};
@@ -67,16 +82,18 @@ for i = 1:length(cb_imgs)
 end
 
 % Refine points
-for i = 1:length(cb_imgs)
+for i = 1:length(cb_imgs)    
     board_points_is{i} = alg.refine_points(board_points_is{i}, ...
                                            cb_imgs(i), ...
-                                           alg.refine_window(four_points_is{i},cb_config));  %#ok<SAGROW>
+                                           homographies_four_points{i}, ...
+                                           cb_config);  %#ok<SAGROW>
 end
 
 % Debug
 for i = 1:length(cb_imgs)
     util.debug_refine_points(board_points_is{i}, ...
                              cb_imgs(i), ...
-                             alg.refine_window(four_points_is{i},cb_config), ...
+                             homographies_four_points{i}, ...
+                             cb_config, ...
                              subplot(2,2,i+1,'parent',f));
 end

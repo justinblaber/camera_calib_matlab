@@ -1,17 +1,20 @@
-function gs_points = interp_array(array,points,method)
-    % Interpolates array at specified points.
+function array_g = array_grad(array,direc)
+    % Compute gradient of input image along direction specified by direc
     %
     % Inputs:
     %   array - array; mxn array
-    %   points - array; px2 array of points
-    %   method - string; method of interpolation
+    %   direc - string; either 'x' or 'y'
     %
     % Outputs:
-    %   gs_points - array; px1 vector of interpolated image points
+    %   array_g - array; mxn gradient
     
-    if exist('method','var')
-        gs_points = interp2(1:size(array,2),1:size(array,1),array,points(:,1),points(:,2),method);
-    else
-        gs_points = interp2(1:size(array,2),1:size(array,1),array,points(:,1),points(:,2));
+    switch direc
+        case 'x'
+            array_g = imfilter(array,-fspecial('sobel')');
+        case 'y'
+            array_g = imfilter(array,-fspecial('sobel'));
+        otherwise 
+            error(['Direction of gradient calculation can either be: x or y' ...
+                   ', but : ' direc ' was input']);
     end
 end

@@ -23,6 +23,8 @@ function points = refine_points(points,cb_img,homography,cb_config)
     cb_gs_dy = alg.array_grad(cb_gs,'y');
                                
     % Perform iterations until convergence
+    disp('-----------------------------------------------');
+    disp(['Refining points for : ' cb_img.get_path() '...']);
     it_cutoff = 10;
     norm_cutoff = 0.05;
     for i = 1:size(points,1)           
@@ -51,13 +53,18 @@ function points = refine_points(points,cb_img,homography,cb_config)
                 break
             end
         end  
-        disp(['Iterations: ' num2str(it)]);
+        if it == it_cutoff
+            disp('WARNING: iterations hit cutoff before converging!!!');
+        else
+            disp(['Iterations: ' num2str(it)]);
+        end
         disp(['Norm: ' num2str(norm(point_prev-points(i,:)))]);
     end    
+    disp('-----------------------------------------------');
 end
 
 function win_points = window_points(point_w,cb_config)
-    num_points = 30;
+    num_points = 100;
     h = cb_config.rect_height;
     w = cb_config.rect_width;
 

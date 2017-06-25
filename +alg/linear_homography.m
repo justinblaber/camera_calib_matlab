@@ -26,7 +26,8 @@ function homography_w_i = linear_homography(points_w, points_i)
     L = vertcat([points_w_norm' zeros(size(points_w_norm')) -points_i_norm(1,:)'.*points_w_norm'], ...
                 [zeros(size(points_w_norm')) points_w_norm' -points_i_norm(2,:)'.*points_w_norm']);    
     
-    % Solution is the last column of V
+    % Solution is the last column of V - note that contraint of norm(H) =
+    % 1 is applied by svd.
     [~,~,V] = svd(L);    
     homography_norm_w_i = reshape(V(:,end),3,3)';
     

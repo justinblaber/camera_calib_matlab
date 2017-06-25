@@ -35,7 +35,7 @@ function debug_refine_points(points,cb_img,homography,cb_config,a)
 end
 
 function win_points = window_points(point_w,cb_config)
-    num_points = 30;
+    num_points = 100; % Make sure this is the same number as in the alg.refine_points() function
     h = cb_config.rect_height;
     w = cb_config.rect_width;
 

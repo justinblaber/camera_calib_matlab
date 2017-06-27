@@ -1,6 +1,6 @@
 %% Clear
 clear, clc;
-f = figure(1);
+f1 = figure(1);
 
 %% Set images
 cb_img_paths = {'test_images/Image1.tif', ...
@@ -19,7 +19,7 @@ cb_imgs = class.img.validate_similar_imgs(cb_img_paths);
 cb_config = util.load_cb_config('ncorr_board.yaml');
 
 % Debug
-util.debug_cb_config(cb_config,subplot(3,3,1,'parent',f));
+util.debug_cb_config(cb_config,subplot(3,3,1,'parent',f1));
 
 %% Get four points in image coordinates per calibration board image
 four_points_is = {};
@@ -79,7 +79,7 @@ switch cb_config.calibration
                              372 65;
                              325 321]; 
         % Refine
-        for i = length(four_points_is)
+        for i = 1:length(four_points_is)
             four_points_is{i} = alg.refine_points(four_points_is{i}, ...
                                                   cb_imgs(i), ...
                                                   alg.linear_homography(four_points_w,four_points_is{i}), ...
@@ -112,11 +112,11 @@ end
 
 % Debug
 for i = 1:length(cb_imgs)
-    util.debug_refine_points(board_points_is{i}, ...
-                             cb_imgs(i), ...
-                             homographies_four_points{i}, ...
-                             cb_config, ...
-                             subplot(3,3,i+1,'parent',f));
+    util.debug_cb_refine_points(board_points_is{i}, ...
+                                cb_imgs(i), ...
+                                homographies_four_points{i}, ...
+                                cb_config, ...
+                                subplot(3,3,i+1,'parent',f1));
 end
 
 %% Get homographies using refined points
@@ -125,30 +125,41 @@ for i = 1:length(cb_imgs)
     homographies{i} = alg.linear_homography(board_points_w,board_points_is{i}); %#ok<SAGROW>
 end
 
-% Debug by reprojecting points and see how close they are to measured points.
-for i = 1:length(cb_imgs)
-    board_points_i_debug = alg.apply_homography(homographies{i},board_points_w);
-    util.debug_cb_points(vertcat(board_points_i_debug,board_points_is{i}),cb_imgs(i));
-end
-
 %% Get initial guess for intrinsic camera parameters using all homographies
 A = alg.linear_intrinsic_params(homographies);
 
-%% Get rotations and translations per homography
+%% Get initial guess for extrinsic camera parameters (R and t) per homography.
 rotations = {};
 translations = {};
 for i = 1:length(cb_imgs)
-    [rotations{i}, translations{i}] = alg.RT_from_homography(homographies{i},A); %#ok<SAGROW>
+    [rotations{i}, translations{i}] = alg.linear_extrinsic_params(homographies{i},A); %#ok<SAGROW>
 end
 
-% Debug by recomputing homographies and reprojecting points and see how
-% close they are to measured points.
-homographies_debug = {};
+% Debug by reprojecting points
+f2 = figure(2);
 for i = 1:length(cb_imgs)
     R = rotations{i};
     t = translations{i};
-    homography_debug = A*[R(:,1) R(:,2) t];
-    homographies_debug{i} = homography_debug; %#ok<SAGROW>
-    board_points_i_debug = alg.apply_homography(homography_debug,board_points_w);
-    util.debug_cb_points(vertcat(board_points_i_debug,board_points_is{i}),cb_imgs(i));
+    util.debug_cb_points_disp(board_points_is{i}, ...
+                              alg.apply_homography(A*[R(:,1) R(:,2) t],board_points_w), ...
+                              cb_imgs(i), ...
+                              subplot(3,3,i+1,'parent',f2));
 end
+
+%% Nonlinear refinement
+[A,rotations,translations] = alg.nonlinear_params(A,rotations,translations,board_points_is,cb_config);
+
+%% Plot boards
+
+%{
+% Debug by projecting each board_points to
+figure();
+hold on;
+plot3(0,0,0,'gs');
+for i = 1:length(cb_imgs)
+    R = rotations{i};
+    t = translations{i};
+    board_points_c = ([R t] * [board_points_w zeros(size(board_points_w,1),1) ones(size(board_points_w,1),1)]')';
+    plot3(board_points_c(:,1),board_points_c(:,2),board_points_c(:,3),'ro');
+end
+%}

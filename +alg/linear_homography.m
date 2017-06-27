@@ -7,11 +7,11 @@ function homography_w_i = linear_homography(points_w, points_i)
     %   points_i - array; Nx2 array of points
     %
     % Outputs:
-    %   homography_w_i - array; 3x4 array which transforms the points from 
-    %       w to i.
+    %   homography_w_i - array; 3x3 array which transforms the points from 
+    %       w to i. Constraint of homography_w_i(3,3) = 1 is applied.
     
     % TODO: validate inputs. They must be the same size and there must be
-    % least four non-collinear points (I think...)
+    % least four non-collinear points
         
     % Perform normalization first
     T_w = norm_mat(points_w);
@@ -33,6 +33,9 @@ function homography_w_i = linear_homography(points_w, points_i)
     
     % "Undo" normalization to get desired homography
     homography_w_i = T_i^-1*homography_norm_w_i*T_w;
+    
+    % Normalize homography_w_i(3,3) to 1
+    homography_w_i = homography_w_i./homography_w_i(3,3);
 end
 
 function T_norm = norm_mat(points)

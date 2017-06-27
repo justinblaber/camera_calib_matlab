@@ -23,10 +23,11 @@ function points = refine_points(points,cb_img,homography,cb_config)
     cb_gs_dy = alg.array_grad(cb_gs,'y');
                                
     % Perform iterations until convergence
-    disp('-----------------------------------------------');
-    disp(['Refining points for : ' cb_img.get_path() '...']);
     it_cutoff = 10;
     norm_cutoff = 0.05;
+    num_points = 100;
+    disp(['Refining points for: ' cb_img.get_path() '...']);
+    disp(['Number of points per side of window: ' num2str(num_points)]);
     for i = 1:size(points,1)           
         for it = 1:it_cutoff
             % Get point            
@@ -34,7 +35,7 @@ function points = refine_points(points,cb_img,homography,cb_config)
             
             % Get window around point; apply inverse homography to it to
             % first bring it into world coordinates
-            win_points_w = window_points(alg.apply_inv_homography(homography,point_prev),cb_config); 
+            win_points_w = window_points(alg.apply_inv_homography(homography,point_prev),num_points,cb_config); 
         
             % Apply homography to window points to bring them into image
             % coordinates
@@ -58,13 +59,12 @@ function points = refine_points(points,cb_img,homography,cb_config)
         else
             disp(['Iterations: ' num2str(it)]);
         end
-        disp(['Norm: ' num2str(norm(point_prev-points(i,:)))]);
+        disp(['Difference norm: ' num2str(norm(point_prev-points(i,:)))]);
     end    
     disp('-----------------------------------------------');
 end
 
-function win_points = window_points(point_w,cb_config)
-    num_points = 100;
+function win_points = window_points(point_w,num_points,cb_config)
     h = cb_config.rect_height;
     w = cb_config.rect_width;
 

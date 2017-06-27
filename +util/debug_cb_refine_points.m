@@ -1,4 +1,4 @@
-function debug_refine_points(points,cb_img,homography,cb_config,a)
+function debug_cb_refine_points(points,cb_img,homography,cb_config,a)
     % This will plot the points and the window around the points
         
     if ~exist('a','var')

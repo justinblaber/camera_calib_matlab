@@ -8,7 +8,7 @@ function points = apply_inv_homography(homography,points_h)
     % Outputs:
     %   points - array; Nx2 array of points
     
-    % TODO: Add check to make sure homography isn't singular
+    % TODO: Add check to make sure homography isn't singular.
     
     % Augment and transpose -> Apply inverse homography -> normalize by 3rd
     % coordinate -> untranspose

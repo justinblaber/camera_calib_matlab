@@ -90,6 +90,7 @@ function validate_calibration(cb_config,cb_config_path)
             disp_cb_config(cb_config_path);
             error(['Calibration type: ' cb_config.calibration ' is not supported.']);
     end
+    disp('-----------------------------------------------');
 end
 
 function num = validate_pos_num(cb_config,field,cb_config_path)

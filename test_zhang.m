@@ -16,7 +16,7 @@ cb_img_paths = {'test_images/Image1.tif', ...
 cb_imgs = class.img.validate_similar_imgs(cb_img_paths);
                      
 %% Load calibration board config file
-cb_config = util.load_cb_config('ncorr_board.yaml');
+cb_config = util.load_cb_config('board_zhang.yaml');
 
 % Debug
 util.debug_cb_config(cb_config,subplot(3,3,1,'parent',f1));
@@ -83,83 +83,20 @@ switch cb_config.calibration
             four_points_is{i} = alg.refine_points(four_points_is{i}, ...
                                                   cb_imgs(i), ...
                                                   alg.linear_homography(four_points_w,four_points_is{i}), ...
-                                                  cb_config);            
+                                                  cb_config); 
+          
+            util.debug_cb_refine_points(four_points_is{i},cb_imgs(i),alg.linear_homography(four_points_w,four_points_is{i}),cb_config,subplot(3,3,i+1,'parent',f1));
         end   
 end
 
-%% Get homographies for four points
-[board_points_w, four_points_w] = alg.cb_points(cb_config);
-
-homographies_four_points = {};
-for i = 1:length(cb_imgs)
-    homographies_four_points{i} = alg.linear_homography(four_points_w,four_points_is{i}); %#ok<SAGROW>
-end
-
-%% Refine points
-% Apply homography to pocints
-board_points_is = {};
-for i = 1:length(cb_imgs)
-    board_points_is{i} = alg.apply_homography(homographies_four_points{i},board_points_w); %#ok<SAGROW>
-end
-
-% Refine points
-for i = 1:length(cb_imgs)    
-    board_points_is{i} = alg.refine_points(board_points_is{i}, ...
-                                           cb_imgs(i), ...
-                                           homographies_four_points{i}, ...
-                                           cb_config);  %#ok<SAGROW>
-end
-
-% Debug
-for i = 1:length(cb_imgs)
-    util.debug_cb_refine_points(board_points_is{i}, ...
-                                cb_imgs(i), ...
-                                homographies_four_points{i}, ...
-                                cb_config, ...
-                                subplot(3,3,i+1,'parent',f1));
-end
-
-%% Get homographies using refined points
-homographies = {};
-for i = 1:length(cb_imgs)
-    homographies{i} = alg.linear_homography(board_points_w,board_points_is{i}); %#ok<SAGROW>
-end
-
-%% Get initial guess for intrinsic camera parameters using all homographies
-A = alg.linear_intrinsic_params(homographies);
-
-%% Get initial guess for extrinsic camera parameters (R and t) per homography.
-rotations = {};
-translations = {};
-for i = 1:length(cb_imgs)
-    [rotations{i}, translations{i}] = alg.linear_extrinsic_params(homographies{i},A); %#ok<SAGROW>
-end
+%% Perform zhang calibration
+[A,distortion,rotations,translations,board_points_is] = alg.zhang_calibrate(cb_imgs,four_points_is,cb_config);
 
 % Debug by reprojecting points
 f2 = figure(2);
 for i = 1:length(cb_imgs)
-    R = rotations{i};
-    t = translations{i};
-    util.debug_cb_points_disp(board_points_is{i}, ...
-                              alg.apply_homography(A*[R(:,1) R(:,2) t],board_points_w), ...
+    util.debug_cb_points_disp(alg.apply_full_model(A,distortion,rotations{i},translations{i},alg.cb_points(cb_config)), ...
+                              board_points_is{i}, ...
                               cb_imgs(i), ...
                               subplot(3,3,i+1,'parent',f2));
 end
-
-%% Nonlinear refinement
-[A,rotations,translations] = alg.nonlinear_params(A,rotations,translations,board_points_is,cb_config);
-
-%% Plot boards
-
-%{
-% Debug by projecting each board_points to
-figure();
-hold on;
-plot3(0,0,0,'gs');
-for i = 1:length(cb_imgs)
-    R = rotations{i};
-    t = translations{i};
-    board_points_c = ([R t] * [board_points_w zeros(size(board_points_w,1),1) ones(size(board_points_w,1),1)]')';
-    plot3(board_points_c(:,1),board_points_c(:,2),board_points_c(:,3),'ro');
-end
-%}

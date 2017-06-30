@@ -16,7 +16,7 @@ function debug_cb_refine_points(points,cb_img,homography,cb_config,a)
     for i = 1:size(points,1)    
         % Get window around point; apply inverse homography to it to
         % first bring it into world coordinates
-        win_points_w = window_points(alg.apply_inv_homography(homography,points(i,:)),cb_config); 
+        win_points_w = window_points(alg.apply_homography(homography^-1,points(i,:)),cb_config); 
 
         % Apply homography to window points to bring them into image
         % coordinates

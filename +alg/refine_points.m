@@ -35,7 +35,7 @@ function points = refine_points(points,cb_img,homography,cb_config)
             
             % Get window around point; apply inverse homography to it to
             % first bring it into world coordinates
-            win_points_w = window_points(alg.apply_inv_homography(homography,point_prev),num_points,cb_config); 
+            win_points_w = window_points(alg.apply_homography(homography^-1,point_prev),num_points,cb_config); 
         
             % Apply homography to window points to bring them into image
             % coordinates
@@ -47,7 +47,7 @@ function points = refine_points(points,cb_img,homography,cb_config)
             win_points_i = win_points_i(idx_inbounds,:);
                 
             % Refine point
-            points(i,:) = refine_points_it(point_prev,cb_gs_dx,cb_gs_dy,win_points_i);  
+            points(i,:) = refine_point_it(cb_gs_dx,cb_gs_dy,win_points_i);  
             
             % Exit if change in distance is small
             if norm(point_prev-points(i,:)) < norm_cutoff
@@ -78,12 +78,12 @@ function win_points = window_points(point_w,num_points,cb_config)
     win_points = unique([win_points_x win_points_y],'rows');    
 end
 
-function points = refine_points_it(points,cb_gs_dx,cb_gs_dy,win_points)
+function point = refine_point_it(cb_gs_dx,cb_gs_dy,win_points)
     cb_gs_dx_window = alg.array_interp(cb_gs_dx,win_points,'cubic');
     cb_gs_dy_window = alg.array_interp(cb_gs_dy,win_points,'cubic');
 
     A = [cb_gs_dx_window cb_gs_dy_window];
     b = (cb_gs_dx_window.*win_points(:,1) + cb_gs_dy_window.*win_points(:,2));
 
-    points(1,:) = (pinv(A)*b)';  
+    point = (pinv(A)*b)';  
 end

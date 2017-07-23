@@ -1,4 +1,4 @@
-function debug_cb_points(points,cb_img,a)
+function plot_cb_points(points,cb_img,a)
     % This overlays points over cb_img and plots it.
         
     if ~exist('a','var')

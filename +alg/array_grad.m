@@ -1,12 +1,12 @@
 function array_g = array_grad(array,direc)
-    % Compute gradient of input image along direction specified by direc
+    % Compute gradient of input array along direction specified by direc
     %
     % Inputs:
-    %   array - array; mxn array
+    %   array - array; MxN array
     %   direc - string; either 'x' or 'y'
     %
     % Outputs:
-    %   array_g - array; mxn gradient
+    %   array_g - array; MxN gradient along either x or y direction
     
     switch direc
         case 'x'

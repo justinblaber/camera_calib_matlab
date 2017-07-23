@@ -20,7 +20,7 @@ function [A,distortion,rotations,translations] = nonlinear_params(A,rotations,tr
     %   A - array; optimized A
     %   distortion - array; 4x1 array ofoptimized distortions (radial and 
     %   tangential) stored as: 
-    %       [beta1; beta2; beta3; beta4]
+    %       [beta_1; beta_2; beta_3; beta_4]
     %   rotations - cell; optimized rotations
     %   translations - cell; optimized translations
           
@@ -40,10 +40,12 @@ function [A,distortion,rotations,translations] = nonlinear_params(A,rotations,tr
     % (4 more for distortion parameters) and 6 extrinsic parameters per 
     % board.
     % p has form of: 
-    %   [alpha_x, alpha_y, x_o, y_o, beta1, beta2, beta3, beta4, ...
+    %   [alpha_x, alpha_y, x_o, y_o, beta_1, beta_2, beta_3, beta_4, ...
     %    theta_x1, theta_y1, theta_z1, t_x1, t_y1, t_z1, ... 
     %    theta_xM, theta_yM, theta_zM, t_xM, t_yM, t_zM]
     p = zeros(8+6*num_boards,1);
+    
+    % Do extrinsic parameters first
     p(1) = A(1,1);
     p(2) = A(2,2);
     p(3) = A(1,3);
@@ -54,8 +56,7 @@ function [A,distortion,rotations,translations] = nonlinear_params(A,rotations,tr
     for i = 1:num_boards
         R = rotations{i};
         t = translations{i};
-        euler = alg.rot2euler(R);
-        
+        euler = alg.rot2euler(R);        
         p(8 +6*(i-1)+1:8 +6*(i-1)+3) = euler;
         p(8 +6*(i-1)+4:8 +6*(i-1)+6) = t';        
     end
@@ -65,7 +66,7 @@ function [A,distortion,rotations,translations] = nonlinear_params(A,rotations,tr
     res = zeros(2*num_boards*num_points,1);
     
     % Perform gauss newton iterations until convergence
-    it_cutoff = 10;
+    it_cutoff = 20;
     norm_cutoff = 1e-5;
     for it = 1:it_cutoff      
         % Get parameters
@@ -73,10 +74,10 @@ function [A,distortion,rotations,translations] = nonlinear_params(A,rotations,tr
         alpha_y = p(2);
         x_o = p(3);
         y_o = p(4);        
-        beta1 = p(5);
-        beta2 = p(6);
-        beta3 = p(7);
-        beta4 = p(8);
+        beta_1 = p(5);
+        beta_2 = p(6);
+        beta_3 = p(7);
+        beta_4 = p(8);
                     
         % Fill jacobian and residuals per board
         for i = 1:num_boards
@@ -107,7 +108,7 @@ function [A,distortion,rotations,translations] = nonlinear_params(A,rotations,tr
             
             % Intrinsic params
             % x coords
-            jacob(x_top:x_bottom,1) = x_n.*(1+beta1*r_n.^2+beta2*r_n.^4) + 2*beta3*x_n.*y_n + beta4*(r_n.^2 + 2*x_n.^2); %#ok<*SPRIX>
+            jacob(x_top:x_bottom,1) = x_n.*(1+beta_1*r_n.^2+beta_2*r_n.^4) + 2*beta_3*x_n.*y_n + beta_4*(r_n.^2 + 2*x_n.^2); %#ok<*SPRIX>
             jacob(x_top:x_bottom,2) = 0;
             jacob(x_top:x_bottom,3) = 1;
             jacob(x_top:x_bottom,4) = 0;
@@ -118,7 +119,7 @@ function [A,distortion,rotations,translations] = nonlinear_params(A,rotations,tr
             
             % y coords
             jacob(y_top:y_bottom,1) = 0;
-            jacob(y_top:y_bottom,2) = y_n.*(1+beta1*r_n.^2+beta2*r_n.^4) + beta3*(r_n.^2 + 2*y_n.^2) + 2*beta4*x_n.*y_n;
+            jacob(y_top:y_bottom,2) = y_n.*(1+beta_1*r_n.^2+beta_2*r_n.^4) + beta_3*(r_n.^2 + 2*y_n.^2) + 2*beta_4*x_n.*y_n;
             jacob(y_top:y_bottom,3) = 0;
             jacob(y_top:y_bottom,4) = 1;
             jacob(y_top:y_bottom,5) = alpha_y*y_n.*r_n.^2;
@@ -150,15 +151,15 @@ function [A,distortion,rotations,translations] = nonlinear_params(A,rotations,tr
             dr_n_dm = (x_n.*dx_n_dm + y_n.*dy_n_dm)./r_n;
             
             % Store jacobian of pixel coords
-            jacob(x_top:x_bottom,8+(i-1)*6+1:8+i*6) = alpha_x*(dx_n_dm.*(1+beta1*r_n.^2+beta2*r_n.^4)+x_n.*(2*beta1*r_n.*dr_n_dm+4*beta2*r_n.^3.*dr_n_dm)+2*beta3*(dx_n_dm.*y_n+x_n.*dy_n_dm)+beta4*(2*r_n.*dr_n_dm+4*x_n.*dx_n_dm));           
-            jacob(y_top:y_bottom,8+(i-1)*6+1:8+i*6) = alpha_y*(dy_n_dm.*(1+beta1*r_n.^2+beta2*r_n.^4)+y_n.*(2*beta1*r_n.*dr_n_dm+4*beta2*r_n.^3.*dr_n_dm)+beta3*(2*r_n.*dr_n_dm+4*y_n.*dy_n_dm)+2*beta4*(dx_n_dm.*y_n+x_n.*dy_n_dm)); 
+            jacob(x_top:x_bottom,8+(i-1)*6+1:8+i*6) = alpha_x*(dx_n_dm.*(1+beta_1*r_n.^2+beta_2*r_n.^4)+x_n.*(2*beta_1*r_n.*dr_n_dm+4*beta_2*r_n.^3.*dr_n_dm)+2*beta_3*(dx_n_dm.*y_n+x_n.*dy_n_dm)+beta_4*(2*r_n.*dr_n_dm+4*x_n.*dx_n_dm));           
+            jacob(y_top:y_bottom,8+(i-1)*6+1:8+i*6) = alpha_y*(dy_n_dm.*(1+beta_1*r_n.^2+beta_2*r_n.^4)+y_n.*(2*beta_1*r_n.*dr_n_dm+4*beta_2*r_n.^3.*dr_n_dm)+beta_3*(2*r_n.*dr_n_dm+4*y_n.*dy_n_dm)+2*beta_4*(dx_n_dm.*y_n+x_n.*dy_n_dm)); 
             
             % Compute residuals        
             board_points_i = board_points_is{i};
             
             % Compute projected points from model
-            x_model = alpha_x*(x_n.*(1+beta1*r_n.^2+beta2*r_n.^4) + 2*beta3*x_n.*y_n + beta4*(r_n.^2+2*x_n.^2)) + x_o;
-            y_model = alpha_y*(y_n.*(1+beta1*r_n.^2+beta2*r_n.^4) + beta3*(r_n.^2+2*y_n.^2) + 2*beta4*x_n.*y_n) + y_o;     
+            x_model = alpha_x*(x_n.*(1+beta_1*r_n.^2+beta_2*r_n.^4) + 2*beta_3*x_n.*y_n + beta_4*(r_n.^2+2*x_n.^2)) + x_o;
+            y_model = alpha_y*(y_n.*(1+beta_1*r_n.^2+beta_2*r_n.^4) + beta_3*(r_n.^2+2*y_n.^2) + 2*beta_4*x_n.*y_n) + y_o;     
             
             % Store residuals
             res(x_top:x_bottom) = x_model - board_points_i(:,1);

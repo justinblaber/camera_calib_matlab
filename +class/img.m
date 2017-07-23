@@ -10,8 +10,9 @@ classdef img < handle
     methods(Static, Access = public)
         function imgs = validate_similar_imgs(img_paths)
             % This function will make sure all image paths in the cell
-            % array img_paths exist, are the same size, and then returns
-            % all images as img objects.
+            % array img_paths exist, are the same size, have valid 
+            % imfinfos, have valid colortypes and then returns all images 
+            % as img objects.
                                 
             % Initialize imgs
             imgs = class.img.empty();         
@@ -24,12 +25,15 @@ classdef img < handle
                 imgs(i) = class.img(img_paths{i});
             end
                                 
-            % Make sure all imgs exist
+            % Make sure all imgs exist, have valid imfinfos, and valid
+            % colortypes
             for i = 1:length(imgs)                        
-                imgs(i).validate_exist();
+                imgs(i).validate_exist();             
+                imgs(i).validate_imfinfo();
+                imgs(i).validate_colortype();
             end            
-            
-            % Make sure they are all the same size
+                           
+            % Make sure all images are the same size
             img_size = [imgs(1).get_height() imgs(1).get_width()];
             for i = 2:length(imgs)
                 if ~isequal(img_size,[imgs(i).get_height() imgs(i).get_width()])
@@ -39,6 +43,35 @@ classdef img < handle
                            '] while image: ' imgs(1).get_path() ' has a size ' ...
                            'of [' num2str(img_size) '].']);
                 end
+            end
+        end
+    end
+    
+    methods(Access = private)
+        function validate_exist(obj)
+            if ~obj.exist()
+                error(['Image: ' obj.get_path() ' does not exist.']);
+            end
+        end
+        
+        function validate_imfinfo(obj)
+            img_info = imfinfo(obj.get_path()); 
+            if length(img_info) ~= 1
+                error(['Image: ' obj.get_path() ' does not contain a ' ...
+                       'single image. Only single image formats are ' ...
+                       'supported.']);
+            end
+        end
+        
+        function validate_colortype(obj)
+            img_info = obj.get_imfinfo();            
+            switch img_info.ColorType
+                case 'grayscale'
+                case 'truecolor'
+                otherwise
+                    error(['Image: ' obj.get_path() ' has invalid ' ...
+                           'ColorType of: ' img_info.ColorType ', ' ...
+                           'which is not yet supported.']);
             end
         end
     end
@@ -56,31 +89,19 @@ classdef img < handle
             success = exist(obj.get_path(),'file') ~= 0;
         end
         
-        function validate_exist(obj)
-            if ~obj.exist()
-                error(['Image file: ' obj.get_path() ' does not exist.']);
-            end
-        end
-        
-        function img_info = get_imfinfo(obj)
-            % Check to make sure this image file only contains a single 
-            % image. Some formats can contain multiple images; this isn't
-            % supported.            
+        function img_info = get_imfinfo(obj)  
             obj.validate_exist();
             
             img_info = imfinfo(obj.get_path()); 
-            if length(img_info) ~= 1
-                error(['Image: ' obj.get_path() ' does not contain a ' ...
-                       'single image. Only single image formats are ' ...
-                       'supported.']);
-            end
         end
-        
+                        
         function img_gs = get_gs(obj)    
             % This function returns the image as double precision grayscale
             % intensities, which is most useful for image processing
             % algorithms.            
             obj.validate_exist();
+            obj.validate_imfinfo();
+            obj.validate_colortype();
             
             % Read file
             img_buf = imread(obj.get_path());  
@@ -92,13 +113,12 @@ classdef img < handle
                     img_gs = double(img_buf);
                 case 'truecolor'
                     img_gs = rgb2gray(double(img_buf));
-                otherwise
-                    error(['ColorType of: ' img_info.ColorType ' is not yet supported.']);
             end
         end
         
         function height = get_height(obj)            
             obj.validate_exist();
+            obj.validate_imfinfo();
             
             img_info = obj.get_imfinfo();    
             height = img_info.Height;
@@ -106,6 +126,7 @@ classdef img < handle
         
         function width = get_width(obj)        
             obj.validate_exist();
+            obj.validate_imfinfo();
             
             img_info = obj.get_imfinfo();    
             width = img_info.Width;

@@ -1,7 +1,7 @@
-function [A,distortion,rotations,translations,board_points_is] = zhang_calibrate(cb_imgs,four_points_is,cb_config)
-    % Performs zhang's camera calibration given calibration board images,
-    % four point boxes around calibration board images and the calibration
-    % board config.
+function [A,distortion,rotations,translations,board_points_is] = single_calibrate(cb_imgs,four_points_is,cb_config)
+    % Performs (mostly) Zhang's camera calibration given calibration board
+    % images, four point boxes around the calibration board images and the 
+    % calibration board config.
     %
     % Inputs:
     %   cb_imgs - class.img; calibration board images
@@ -10,7 +10,7 @@ function [A,distortion,rotations,translations,board_points_is] = zhang_calibrate
     %       util.load_cb_config()
     %
     % Outputs:
-    %   A - array; optimized A
+    %   A - array; optimized camera matrix
     %   distortion - array; 4x1 array of optimized distortions (radial and 
     %   tangential) stored as: 
     %       [beta1; beta2; beta3; beta4]
@@ -24,14 +24,17 @@ function [A,distortion,rotations,translations,board_points_is] = zhang_calibrate
 
     homographies_four_points = {};
     for i = 1:length(cb_imgs)
-        homographies_four_points{i} = alg.linear_homography(four_points_w,four_points_is{i}); %#ok<AGROW>
+        homographies_four_points{i} = alg.homography(four_points_w, ...
+                                                     four_points_is{i}, ...
+                                                     cb_config); %#ok<AGROW>
     end
 
     % Refine points ------------------------------------------------------%
-    % Apply homography to pocints
+    % Apply homography to points, then refine them
     board_points_is = {};
     for i = 1:length(cb_imgs)
-        board_points_is{i} = alg.apply_homography(homographies_four_points{i},board_points_w); %#ok<AGROW>
+        board_points_is{i} = alg.apply_homography(homographies_four_points{i}, ...
+                                                  board_points_w); %#ok<AGROW>
     end
 
     % Refine points
@@ -45,11 +48,13 @@ function [A,distortion,rotations,translations,board_points_is] = zhang_calibrate
     % Get homographies using refined points ------------------------------%
     homographies = {};
     for i = 1:length(cb_imgs)
-        homographies{i} = alg.linear_homography(board_points_w,board_points_is{i}); %#ok<AGROW>
+        homographies{i} = alg.homography(board_points_w, ...
+                                         board_points_is{i}, ...
+                                         cb_config); %#ok<AGROW>
     end
 
     % Get initial guess for intrinsic camera parameters using all homographies
-    A = alg.linear_intrinsic_params(homographies);
+    A = alg.linear_intrinsic_params(homographies,cb_imgs);
 
     % Get initial guess for extrinsic camera parameters (R and t) per homography.
     rotations = {};

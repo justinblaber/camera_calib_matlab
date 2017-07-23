@@ -21,11 +21,10 @@ function [board_points, four_points] = cb_points(cb_config)
                    cb_config.four_point_width   cb_config.four_point_height];
     
     % Get board points next
-    board_height = cb_config.num_rects_height * cb_config.rect_height;
-    board_width = cb_config.num_rects_width * cb_config.rect_width;
-           
-    [board_y, board_x] = ndgrid(0:cb_config.rect_height:board_height, ...
-                                0:cb_config.rect_width:board_width);
+    board_height = cb_config.num_squares_height * cb_config.square_size;
+    board_width = cb_config.num_squares_width * cb_config.square_size;           
+    [board_y, board_x] = ndgrid(0:cb_config.square_size:board_height, ...
+                                0:cb_config.square_size:board_width);
     
     % Assume board is centered between four points 
     board_points = [board_x(:)-board_width/2+cb_config.four_point_width/2 ...

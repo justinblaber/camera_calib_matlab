@@ -1,9 +1,25 @@
 --- 
-calibration: four_point_manual
-four_point_height: 20*11
-four_point_width: 20*11
-num_rects_height: 9
-num_rects_width: 9
-rect_height: 20
-rect_width: 20
-units: mm
+%% These are required parameters ---------%%
+
+%% Checkerboard parameters
+num_rects_height = 9
+num_rects_width = 9
+rect_height = 20
+rect_width = 20
+units = mm
+
+%% Four-point detection parameters
+calibration = four_point_manual
+four_point_height = 20*11
+four_point_width = 20*11
+
+%% Beyond here are optional parameters ----%%
+
+%% Homography parameters
+homography_it_cutoff = 5
+homography_norm_cutoff = 1e-5
+
+%% Corner refinement parameters
+refine_it_cutoff = 10
+refine_norm_cutoff = 0.05
+refine_window_factor = 2/3

@@ -1,58 +1,60 @@
-function A = linear_intrinsic_params(homographies)
+function A = linear_intrinsic_params(homographies,cb_imgs)
     % This will compute the instrinsic parameters using a linear least 
-    % squares fit given a set of homographies.
+    % squares fit given a set of homographies. This assumes a single alpha
+    % and that the principle point is at the center of the image.
     %
     % Inputs:
     %   homographies - cell; cell of 3x3 homographies
+    %   cb_imgs - class.img; calibration board image
     %
     % Outputs:
     %   A - array; 3x3 array containing:
-    %       [alpha_x    0       x_o;
-    %        0          alpha_y y_o;
-    %        0          0       1]
+    %       [alpha    0       x_o;
+    %        0        alpha   y_o;
+    %        0        0       1]
     %
-    %       alpha_x - positive scalar;  f*kx
-    %       alpha_y - positive scalar;  f*ky
+    %       alpha - positive scalar;  f*k
     %       x_o - scalar; x component of image center
     %       y_o - scalar; y component of image center
-          
-    % TODO: validate 2 or more distinct homographies have been used which
-    % is required to compute A with 4 parameters.
+              
+    % Assumes alpha_x and alpha_y are equal. Also assumes x_o and y_o are
+    % the center of the image.
+    x_o = (cb_imgs(1).get_width()+1)/2;
+    y_o = (cb_imgs(1).get_height()+1)/2;
+    p_o_inv = [1 0 -x_o;
+               0 1 -y_o;
+               0 0  1];
     
-    % W is V in my notes, but V is also used in SVD notation, so use W here
-    W = zeros(2*length(homographies),5);
+    A = zeros(2*length(homographies),1);
+    b = zeros(2*length(homographies),1);
     for i = 1:length(homographies)
-        W(2*i-1,:) = w(homographies{i},1,2);
-        W(2*i,:) = w(homographies{i},1,1) - w(homographies{i},2,2);
+        % Remove principle point from homography
+        H_bar = p_o_inv*homographies{i};
+        
+        % Get orthogonal vanishing points
+        v1 = H_bar(:,1);
+        v2 = H_bar(:,2);
+        v3 = (H_bar(:,1)+H_bar(:,2))./2;
+        v4 = (H_bar(:,1)-H_bar(:,2))./2;
+        
+        % 
+        v1 = v1./norm(v1);
+        v2 = v2./norm(v2);
+        v3 = v3./norm(v3);
+        v4 = v4./norm(v4);
+        
+        % Form constraints
+        A(2*(i-1)+1:2*i) = [v1(1)*v2(1) + v1(2)*v2(2);
+                            v3(1)*v4(1) + v3(2)*v4(2)];
+        b(2*(i-1)+1:2*i) = [-v1(3)*v2(3);
+                            -v3(3)*v4(3)];
     end
         
-    % Solution is the last column of V
-    [~,~,V] = svd(W);    
-    b = V(:,end);
-    
-    % Form B
-    B = zeros(3,3);
-    B(1,1) = b(1);
-    B(2,2) = b(2);
-    B(1,3) = b(3);
-    B(2,3) = b(4);
-    B(3,3) = b(5);
-    % Symmetric
-    B(3,1) = B(1,3);
-    B(3,2) = B(2,3);
-    
-    % Get intrinsic parameters     
-    alpha_x = sqrt(B(3,3)/B(1,1)-B(1,3)^2/B(1,1)^2-B(2,3)^2/(B(2,2)*B(1,1))); % Use positive value
-    alpha_y = sqrt(B(3,3)/B(2,2)-B(1,3)^2/(B(1,1)*B(2,2))-B(2,3)^2/B(2,2)^2); % Use positive value   
-    x_o = -B(1,3)/B(1,1);
-    y_o = -B(2,3)/B(2,2);
+    % Solve for alpha
+    alpha = sqrt(1/(pinv(A)*b));
     
     % Set output
-    A = [alpha_x    0       x_o;
-         0          alpha_y y_o;
-         0          0       1];
-end
-
-function w_ij = w(h,i,j)
-    w_ij = [h(1,j)*h(1,i) h(2,j)*h(2,i) h(3,j)*h(1,i)+h(1,j)*h(3,i) h(3,j)*h(2,i)+h(2,j)*h(3,i) h(3,j)*h(3,i)];
+    A = [alpha 0      x_o;
+         0     alpha  y_o;
+         0     0      1];
 end

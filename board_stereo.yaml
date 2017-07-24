@@ -3,14 +3,14 @@
 
 %% Checkerboard parameters
 num_squares_height = 3
-num_squares_width = 7
+num_squares_width = 5
 square_size = 100
 units = mm
 
 %% Four-point detection parameters
 calibration = four_point_manual
 four_point_height = 100*3
-four_point_width = 100*7
+four_point_width = 100*5
 
 %% Beyond here are optional parameters ----%%
 
@@ -21,5 +21,5 @@ homography_norm_cutoff = 1e-5
 %% Corner refinement parameters
 refine_it_cutoff = 10
 refine_norm_cutoff = 0.05
-refine_window_factor = 2/3
-refine_window_min_size = 30
+refine_default_window_factor = 2/3
+refine_window_min_size = 10

@@ -2,10 +2,9 @@
 %% These are required parameters ---------%%
 
 %% Checkerboard parameters
-num_rects_height = 9
-num_rects_width = 9
-rect_height = 20
-rect_width = 20
+num_squares_height = 9
+num_squares_width = 9
+square_size = 20
 units = mm
 
 %% Four-point detection parameters
@@ -22,4 +21,5 @@ homography_norm_cutoff = 1e-5
 %% Corner refinement parameters
 refine_it_cutoff = 10
 refine_norm_cutoff = 0.05
-refine_window_factor = 2/3
+refine_default_window_factor = 2/3
+refine_window_min_size = 10

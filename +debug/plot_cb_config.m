@@ -22,7 +22,7 @@ function plot_cb_config(cb_config,a)
     width_offset = (cb_config.four_point_width-cb_config.num_squares_width*cb_config.square_size)/2;
     for i = 1:cb_config.num_squares_width
         for j = 1:cb_config.num_squares_height
-            if mod((i-1)*cb_config.num_squares_height+j,2) ~= 0
+            if ~util.is_even((i-1)*cb_config.num_squares_height+j)
                 x = [(i-1)*cb_config.square_size (i-1)*cb_config.square_size ...
                      i*cb_config.square_size i*cb_config.square_size];
                 y = [(j-1)*cb_config.square_size j*cb_config.square_size ...

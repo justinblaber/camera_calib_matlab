@@ -28,14 +28,12 @@ function cb_config = load_cb_config(cb_config_path)
     %           refinement of corner point
     %       refine_norm_cutoff = scalar; cutoff for the difference in
     %           corner point position for corner point refinement
-    %       refine_window_factor - scalar; relative size of corner 
-    %           refinement window compared to size of the calibration board
-    %           squares.
+    %       refine_default_window_factor - scalar; default relative size of
+    %           corner refinement window compared to size of the 
+    %           calibration board squares.
     %       refine_window_min_size - scalar; minimum length of refinement 
-    %           window. This will recompute the window_factor to get a 
-    %           minimum specified length -or- will max out the 
-    %           window_factor to 4/3 (basically the max size before 
-    %           starting to overlap with other corners).
+    %           window. This will recompute the window_factor to meet the 
+    %           minimum specified length.
 
     % Check to make sure config file exists
     if exist(cb_config_path,'file') == 0
@@ -79,20 +77,20 @@ function cb_config = load_cb_config(cb_config_path)
     
     % Perform validations on input fields    
     % Required fields
-    field_info        = struct('field','num_squares_height'     ,'required',true ,'default',''    ,'validation_fun',@validate_pos_odd_int);
-    field_info(end+1) = struct('field','num_squares_width'      ,'required',true ,'default',''    ,'validation_fun',@validate_pos_odd_int);
-    field_info(end+1) = struct('field','square_size'            ,'required',true ,'default',''    ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','units'                  ,'required',true ,'default',''    ,'validation_fun',[]);
-    field_info(end+1) = struct('field','calibration'            ,'required',true ,'default',''    ,'validation_fun',@validate_calibration);
-    field_info(end+1) = struct('field','four_point_height'      ,'required',true ,'default',''    ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','four_point_width'       ,'required',true ,'default',''    ,'validation_fun',@validate_pos_num);
+    field_info        = struct('field','num_squares_height'          ,'required',true ,'default',''    ,'validation_fun',@validate_pos_odd_int);
+    field_info(end+1) = struct('field','num_squares_width'           ,'required',true ,'default',''    ,'validation_fun',@validate_pos_odd_int);
+    field_info(end+1) = struct('field','square_size'                 ,'required',true ,'default',''    ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','units'                       ,'required',true ,'default',''    ,'validation_fun',[]);
+    field_info(end+1) = struct('field','calibration'                 ,'required',true ,'default',''    ,'validation_fun',@validate_calibration);
+    field_info(end+1) = struct('field','four_point_height'           ,'required',true ,'default',''    ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','four_point_width'            ,'required',true ,'default',''    ,'validation_fun',@validate_pos_num);
     % Optional fields
-    field_info(end+1) = struct('field','homography_it_cutoff'   ,'required',false,'default','5'   ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','homography_norm_cutoff' ,'required',false,'default','1e-5','validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','refine_it_cutoff'       ,'required',false,'default','10'  ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','refine_norm_cutoff'     ,'required',false,'default','0.05','validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','refine_window_factor'   ,'required',false,'default','2/3' ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','refine_window_min_size' ,'required',false,'default','10'  ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','homography_it_cutoff'        ,'required',false,'default','5'   ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','homography_norm_cutoff'      ,'required',false,'default','1e-5','validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','refine_it_cutoff'            ,'required',false,'default','10'  ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','refine_norm_cutoff'          ,'required',false,'default','0.05','validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','refine_default_window_factor','required',false,'default','2/3' ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','refine_window_min_size'      ,'required',false,'default','10'  ,'validation_fun',@validate_pos_num);
     
     % Check to see if any unrecognized fields exist
     cb_config_fields = fields(cb_config);

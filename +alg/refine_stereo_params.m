@@ -1,4 +1,4 @@
-function [A,distortion,rotations,translations,R_s,t_s] = nonlinear_stereo_params(A,distortion,rotations,translations,R_s,t_s,board_points_is,cb_config)
+function [rotations,translations,A,distortion,R_s,t_s] = refine_stereo_params(rotations,translations,A,distortion,R_s,t_s,board_points_is,type,cb_config)
               
     % Get number of calibration boards and number of board points
     board_points_w = alg.cb_points(cb_config);
@@ -8,7 +8,6 @@ function [A,distortion,rotations,translations,R_s,t_s] = nonlinear_stereo_params
     % Get number of boards, points, and parameters
     num_boards = length(board_points_is.L);
     num_points = size(board_points_w,1);
-    num_params = 22+6*num_boards;
     
     % Supply initial parameter vector. p has a length of 22 + 6*M, where M 
     % is the number of calibration boards. There are 16 intrinsic 
@@ -20,6 +19,7 @@ function [A,distortion,rotations,translations,R_s,t_s] = nonlinear_stereo_params
     %    theta_Lx1, theta_Ly1, theta_Lz1, t_Lx1, t_Ly1, t_Lz1, ... 
     %    theta_LxM, theta_LyM, theta_LzM, t_LxM, t_LyM, t_LzM, ...
     %    theta_sx, theta_sy, theta_sz, t_sx, t_sy, t_sz]
+    num_params = 22+6*num_boards;
     p = zeros(num_params,1);
 
     % Do extrinsic parameters first
@@ -28,19 +28,13 @@ function [A,distortion,rotations,translations,R_s,t_s] = nonlinear_stereo_params
     p(2) = A.L(2,2);
     p(3) = A.L(1,3);
     p(4) = A.L(2,3);
-    p(5) = distortion.L(1);
-    p(6) = distortion.L(2);
-    p(7) = distortion.L(3);
-    p(8) = distortion.L(4);
+    p(5:8) = distortion.L;
     % Right
     p(9) = A.R(1,1);
     p(10) = A.R(2,2);
     p(11) = A.R(1,3);
     p(12) = A.R(2,3);
-    p(13) = distortion.R(1);
-    p(14) = distortion.R(2);
-    p(15) = distortion.R(3);
-    p(16) = distortion.R(4);
+    p(13:16) = distortion.R;
     
     % Cycle over rotations and translations and store params. Note that
     % rotations.R and translations.R are not used.
@@ -56,10 +50,18 @@ function [A,distortion,rotations,translations,R_s,t_s] = nonlinear_stereo_params
     jacob = sparse(4*num_boards*num_points,num_params);
     res = zeros(4*num_boards*num_points,1);
     
-    % Perform gauss newton iterations until convergence
-    it_cutoff = 1;
-    norm_cutoff = 1e-5;
-    for it = 1:it_cutoff      
+    % Determine which parameters to update based on type
+    update_idx = false(num_params,1);
+    switch type
+        case 'full'
+            % Attempt to calibrate everything
+            update_idx(1:num_params) = true;
+        otherwise
+            error(['Input type of: "' type '" was not recognized']);
+    end
+    
+    % Perform gauss newton iteration(s)    
+    for it = 1:cb_config.refine_param_it_cutoff      
         % Get intrinsic parameters
         % left
         alpha_Lx = p(1);
@@ -99,8 +101,8 @@ function [A,distortion,rotations,translations,R_s,t_s] = nonlinear_stereo_params
             t_L = p(16+6*(i-1)+4:16+6*(i-1)+6);
             
             % Get rotation and translation for the right board
-            R_R = R_L*R_s;         
-            t_R = R_L*t_s+t_L;
+            R_R = R_s*R_L;         
+            t_R = R_s*t_L+t_s;
             
             % Fill jacobian for left board -------------------------------%
             % This is basically the same for single board calibration since
@@ -224,34 +226,33 @@ function [A,distortion,rotations,translations,R_s,t_s] = nonlinear_stereo_params
             dy_Rn_dRt_R = [zeros(num_points,1) X_s./z_Rs -(X_s.*y_Rs)./z_Rs.^2 zeros(num_points,1) Y_s./z_Rs -(Y_s.*y_Rs)./z_Rs.^2 zeros(num_points,1) 1./z_Rs -y_Rs./z_Rs.^2];
              
             % Do dRt_R_dm_L first
-            dRt_R_dRt_L = [R_s(1,1)*eye(3) R_s(2,1)*eye(3) R_s(3,1)*eye(3) zeros(3);
-                           R_s(1,2)*eye(3) R_s(2,2)*eye(3) R_s(3,2)*eye(3) zeros(3);
-                           t_s(1)*eye(3)   t_s(2)*eye(3)   t_s(3)*eye(3)   eye(3)];
+            dRt_R_dRt_L = [R_s         zeros(3)    zeros(3);
+                           zeros(3)    R_s         zeros(3);
+                           zeros(3)    zeros(3)    R_s];
             dRt_L_dm_L = [0                                                                        -sin(theta_Ly)*cos(theta_Lz)                -cos(theta_Ly)*sin(theta_Lz)                                             0   0   0;
                           0                                                                        -sin(theta_Ly)*sin(theta_Lz)                 cos(theta_Ly)*cos(theta_Lz)                                             0   0   0;
                           0                                                                        -cos(theta_Ly)                               0                                                                       0   0   0;
                           sin(theta_Lx)*sin(theta_Lz)+cos(theta_Lx)*sin(theta_Ly)*cos(theta_Lz)     sin(theta_Lx)*cos(theta_Ly)*cos(theta_Lz)  -cos(theta_Lx)*cos(theta_Lz)-sin(theta_Lx)*sin(theta_Ly)*sin(theta_Lz)   0   0   0;
                          -sin(theta_Lx)*cos(theta_Lz)+cos(theta_Lx)*sin(theta_Ly)*sin(theta_Lz)     sin(theta_Lx)*cos(theta_Ly)*sin(theta_Lz)  -cos(theta_Lx)*sin(theta_Lz)+sin(theta_Lx)*sin(theta_Ly)*cos(theta_Lz)   0   0   0;
                           cos(theta_Lx)*cos(theta_Ly)                                              -sin(theta_Lx)*sin(theta_Ly)                 0                                                                       0   0   0;
-                          cos(theta_Lx)*sin(theta_Lz)-sin(theta_Lx)*sin(theta_Ly)*cos(theta_Lz)     cos(theta_Lx)*cos(theta_Ly)*cos(theta_Lz)   sin(theta_Lx)*cos(theta_Lz)-cos(theta_Lx)*sin(theta_Ly)*sin(theta_Lz)   0   0   0;
-                         -cos(theta_Lx)*cos(theta_Lz)-sin(theta_Lx)*sin(theta_Ly)*sin(theta_Lz)     cos(theta_Lx)*cos(theta_Ly)*sin(theta_Lz)   sin(theta_Lx)*sin(theta_Lz)+cos(theta_Lx)*sin(theta_Ly)*cos(theta_Lz)   0   0   0;
-                         -sin(theta_Lx)*cos(theta_Ly)                                              -cos(theta_Lx)*sin(theta_Ly)                 0                                                                       0   0   0;
                           0                                                                         0                                           0                                                                       1   0   0;
                           0                                                                         0                                           0                                                                       0   1   0;
-                          0                                                                         0                                           0                                                                       0   0   1];
-            
+                          0                                                                         0                                           0                                                                       0   0   1];       
             dRt_R_dm_L = dRt_R_dRt_L*dRt_L_dm_L;
             
             % Do dRt_R_dm_s next
-            dRt_R_dRt_s = [R_L         zeros(3)    zeros(3);
-                           zeros(3)    R_L         zeros(3);
-                           zeros(3)    zeros(3)    R_L];            
+            dRt_R_dRt_s = [R_L(1,1)*eye(3) R_L(2,1)*eye(3) R_L(3,1)*eye(3) zeros(3);
+                           R_L(1,2)*eye(3) R_L(2,2)*eye(3) R_L(3,2)*eye(3) zeros(3);
+                           t_L(1)*eye(3)   t_L(2)*eye(3)   t_L(3)*eye(3)   eye(3)];         
             dRt_s_dm_s = [0                                                                        -sin(theta_sy)*cos(theta_sz)                -cos(theta_sy)*sin(theta_sz)                                             0   0   0;
                           0                                                                        -sin(theta_sy)*sin(theta_sz)                 cos(theta_sy)*cos(theta_sz)                                             0   0   0;
                           0                                                                        -cos(theta_sy)                               0                                                                       0   0   0;
                           sin(theta_sx)*sin(theta_sz)+cos(theta_sx)*sin(theta_sy)*cos(theta_sz)     sin(theta_sx)*cos(theta_sy)*cos(theta_sz)  -cos(theta_sx)*cos(theta_sz)-sin(theta_sx)*sin(theta_sy)*sin(theta_sz)   0   0   0;
                          -sin(theta_sx)*cos(theta_sz)+cos(theta_sx)*sin(theta_sy)*sin(theta_sz)     sin(theta_sx)*cos(theta_sy)*sin(theta_sz)  -cos(theta_sx)*sin(theta_sz)+sin(theta_sx)*sin(theta_sy)*cos(theta_sz)   0   0   0;
                           cos(theta_sx)*cos(theta_sy)                                              -sin(theta_sx)*sin(theta_sy)                 0                                                                       0   0   0;
+                          cos(theta_sx)*sin(theta_sz)-sin(theta_sx)*sin(theta_sy)*cos(theta_sz)     cos(theta_sx)*cos(theta_sy)*cos(theta_sz)   sin(theta_sx)*cos(theta_sz)-cos(theta_sx)*sin(theta_sy)*sin(theta_sz)   0   0   0;
+                         -cos(theta_sx)*cos(theta_sz)-sin(theta_sx)*sin(theta_sy)*sin(theta_sz)     cos(theta_sx)*cos(theta_sy)*sin(theta_sz)   sin(theta_sx)*sin(theta_sz)+cos(theta_sx)*sin(theta_sy)*cos(theta_sz)   0   0   0;
+                         -sin(theta_sx)*cos(theta_sy)                                              -cos(theta_sx)*sin(theta_sy)                 0                                                                       0   0   0;
                           0                                                                         0                                           0                                                                       1   0   0;
                           0                                                                         0                                           0                                                                       0   1   0;
                           0                                                                         0                                           0                                                                       0   0   1];
@@ -286,45 +287,44 @@ function [A,distortion,rotations,translations,R_s,t_s] = nonlinear_stereo_params
         end  
                 
         % Get and store update
-        delta_p = -inv(jacob'*jacob)*jacob'*res;
-        p = p + delta_p;
+        delta_p = -inv(jacob(:,update_idx)'*jacob(:,update_idx))*jacob(:,update_idx)'*res;
+        p(update_idx) = p(update_idx) + delta_p;
+        
+        % Store norm of residual
+        norm_res = norm(res);
         
         % Exit if change in distance is small
         norm_delta_p = norm(delta_p);        
         disp(['Iteration #: ' num2str(it)]);
         disp(['Difference norm for nonlinear parameter refinement: ' num2str(norm_delta_p)]);
-        if norm(delta_p) < norm_cutoff
+        disp(['Norm of residual: ' num2str(norm_res)]);
+        if norm(delta_p) < cb_config.refine_param_norm_cutoff
             break
         end
     end    
-    if it == it_cutoff
+    if it == cb_config.refine_param_it_cutoff
         disp('WARNING: iterations hit cutoff before converging!!!');
     end
         
-    % Get A, rotations, and distortions from p
+    % Get outputs from p    
+    R_s = alg.euler2rot(p(16 +6*num_boards+1:16 +6*num_boards+3));
+    t_s = p(16 +6*num_boards+4:16 +6*num_boards+6);
+    rotations.L = {};
+    rotations.R = {};
+    translations.L = {};
+    translations.R = {};
+    for i = 1:num_boards
+        rotations.L{i} = alg.euler2rot(p(16 +6*(i-1)+1:16 +6*(i-1)+3));
+        translations.L{i} = p(16 +6*(i-1)+4:16 +6*(i-1)+6);  
+        rotations.R{i} = R_s*rotations.L{i};  
+        translations.R{i} = R_s*translations.L{i} + t_s;
+    end
     A.L = [p(1)     0       p(3);
            0        p(2)    p(4);
            0        0       1];
     A.R = [p(9)     0       p(11);
            0        p(10)   p(12);
            0        0       1];
-
     distortion.L = [p(5); p(6); p(7); p(8)];
     distortion.R = [p(13); p(14); p(15); p(16)];
-    
-    translations.L = {};
-    translations.R = {};
-    rotations.L = {};
-    rotations.R = {};
-    for i = 1:num_boards
-        % Get rotation and translation for this board
-        translations.L{i} = p(16 +6*(i-1)+4:16 +6*(i-1)+6);
-        rotations.L{i} = alg.euler2rot(p(16 +6*(i-1)+1:16 +6*(i-1)+3));
-        
-        t_s = p(16 +6*num_boards+4:16 +6*num_boards+6);
-        R_s = alg.euler2rot(p(16 +6*num_boards+1:16 +6*num_boards+3));
-        
-        translations.R{i} = rotations.L{i}*t_s + translations.L{i};
-        rotations.R{i} = rotations.L{i}*R_s;  
-    end
 end

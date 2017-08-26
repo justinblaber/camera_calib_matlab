@@ -1,10 +1,12 @@
 function plot_cb_refine_points(points,cb_img,homography,cb_config,show_weights,a)
-    % This will plot the points and the window around the points
+    % This will plot the points and the refinement window around each 
+    % point.
         
     if ~exist('a','var')
         f = figure(); 
         a = axes(f);
     end
+    cla(a);
              
     % Plot points over calibration board image    
     cb_img.imshow(a);
@@ -14,11 +16,11 @@ function plot_cb_refine_points(points,cb_img,homography,cb_config,show_weights,a
     % Plot boxes around points   
     for i = 1:size(points,1)          
         % Get window points in image coordinates
-        [win_points_i,win_point_weights,win_point_corners] = alg.refine_window_points_i(points(i,:), ...
-                                                                                        homography, ...
-                                                                                        cb_img.get_width(), ...
-                                                                                        cb_img.get_height(), ...
-                                                                                        cb_config);
+        [win_points_i,win_point_weights,win_point_corners] = alg.refine_window_i(points(i,:), ...
+                                                                                 homography, ...
+                                                                                 cb_img.get_width(), ...
+                                                                                 cb_img.get_height(), ...
+                                                                                 cb_config);
         
         % Plot points
         if exist('show_weights','var') && show_weights

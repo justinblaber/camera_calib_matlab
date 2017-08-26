@@ -1,28 +1,38 @@
-function [A,distortion,rotations,translations] = nonlinear_params(A,rotations,translations,board_points_is,cb_config)
+function [rotations,translations,A,distortion,norm_res] = refine_single_params(rotations,translations,A,distortion,board_points_is,type,cb_config)
     % This will compute nonlinear refinement given input A, rotations, and
     % translations. This takes into account the full camera model,
     % including radial and tangential distortions (with initial guess of 0
     % for these four parameters).
     %
     % Inputs:
-    %   A - array; 3x3 array containing:
-    %       [alpha_x    0       x_o;
-    %        0          alpha_y y_o;
-    %        0          0       1]
     %   rotations - cell; Mx1 cell array containing 3x3 rotation matrices
     %   translations - cell; Mx1 cell array containing 3x1 translation
     %       vectors
-    %   board_points_is - cell; Mx1 cell array of calibration board points    
+    %   A - array; 3x3 array containing:
+    %       [alpha_x    0       x_o;
+    %        0          alpha_y y_o;
+    %        0          0       1]    
+    %   distortion - array; 4x1 array of distortions (radial and 
+    %       tangential) stored as: 
+    %       [beta_1; beta_2; beta_3; beta_4]
+    %   board_points_is - cell; Mx1 cell array of calibration board points 
+    %   type - string; 
+    %       'extrinsic' - Only rotations and translations are optimized
+    %       'intrisic' - Only camera parameters (A and distortion) are 
+    %           optimized
+    %       'full' - Attempts to do full calibration
     %   cb_config - struct; this is the struct returned by
     %       util.load_cb_config()
     %
     % Outputs:
-    %   A - array; optimized A
-    %   distortion - array; 4x1 array ofoptimized distortions (radial and 
-    %   tangential) stored as: 
-    %       [beta_1; beta_2; beta_3; beta_4]
     %   rotations - cell; optimized rotations
     %   translations - cell; optimized translations
+    %   A - array; optimized A
+    %   distortion - array; 4x1 array of optimized distortions (radial and 
+    %       tangential) stored as: 
+    %       [beta_1; beta_2; beta_3; beta_4]
+    %   norm_res - scalar; norm of the residuals of modelled board points vs
+    %       measured board points
           
     % TODO: make sure rotations and translations have the same length
         
@@ -43,33 +53,53 @@ function [A,distortion,rotations,translations] = nonlinear_params(A,rotations,tr
     %   [alpha_x, alpha_y, x_o, y_o, beta_1, beta_2, beta_3, beta_4, ...
     %    theta_x1, theta_y1, theta_z1, t_x1, t_y1, t_z1, ... 
     %    theta_xM, theta_yM, theta_zM, t_xM, t_yM, t_zM]
-    p = zeros(8+6*num_boards,1);
+    num_params = 8+6*num_boards;
+    p = zeros(num_params,1);
     
     % Do extrinsic parameters first
     p(1) = A(1,1);
     p(2) = A(2,2);
     p(3) = A(1,3);
     p(4) = A(2,3);
-    % Let initial distortion params be zero
+    p(5:8) = distortion;
     
     % Cycle over rotations and translations and store params. 
     for i = 1:num_boards
         R = rotations{i};
         t = translations{i};
         euler = alg.rot2euler(R);        
-        p(8 +6*(i-1)+1:8 +6*(i-1)+3) = euler;
-        p(8 +6*(i-1)+4:8 +6*(i-1)+6) = t';        
+        p(8+6*(i-1)+1:8+6*(i-1)+3) = euler;
+        p(8+6*(i-1)+4:8+6*(i-1)+6) = t';        
     end
    
     % Initialize jacobian
-    jacob = sparse(2*num_boards*num_points,8+6*num_boards);
+    jacob = sparse(2*num_boards*num_points,num_params);
     res = zeros(2*num_boards*num_points,1);
+        
+    % Determine which parameters to update based on type
+    update_idx = false(num_params,1);
+    switch type
+        case 'extrinsic'
+            % Only update rotations and translations
+            update_idx(9:num_params) = true;
+        case 'intrinsic'
+            % Only update camera matrix
+            update_idx(1:8) = true;
+        case 'full'
+            % Attempt to calibrate everything
+            update_idx(1:num_params) = true;
+        otherwise
+            error(['Input type of: "' type '" was not recognized']);
+    end
     
-    % Perform gauss newton iterations until convergence
-    it_cutoff = 20;
-    norm_cutoff = 1e-5;
-    for it = 1:it_cutoff      
-        % Get parameters
+    % For single images, remove principle point from optimization
+    if num_boards == 1
+        update_idx(3:4) = false;
+    end  
+    
+    % Perform gauss newton iteration(s)    
+    for it = 1:cb_config.refine_param_it_cutoff        
+        % Get intrinsic parameters
         alpha_x = p(1);
         alpha_y = p(2);
         x_o = p(3);
@@ -82,12 +112,12 @@ function [A,distortion,rotations,translations] = nonlinear_params(A,rotations,tr
         % Fill jacobian and residuals per board
         for i = 1:num_boards
             % Get rotation and translation for this board
-            t = p(8+6*(i-1)+4:8+6*(i-1)+6);
             euler = p(8+6*(i-1)+1:8+6*(i-1)+3);
-            R = alg.euler2rot(euler);
             theta_x = euler(1);
             theta_y = euler(2);
             theta_z = euler(3);
+            R = alg.euler2rot(euler);
+            t = p(8+6*(i-1)+4:8+6*(i-1)+6);
 
             % Apply xform to points to get into camera coordinates
             points_s = [R(:,1) R(:,2) t] * [board_points_w ones(size(board_points_w,1),1)]';
@@ -165,35 +195,37 @@ function [A,distortion,rotations,translations] = nonlinear_params(A,rotations,tr
             res(x_top:x_bottom) = x_model - board_points_i(:,1);
             res(y_top:y_bottom) = y_model - board_points_i(:,2);           
         end  
-        
+                
         % Get and store update
-        delta_p = -inv(jacob'*jacob)*jacob'*res;
-        p = p + delta_p;
+        delta_p = -inv(jacob(:,update_idx)'*jacob(:,update_idx))*jacob(:,update_idx)'*res;
+        p(update_idx) = p(update_idx) + delta_p;
+        
+        % Store norm of residual
+        norm_res = norm(res);
         
         % Exit if change in distance is small
         norm_delta_p = norm(delta_p);        
         disp(['Iteration #: ' num2str(it)]);
         disp(['Difference norm for nonlinear parameter refinement: ' num2str(norm_delta_p)]);
-        if norm(delta_p) < norm_cutoff
+        disp(['Norm of residual: ' num2str(norm_res)]);
+        if norm(delta_p) < cb_config.refine_param_norm_cutoff
             break
         end
     end    
-    if it == it_cutoff
+    if it == cb_config.refine_param_it_cutoff
         disp('WARNING: iterations hit cutoff before converging!!!');
     end
         
-    % Get A, rotations, and distortions from p
+    % Get outputs from p    
+    rotations = {};
+    translations = {};
+    for i = 1:num_boards
+        % Get rotation and translation for this board
+        rotations{i} = alg.euler2rot(p(8+6*(i-1)+1:8+6*(i-1)+3)); %#ok<AGROW>
+        translations{i} = p(8+6*(i-1)+4:8+6*(i-1)+6); %#ok<AGROW>
+    end
     A = [p(1) 0    p(3);
          0    p(2) p(4);
          0    0    1];
-
     distortion = [p(5); p(6); p(7); p(8)];
-    
-    translations = {};
-    rotations = {};
-    for i = 1:num_boards
-        % Get rotation and translation for this board
-        translations{i} = p(8+6*(i-1)+4:8+6*(i-1)+6); %#ok<AGROW>
-        rotations{i} = alg.euler2rot(p(8+6*(i-1)+1:8+6*(i-1)+3)); %#ok<AGROW>
-    end
 end

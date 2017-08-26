@@ -1,5 +1,6 @@
 function points_h = apply_homography(homography,points)
-    % This will apply homography to input points.
+    % This will apply a homography to input points. Outputs are normalized
+    % so the 3rd coordinate is 1 (and is omitted).
     %
     % Inputs:
     %   homography - array; 3x3 homography

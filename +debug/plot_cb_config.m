@@ -6,6 +6,7 @@ function plot_cb_config(cb_config,a)
         f = figure(); 
         a = axes(f);
     end
+    cla(a);
     
     % Get board points in world coordinates
     [board_points, four_points] = alg.cb_points(cb_config);
@@ -34,15 +35,15 @@ function plot_cb_config(cb_config,a)
     
     % Plot board points    
     plot(board_points(:,1),board_points(:,2),'gs','MarkerSize',12, ...
-        'MarkerFaceColor','w','parent',a);
+         'MarkerFaceColor','w','parent',a);
     text(board_points(:,1),board_points(:,2),cellstr(num2str([1:size(board_points,1)]')), ...
          'FontSize',6,'HorizontalAlignment','center','color','k','parent',a); %#ok<NBRAK>
     
     % Plot four points 
     plot(four_points(:,1),four_points(:,2),'bo','MarkerSize',14, ...
-        'MarkerFaceColor','w','LineWidth',1.5,'parent',a);
+         'MarkerFaceColor','w','LineWidth',1.5,'parent',a);
     text(four_points(:,1),four_points(:,2),cellstr(num2str([1:4]')), ...
-        'FontSize',8,'HorizontalAlignment','center','parent',a); %#ok<NBRAK>    
+         'FontSize',8,'HorizontalAlignment','center','parent',a); %#ok<NBRAK>    
     hold(a,'off');
     
     drawnow;

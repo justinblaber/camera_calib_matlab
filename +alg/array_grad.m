@@ -1,5 +1,6 @@
 function array_g = array_grad(array,direc)
-    % Compute gradient of input array along direction specified by direc
+    % Computes gradient of input array along the direction specified by 
+    % direc
     %
     % Inputs:
     %   array - array; MxN array

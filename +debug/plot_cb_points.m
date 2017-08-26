@@ -5,6 +5,7 @@ function plot_cb_points(points,cb_img,a)
         f = figure(); 
         a = axes(f);
     end
+    cla(a);
     
     % Show image
     imshow(cb_img.get_gs(),[],'parent',a);

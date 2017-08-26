@@ -82,10 +82,10 @@ function homography_1_2 = homography(points_1, points_2, cb_config)
         delta_h = -pinv(jacob)*res;
         h = h + delta_h;
         
-        % Exit if change in parameter vector is small
-        norm_delta_h = norm(delta_h);        
+        % Exit if change in distance is small
+        diff_norm = norm(delta_h);        
         disp(['Homography refinement iteration #: ' num2str(it)]);
-        disp(['Difference norm for nonlinear parameter refinement: ' num2str(norm_delta_h)]);
+        disp(['Difference norm for nonlinear parameter refinement: ' num2str(diff_norm)]);
         if norm(delta_h) < cb_config.homography_norm_cutoff
             break
         end

@@ -23,9 +23,9 @@ switch cb_config.calibration
         [~, four_points_w] = alg.cb_points(cb_config);
 
         % Board 1 
-        four_points_is{1} = [320 165;
-                             266 290;
-                             540 232;
+        four_points_is{1} = [279 70;
+                             189 257;
+                             564 152;
                              499 374];
                            
         % Refine
@@ -48,7 +48,7 @@ end
 clear, clc;
 f1 = figure(1);
 
-cb_img_paths = {'test_images/Image1.tif'};
+cb_img_paths = {'test_images/Image5.tif'};
                      
 % Validate all calibration board images
 cb_imgs = class.img.validate_similar_imgs(cb_img_paths);
@@ -57,7 +57,7 @@ cb_imgs = class.img.validate_similar_imgs(cb_img_paths);
 cb_config = util.load_cb_config('board_zhang.yaml');
 
 % Debug
-debug.plot_cb_config(cb_config,subplot(1,2,1,'parent',f1));
+debug.plot_cb_config(cb_config,subplot(1,3,1,'parent',f1));
 
 % Get four points in image coordinates per calibration board image
 four_points_is = {};
@@ -69,10 +69,10 @@ switch cb_config.calibration
         [~, four_points_w] = alg.cb_points(cb_config);
 
         % Board 1 
-        four_points_is{1} = [168 178;
-                             135 375;
-                             414 193;
-                             473 385];
+        four_points_is{1} = [80 194;
+                             400 428;
+                             222 43;
+                             435 218];
                            
         % Refine
         for i = 1:length(four_points_is)
@@ -116,11 +116,11 @@ for i = 1:length(cb_imgs)
                                            cb_imgs(i), ...
                                            homographies_four_points{i}, ...
                                            cb_config);  %#ok<SAGROW>
+                                       
+    debug.plot_cb_refine_points(board_points_is{i}, ...
+                                cb_imgs(i), ...
+                                alg.homography(board_points_w,board_points_is{i},cb_config), ...
+                                cb_config, ...
+                                false, ...
+                                subplot(1,3,3,'parent',f1));
 end
-
-debug.plot_cb_refine_points(board_points_is{i}, ...
-                            cb_imgs(i), ...
-                            alg.homography(board_points_w,board_points_is{i},cb_config), ...
-                            cb_config, ...
-                            false, ...
-                            subplot(1,3,3,'parent',f1));

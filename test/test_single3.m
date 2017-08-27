@@ -1,14 +1,14 @@
-%% Set images, load config, and get four corners - zhang
+%% Set images, load config, and get four corners - single
 clear, clc;
 f1 = figure(1);
 
-cb_img_paths = {'test_images/left01.jpg'};
+cb_img_paths = {'test/test_images/left01.jpg'};
                      
 % Validate all calibration board images
 cb_imgs = class.img.validate_similar_imgs(cb_img_paths);
                      
 % Load calibration board config file
-cb_config = util.load_cb_config('board_stereo.yaml');
+cb_config = util.load_cb_config('test/board_stereo.yaml');
 
 % Debug
 debug.plot_cb_config(cb_config,subplot(1,2,1,'parent',f1));
@@ -43,7 +43,7 @@ switch cb_config.calibration
         end   
 end
 
-%% Perform zhang calibration
+%% Perform single calibration
 [A,distortion,rotations,translations,board_points_is] = alg.single_calibrate(cb_imgs, ...
                                                                              four_points_is, ...
                                                                              cb_config);

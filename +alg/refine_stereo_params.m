@@ -217,6 +217,7 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
         rotations.L{i} = alg.euler2rot(p(16 +6*(i-1)+1:16 +6*(i-1)+3));
         translations.L{i} = p(16 +6*(i-1)+4:16 +6*(i-1)+6);
         
+        % Recompute R_R and t_R using R_s and t_s
         rotations.R{i} = R_s*rotations.L{i};  
         translations.R{i} = R_s*translations.L{i} + t_s;
     end

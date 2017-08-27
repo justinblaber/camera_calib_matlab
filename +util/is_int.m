@@ -6,5 +6,6 @@ function success = is_int(num)
     %
     % Outputs:
     %   success - logical;
+    
     success = util.is_num(num) && round(num) == num;
 end

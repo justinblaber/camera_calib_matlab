@@ -6,5 +6,6 @@ function success = is_num(num)
     %
     % Outputs:
     %   success - logical;
+    
     success = ~isempty(num) && isscalar(num) && isreal(num) && isfinite(num);
 end

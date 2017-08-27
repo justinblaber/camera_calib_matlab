@@ -2,7 +2,7 @@
 clear, clc;
 f1 = figure(1);
 
-cb_img_paths = {'test_images/left_single01.jpg'};
+cb_img_paths = {'test_images/left01.jpg'};
                      
 % Validate all calibration board images
 cb_imgs = class.img.validate_similar_imgs(cb_img_paths);

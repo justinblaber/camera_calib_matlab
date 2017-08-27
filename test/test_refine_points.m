@@ -2,7 +2,7 @@
 clear, clc;
 f1 = figure(1);
 
-cb_img_paths = {'test_images/left03.jpg'};
+cb_img_paths = {'test/test_images/left03.jpg'};
                      
 % Validate all calibration board images
 cb_imgs = class.img.validate_similar_imgs(cb_img_paths);
@@ -44,17 +44,17 @@ switch cb_config.calibration
         end   
 end
 
-%% Set images, load config, and get four corners - zhang
+%% Set images, load config, and get four corners - single
 clear, clc;
 f1 = figure(1);
 
-cb_img_paths = {'test_images/Image5.tif'};
+cb_img_paths = {'test/test_images/Image5.tif'};
                      
 % Validate all calibration board images
 cb_imgs = class.img.validate_similar_imgs(cb_img_paths);
                      
 % Load calibration board config file
-cb_config = util.load_cb_config('board_zhang.yaml');
+cb_config = util.load_cb_config('test/board_single.yaml');
 
 % Debug
 debug.plot_cb_config(cb_config,subplot(1,3,1,'parent',f1));

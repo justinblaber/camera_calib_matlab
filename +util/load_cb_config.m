@@ -96,7 +96,7 @@ function cb_config = load_cb_config(cb_config_path)
     field_info(end+1) = struct('field','refine_corner_norm_cutoff'          ,'required',false,'default','0.05','validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','refine_corner_default_window_factor','required',false,'default','2/3' ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','refine_corner_window_min_size'      ,'required',false,'default','10'  ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','refine_param_it_cutoff'             ,'required',false,'default','20'  ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','refine_param_it_cutoff'             ,'required',false,'default','20'  ,'validation_fun',@validate_pos_int);
     field_info(end+1) = struct('field','refine_param_norm_cutoff'           ,'required',false,'default','1e-6','validation_fun',@validate_pos_num);
     
     % Check to see if any unrecognized fields exist

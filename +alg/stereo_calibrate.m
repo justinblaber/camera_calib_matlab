@@ -1,4 +1,4 @@
-function [A,distortion,rotations,translations,board_points_is] = single_calibrate(cb_imgs,four_points_is,cb_config)
+function [rotations,translations,A,distortion,board_points_is] = single_calibrate(cb_imgs,four_points_is,cb_config)
     % Performs camera calibration (mostly from Zhang's paper, some stuff
     % adapted from Bouguet's toolbox, and some stuff I've added myself) 
     % given calibration board images, four point boxes around the 
@@ -11,12 +11,12 @@ function [A,distortion,rotations,translations,board_points_is] = single_calibrat
     %       util.load_cb_config()
     %
     % Outputs:
+    %   rotations - cell; optimized rotations
+    %   translations - cell; optimized translations  
     %   A - array; optimized camera matrix
     %   distortion - array; 4x1 array of optimized distortions (radial and 
     %   tangential) stored as: 
     %       [beta1; beta2; beta3; beta4]  
-    %   rotations - cell; optimized rotations
-    %   translations - cell; optimized translations  
     %   board_points_is - cell; cell array of optimized subpixel 
     %       calibration board points.
 
@@ -80,10 +80,10 @@ function [A,distortion,rotations,translations,board_points_is] = single_calibrat
     % Perform full optimization
     disp('--------------------------------------------');
     disp('Refining full parameters...');
-    [A,distortion,rotations,translations] = alg.refine_single_params(A, ... 
-                                                                     distortion, ...
-                                                                     rotations, ...
+    [rotations,translations,A,distortion] = alg.refine_single_params(rotations, ...
                                                                      translations, ...
+                                                                     A, ... 
+                                                                     distortion, ... % init distortion to zero
                                                                      board_points_is, ...
                                                                      'full', ...
                                                                      cb_config);      

@@ -16,8 +16,8 @@ function jacob = dp_m_dextrinsic(A,distortion,R,t,dRt_dm,points_w)
     %   points_w - array; Nx2 array of points in world coordinates
     %
     % Outputs:
-    %   jacob - array; 2*num_pointsx6 array of jacobian evaluated at input euler
-    %       angles. Format of jacobian is:
+    %   jacob - array; 2*num_pointsx6 array. 
+    %       Format of jacobian is:
     %
     %               dtheta_x dtheta_y dtheta_z dtx dty dtz
     %       dx_m_1
@@ -45,17 +45,16 @@ function jacob = dp_m_dextrinsic(A,distortion,R,t,dRt_dm,points_w)
     x_n = p_n(:,1);
     y_n = p_n(:,2);    
     
-    %   dx_n/dtheta_x1, dx_n/dtheta_y1, dx_n/dtheta_z1, dx_n/dt_x, dx_n/dt_y, dx_n/dt_z
-    %   dy_n/dtheta_x1, dy_n/dtheta_y1, dy_n/dtheta_z1, dy_n/dt_x, dy_n/dt_y, dy_n/dt_z
+    % Get jacobian of normalized coords wrt R and t
     dx_n_dRt = [points_w(:,1)./z_s zeros(num_points,1) -(points_w(:,1).*x_s)./z_s.^2 points_w(:,2)./z_s zeros(num_points,1) -(points_w(:,2).*x_s)./z_s.^2 1./z_s zeros(num_points,1) -x_s./z_s.^2];
     dy_n_dRt = [zeros(num_points,1) points_w(:,1)./z_s -(points_w(:,1).*y_s)./z_s.^2 zeros(num_points,1) points_w(:,2)./z_s -(points_w(:,2).*y_s)./z_s.^2 zeros(num_points,1) 1./z_s -y_s./z_s.^2];
 
-    % Get jacobian of normalized coords
+    % Get jacobian of normalized coords wrt euler angles and t
     dx_n_dm = dx_n_dRt*dRt_dm;
     dy_n_dm = dy_n_dRt*dRt_dm;
     dr_n_dm = (x_n.*dx_n_dm + y_n.*dy_n_dm)./r_n;
     
-    % Store
+    % Get jacobian of model points wrt euler angles and t
     jacob = vertcat(A(1,1)*(dx_n_dm.*(1+distortion(1)*r_n.^2+distortion(2)*r_n.^4)+x_n.*(2*distortion(1)*r_n.*dr_n_dm+4*distortion(2)*r_n.^3.*dr_n_dm)+2*distortion(3)*(dx_n_dm.*y_n+x_n.*dy_n_dm)+distortion(4)*(2*r_n.*dr_n_dm+4*x_n.*dx_n_dm)), ...
                     A(2,2)*(dy_n_dm.*(1+distortion(1)*r_n.^2+distortion(2)*r_n.^4)+y_n.*(2*distortion(1)*r_n.*dr_n_dm+4*distortion(2)*r_n.^3.*dr_n_dm)+distortion(3)*(2*r_n.*dr_n_dm+4*y_n.*dy_n_dm)+2*distortion(4)*(dx_n_dm.*y_n+x_n.*dy_n_dm)));
 end

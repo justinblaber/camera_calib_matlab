@@ -1,11 +1,11 @@
 function [win_points_i, win_point_weights, win_point_corners_i] = refine_window_i(point_i,homography,width,height,cb_config)    
-    % Compute refinement window points, weights of the window points, and 
+    % Computes refinement window points, weights of the window points, and 
     % the corners of the window points in image coordinates.
     %
     % Inputs:
     %   point_i - array; 1x2 point in image coordinates
-    %   homography - array; 3x3 homography matrix of initial guess. This is
-    %       used to compute the window around each point.
+    %   homography - array; 3x3 homography matrix. This is used to compute
+    %       the window around each point.
     %   width - scalar; width of the calibration board image
     %   height - scalar; height of the calibration board image
     %   cb_config - struct; this is the struct returned by
@@ -18,7 +18,7 @@ function [win_points_i, win_point_weights, win_point_corners_i] = refine_window_
     %   win_point_corners_i - array; corners of refinement window. For now,
     %       just use these for plotting/debugging purposes. Currently, 
     %       these corners are not updated if refinement window is truncated
-    %       (due to being outside the image).
+    %       due to being outside the image).
             
     % Get point in world coordinates
     point_w = alg.apply_homography(homography^-1,point_i);
@@ -34,7 +34,7 @@ function [win_points_i, win_point_weights, win_point_corners_i] = refine_window_
                      wf, ...
                      cb_config); 
 
-    % Get window around point in image coordinates
+    % Get window points in image coordinates
     win_points_i = window_points_i(point_w, ...
                                    homography, ...
                                    wf, ...
@@ -46,7 +46,7 @@ function [win_points_i, win_point_weights, win_point_corners_i] = refine_window_
     win_point_weights = window_point_weights(hw);   
     
     % Get window point corners before thresholding based on image bounds.
-    % Corners are:
+    % Corners are stored as:
     %   p1 p3
     %   p2 p4
     l = 2*hw+1;
@@ -63,8 +63,8 @@ function [win_points_i, win_point_weights, win_point_corners_i] = refine_window_
     win_points_i = win_points_i(idx_inbounds,:);        
     win_point_weights = win_point_weights(idx_inbounds,:);
     
-    % TODO: win_point_corners_i can probably get updated by using convex
-    % hull
+    % TODO: Possibly win_point_corners_i in the future if the window is out
+    % of bounds
 end
 
 function l_i = window_lengths_i(point_w,homography,wf,cb_config)
@@ -105,8 +105,9 @@ function wf = window_factor(point_w,homography,cb_config)
     %   Return the default window factor if it meets the minimum length
     %       requirement and is less than 4/3
     %   Return a newly computed window factor which ensures the minimum
-    %       length of the refinement window is refine_corner_window_min_size if
-    %       the default refinement window doesnt meet this criteria
+    %       length of the refinement window is 
+    %       refine_corner_window_min_size if the default refinement window 
+    %       doesnt meet this criteria
     %   Return 4/3, which is the upper bound I set to ensure the refinement
     %       window does not overlap with neighboring corners
     
@@ -114,7 +115,10 @@ function wf = window_factor(point_w,homography,cb_config)
     wf = cb_config.refine_corner_default_window_factor;
         
     % Get window lengths in image coordinates
-    l_i = window_lengths_i(point_w,homography,wf,cb_config);
+    l_i = window_lengths_i(point_w, ...
+                           homography, ...
+                           wf, ...
+                           cb_config);
         
     % Recompute window_factor if any of the distances are below the minimum
     % window size

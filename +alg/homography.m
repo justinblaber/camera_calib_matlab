@@ -12,20 +12,19 @@ function homography_1_2 = homography(points_1, points_2, cb_config)
     %   homography_1_2 - array; 3x3 array which transforms the points from 
     %       1 to 2. Constraint of homography_1_2(3,3) = 1 is applied.
     
-    % TODO: validate inputs. They must be the same size and there must be
-    % least four points
+    % TODO: validate inputs. There must be at least four points?
         
     % Number of points
-    N = size(points_1,1);
+    num_points = size(points_1,1);
     
-    % Perform linear guess -----------------------------------------------%    
+    % Get linear guess ---------------------------------------------------%    
     % Perform normalization first
     T_1 = norm_mat(points_1);
-    points_1_aug = [points_1 ones(N,1)]';
+    points_1_aug = [points_1 ones(num_points,1)]';
     points_1_norm = T_1*points_1_aug;
     
     T_2 = norm_mat(points_2);
-    points_2_aug = [points_2 ones(N,1)]';
+    points_2_aug = [points_2 ones(num_points,1)]';
     points_2_norm = T_2*points_2_aug;
     
     % Compute homography with normalized points
@@ -47,8 +46,8 @@ function homography_1_2 = homography(points_1, points_2, cb_config)
     h = homography_1_2(1:8)';
      
     % Initialize jacobian and residual vector
-    jacob = zeros(2*N,8);
-    res = zeros(2*N,1);
+    jacob = zeros(2*num_points,8);
+    res = zeros(2*num_points,1);
     
     % Perform gauss newton iterations until convergence
     for it = 1:cb_config.homography_it_cutoff
@@ -61,22 +60,24 @@ function homography_1_2 = homography(points_1, points_2, cb_config)
         u_prime = points_prime(1,:)';
         v_prime = points_prime(2,:)';
         w_prime = points_prime(3,:)';
+        
         % x coords
-        jacob(1:N,1) = points_1(:,1)./w_prime;
-        jacob(1:N,3) = -u_prime.*points_1(:,1)./w_prime.^2;
-        jacob(1:N,4) = points_1(:,2)./w_prime;
-        jacob(1:N,6) = -u_prime.*points_1(:,2)./w_prime.^2;
-        jacob(1:N,7) = 1./w_prime;
+        jacob(1:num_points,1) = points_1(:,1)./w_prime;
+        jacob(1:num_points,3) = -u_prime.*points_1(:,1)./w_prime.^2;
+        jacob(1:num_points,4) = points_1(:,2)./w_prime;
+        jacob(1:num_points,6) = -u_prime.*points_1(:,2)./w_prime.^2;
+        jacob(1:num_points,7) = 1./w_prime;
+        
         % y coords
-        jacob(N+1:2*N,2) = points_1(:,1)./w_prime;
-        jacob(N+1:2*N,3) = -v_prime.*points_1(:,1)./w_prime.^2;
-        jacob(N+1:2*N,5) = points_1(:,2)./w_prime;
-        jacob(N+1:2*N,6) = -v_prime.*points_1(:,2)./w_prime.^2;
-        jacob(N+1:2*N,8) = 1./w_prime;
+        jacob(num_points+1:2*num_points,2) = points_1(:,1)./w_prime;
+        jacob(num_points+1:2*num_points,3) = -v_prime.*points_1(:,1)./w_prime.^2;
+        jacob(num_points+1:2*num_points,5) = points_1(:,2)./w_prime;
+        jacob(num_points+1:2*num_points,6) = -v_prime.*points_1(:,2)./w_prime.^2;
+        jacob(num_points+1:2*num_points,8) = 1./w_prime;
 
         % Store residual
-        res(1:N) = u_prime./w_prime - points_2(:,1);
-        res(N+1:2*N,1) = v_prime./w_prime - points_2(:,2);
+        res(1:num_points) = u_prime./w_prime - points_2(:,1);
+        res(num_points+1:2*num_points,1) = v_prime./w_prime - points_2(:,2);
         
         % Get and store update
         delta_h = -pinv(jacob)*res;
@@ -106,7 +107,7 @@ function T_norm = norm_mat(points)
     points_y = points(:,2);
     mean_x = mean(points_x);
     mean_y = mean(points_y);    
-    sm = sqrt(2)*size(points,1)./sum(sqrt((points_x-mean_x).^2 + (points_y-mean_y).^2));
+    sm = sqrt(2)*size(points,1)./sum(sqrt((points_x-mean_x).^2+(points_y-mean_y).^2));
     T_norm = [sm 0  -mean_x*sm;
               0  sm -mean_y*sm;
               0  0   1];

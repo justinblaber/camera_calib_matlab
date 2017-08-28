@@ -1,4 +1,57 @@
-function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,distortion,rotations,translations,R_s,t_s,board_points_is,type,cb_config)
+function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,distortion,rotations,translations,board_points_is,R_s,t_s,type,cb_config)
+    % This will compute nonlinear refinement of intrinsic and extrinsic
+    % camera parameters for both left and right cameras.
+    %
+    % Inputs: 
+    %   A - struct; contains:
+    %       .L - array; camera matrix for the left camera
+    %       .R - array; camera matrix for the right camera
+    %   distortion - struct; contains:
+    %       .L - array; 4x1 array of distortions for the left camera
+    %       .R - array; 4x1 array of distortions for the right camera
+    %       stored as: 
+    %           [beta1; beta2; beta3; beta4]  
+    %   rotations - struct; contains:
+    %       .L - cell; rotations for the left camera
+    %       .R - cell; rotations for the right camera
+    %   translations - struct; contains:
+    %       .L - cell; translations for the left camera
+    %       .R - cell; translations for the right camera
+    %   board_points_is - struct; contains:
+    %       .L - cell; cell array of calibration board points for the left 
+    %           camera.
+    %       .R - cell; cell array of calibration board points for the right
+    %           camera.
+    %   R_s - array; 3x3 rotation matrix describing rotation from the left
+    %       camera to the right camera
+    %   t_s - array; 3x1 translation vector describing translation from the
+    %       left camera to the right camera
+    %   type - string; 
+    %       'full' - Attempts to do full calibration
+    %   cb_config - struct; this is the struct returned by
+    %       util.load_cb_config()
+    %
+    % Outputs:
+    %   A - struct; contains:
+    %       .L - array; optimized camera matrix for the left camera
+    %       .R - array; optimized camera matrix for the right camera
+    %   distortion - struct; contains:
+    %       .L - array; 4x1 array of optimized distortions for the left
+    %           camera
+    %       .R - array; 4x1 array of optimized distortions for the right
+    %           camera
+    %       stored as: 
+    %           [beta1; beta2; beta3; beta4]  
+    %   rotations - struct; contains:
+    %       .L - cell; optimized rotations for the left camera
+    %       .R - cell; optimized rotations for the right camera
+    %   translations - struct; contains:
+    %       .L - cell; optimized translations for the left camera
+    %       .R - cell; optimized translations for the right camera
+    %   R_s - array; 3x3 rotation matrix describing rotation from the left
+    %       camera to the right camera
+    %   t_s - array; 3x1 translation vector describing translation from the
+    %       left camera to the right camera
               
     % Get board points in world coordinates
     board_points_w = alg.cb_points(cb_config);
@@ -55,12 +108,12 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     switch type
         case 'full'
             % Attempt to calibrate everything
-            update_idx(1:num_params) = true;
+            update_idx(1:end) = true;
         otherwise
             error(['Input type of: "' type '" was not recognized']);
     end    
     
-    % For single images, remove principle point from optimization
+    % For single images, remove principle points from optimization
     if num_boards == 1
         update_idx(3:4) = false;
         update_idx(11:12) = false;
@@ -88,13 +141,13 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
         for i = 1:num_boards
             % Fill jacobian for left board -------------------------------%
             % This is basically the same for single board calibration since
-            % the left board is "independent"
+            % the left board is independent
             
             % Get rotation and translation for the left board
             R_L = alg.euler2rot(p(16+6*(i-1)+1:16+6*(i-1)+3));
             t_L = p(16+6*(i-1)+4:16+6*(i-1)+6);
             
-             % Intrinsic params
+            % Intrinsic params
             jacob((i-1)*4*num_points+1:((i-1)*4+2)*num_points,1:8) = alg.dp_m_dintrinsic(A_L, ...
                                                                                          distortion_L, ...
                                                                                          R_L, ...
@@ -206,16 +259,16 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     distortion.L = [p(5); p(6); p(7); p(8)];
     distortion.R = [p(13); p(14); p(15); p(16)]; 
     
-    R_s = alg.euler2rot(p(16 +6*num_boards+1:16 +6*num_boards+3));
-    t_s = p(16 +6*num_boards+4:16 +6*num_boards+6);
+    R_s = alg.euler2rot(p(16+6*num_boards+1:16+6*num_boards+3));
+    t_s = p(16+6*num_boards+4:16+6*num_boards+6);
     
     rotations.L = {};
     rotations.R = {};
     translations.L = {};
     translations.R = {};
     for i = 1:num_boards
-        rotations.L{i} = alg.euler2rot(p(16 +6*(i-1)+1:16 +6*(i-1)+3));
-        translations.L{i} = p(16 +6*(i-1)+4:16 +6*(i-1)+6);
+        rotations.L{i} = alg.euler2rot(p(16+6*(i-1)+1:16+6*(i-1)+3));
+        translations.L{i} = p(16+6*(i-1)+4:16+6*(i-1)+6);
         
         % Recompute R_R and t_R using R_s and t_s
         rotations.R{i} = R_s*rotations.L{i};  

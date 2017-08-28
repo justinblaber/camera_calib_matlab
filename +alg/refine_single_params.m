@@ -1,8 +1,6 @@
 function [A,distortion,rotations,translations,norm_res] = refine_single_params(A,distortion,rotations,translations,board_points_is,type,cb_config)
-    % This will compute nonlinear refinement given input A, rotations, and
-    % translations. This takes into account the full camera model,
-    % including radial and tangential distortions (with initial guess of 0
-    % for these four parameters).
+    % This will compute nonlinear refinement of intrinsic and extrinsic
+    % camera parameters.
     %
     % Inputs:    
     %   A - array; 3x3 array containing:
@@ -44,9 +42,8 @@ function [A,distortion,rotations,translations,norm_res] = refine_single_params(A
     num_points = size(board_points_w,1);
     
     % Supply initial parameter vector. p has a length of 8 + 6*M, where M 
-    % is the number of calibration boards. There are 8 intrinsic parameters
-    % (4 more for distortion parameters) and 6 extrinsic parameters per 
-    % board.
+    % is the number of calibration boards. There are 8 intrinsic 
+    % parameters. There are 6 extrinsic parameters per board.
     % p has form of: 
     %   [alpha_x, alpha_y, x_o, y_o, beta_1, beta_2, beta_3, beta_4, ...
     %    theta_x1, theta_y1, theta_z1, t_x1, t_y1, t_z1, ... 
@@ -76,13 +73,13 @@ function [A,distortion,rotations,translations,norm_res] = refine_single_params(A
     switch type
         case 'extrinsic'
             % Only update rotations and translations
-            update_idx(9:num_params) = true;
+            update_idx(9:end) = true;
         case 'intrinsic'
             % Only update camera matrix
             update_idx(1:8) = true;
         case 'full'
             % Attempt to calibrate everything
-            update_idx(1:num_params) = true;
+            update_idx(1:end) = true;
         otherwise
             error(['Input type of: "' type '" was not recognized']);
     end
@@ -163,7 +160,6 @@ function [A,distortion,rotations,translations,norm_res] = refine_single_params(A
     rotations = {};
     translations = {};
     for i = 1:num_boards
-        % Get rotation and translation for this board
         rotations{i} = alg.euler2rot(p(8+6*(i-1)+1:8+6*(i-1)+3)); %#ok<AGROW>
         translations{i} = p(8+6*(i-1)+4:8+6*(i-1)+6); %#ok<AGROW>
     end

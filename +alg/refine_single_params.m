@@ -1,4 +1,4 @@
-function [A,distortion,rotations,translations,norm_res] = refine_single_params(A,distortion,rotations,translations,board_points_is,type,cb_config)
+function [A,distortion,rotations,translations,norm_res] = refine_single_params(A,distortion,rotations,translations,board_points_ps,type,cb_config)
     % This will compute nonlinear refinement of intrinsic and extrinsic
     % camera parameters.
     %
@@ -13,7 +13,7 @@ function [A,distortion,rotations,translations,norm_res] = refine_single_params(A
     %   rotations - cell; Mx1 cell array containing 3x3 rotation matrices
     %   translations - cell; Mx1 cell array containing 3x1 translation
     %       vectors
-    %   board_points_is - cell; Mx1 cell array of calibration board points 
+    %   board_points_ps - cell; Mx1 cell array of calibration board points 
     %   type - string; 
     %       'extrinsic' - Only rotations and translations are optimized
     %       'intrisic' - Only camera parameters (A and distortion) are 
@@ -38,7 +38,7 @@ function [A,distortion,rotations,translations,norm_res] = refine_single_params(A
     board_points_w = alg.cb_points(cb_config);
     
     % Get number of boards and number of points
-    num_boards = length(board_points_is);
+    num_boards = length(board_points_ps);
     num_points = size(board_points_w,1);
     
     % Supply initial parameter vector. p has a length of 8 + 6*M, where M 
@@ -128,8 +128,8 @@ function [A,distortion,rotations,translations,norm_res] = refine_single_params(A
                           board_points_w);
             
             % Store residuals
-            res((i-1)*2*num_points+1:i*2*num_points) = vertcat(p_m(:,1)-board_points_is{i}(:,1), ...
-                                                               p_m(:,2)-board_points_is{i}(:,2));           
+            res((i-1)*2*num_points+1:i*2*num_points) = vertcat(p_m(:,1)-board_points_ps{i}(:,1), ...
+                                                               p_m(:,2)-board_points_ps{i}(:,2));           
         end  
                 
         % Get and store update

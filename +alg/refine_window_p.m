@@ -1,9 +1,9 @@
-function [win_points_i, win_point_weights, win_point_corners_i] = refine_window_i(point_i,homography,width,height,cb_config)    
+function [win_points_p, win_point_weights, win_point_corners_p] = refine_window_p(point_p,homography,width,height,cb_config)    
     % Computes refinement window points, weights of the window points, and 
     % the corners of the window points in image coordinates.
     %
     % Inputs:
-    %   point_i - array; 1x2 point in image coordinates
+    %   point_p - array; 1x2 point in pixel coordinates
     %   homography - array; 3x3 homography matrix. This is used to compute
     %       the window around each point.
     %   width - scalar; width of the calibration board image
@@ -12,16 +12,16 @@ function [win_points_i, win_point_weights, win_point_corners_i] = refine_window_
     %       util.load_cb_config()
     %
     % Outputs:
-    %   win_points_i - array; points of refinement window in image
+    %   win_points_p - array; points of refinement window in pixel
     %       coordinates
     %   win_point_weights - array; weights of refinement window
-    %   win_point_corners_i - array; corners of refinement window. For now,
+    %   win_point_corners_p - array; corners of refinement window. For now,
     %       just use these for plotting/debugging purposes. Currently, 
     %       these corners are not updated if refinement window is truncated
     %       due to being outside the image).
             
     % Get point in world coordinates
-    point_w = alg.apply_homography(homography^-1,point_i);
+    point_w = alg.apply_homography(homography^-1,point_p);
 
     % Get window_factor
     wf = window_factor(point_w,...
@@ -35,7 +35,7 @@ function [win_points_i, win_point_weights, win_point_corners_i] = refine_window_
                      cb_config); 
 
     % Get window points in image coordinates
-    win_points_i = window_points_i(point_w, ...
+    win_points_p = window_points_p(point_w, ...
                                    homography, ...
                                    wf, ...
                                    hw, ...
@@ -50,25 +50,25 @@ function [win_points_i, win_point_weights, win_point_corners_i] = refine_window_
     %   p1 p3
     %   p2 p4
     l = 2*hw+1;
-    win_point_corners_i = [win_points_i(1,1) win_points_i(1,2); ...
-                           win_points_i(l,1) win_points_i(l,2); ...
-                           win_points_i(l*l,1) win_points_i(l*l,2); ...
-                           win_points_i(l*(l-1)+1,1) win_points_i(l*(l-1)+1,2)];
+    win_point_corners_p = [win_points_p(1,1) win_points_p(1,2); ...
+                           win_points_p(l,1) win_points_p(l,2); ...
+                           win_points_p(l*l,1) win_points_p(l*l,2); ...
+                           win_points_p(l*(l-1)+1,1) win_points_p(l*(l-1)+1,2)];
     
     % Make sure coords are within bounds
-    idx_inbounds = win_points_i(:,1) >= 1 & win_points_i(:,1) <= width & ...
-                   win_points_i(:,2) >= 1 & win_points_i(:,2) <= height;
+    idx_inbounds = win_points_p(:,1) >= 1 & win_points_p(:,1) <= width & ...
+                   win_points_p(:,2) >= 1 & win_points_p(:,2) <= height;
                
     % Only keep inbound idx
-    win_points_i = win_points_i(idx_inbounds,:);        
+    win_points_p = win_points_p(idx_inbounds,:);        
     win_point_weights = win_point_weights(idx_inbounds,:);
     
-    % TODO: Possibly win_point_corners_i in the future if the window is out
+    % TODO: Possibly win_point_corners_p in the future if the window is out
     % of bounds
 end
 
-function l_i = window_lengths_i(point_w,homography,wf,cb_config)
-    % Computes a window, in image coordinates, using input point in world
+function l_p = window_lengths_p(point_w,homography,wf,cb_config)
+    % Computes a window, in pixel coordinates, using input point in world
     % coordinates, homography, window_factor and cb_config, then calculates
     % the lengths of each side of the window.
     %
@@ -90,13 +90,13 @@ function l_i = window_lengths_i(point_w,homography,wf,cb_config)
             point_w(2)+(cb_config.square_size/2)*wf];
         
     % Apply homography
-    p_win_i = alg.apply_homography(homography,vertcat(p1_w,p2_w,p3_w,p4_w));
+    p_win_p = alg.apply_homography(homography,vertcat(p1_w,p2_w,p3_w,p4_w));
     
     % Calculate distances
-    l_i(1) = norm(p_win_i(2,:)-p_win_i(1,:));
-    l_i(2) = norm(p_win_i(3,:)-p_win_i(1,:));
-    l_i(3) = norm(p_win_i(4,:)-p_win_i(2,:));
-    l_i(4) = norm(p_win_i(4,:)-p_win_i(3,:));
+    l_p(1) = norm(p_win_p(2,:)-p_win_p(1,:));
+    l_p(2) = norm(p_win_p(3,:)-p_win_p(1,:));
+    l_p(3) = norm(p_win_p(4,:)-p_win_p(2,:));
+    l_p(4) = norm(p_win_p(4,:)-p_win_p(3,:));
 end
 
 function wf = window_factor(point_w,homography,cb_config)
@@ -115,17 +115,17 @@ function wf = window_factor(point_w,homography,cb_config)
     wf = cb_config.refine_corner_default_window_factor;
         
     % Get window lengths in image coordinates
-    l_i = window_lengths_i(point_w, ...
+    l_p = window_lengths_p(point_w, ...
                            homography, ...
                            wf, ...
                            cb_config);
         
     % Recompute window_factor if any of the distances are below the minimum
     % window size
-    if any(l_i < cb_config.refine_corner_window_min_size)
+    if any(l_p < cb_config.refine_corner_window_min_size)
         disp('WARNING: min window constraint met; recomputing window factor for this corner.');
         
-        [~, min_idx] = min(l_i);
+        [~, min_idx] = min(l_p);
         switch min_idx
             case 1
                 p1_dir = [-1 -1];
@@ -173,11 +173,11 @@ end
 function hw = half_window(point_w,homography,wf,cb_config)
     % Computes half window used for refinement window
         
-    hw = floor(max(window_lengths_i(point_w,homography,wf,cb_config))/4)*2+1;
+    hw = floor(max(window_lengths_p(point_w,homography,wf,cb_config))/4)*2+1;
 end
 
-function win_points_i = window_points_i(point_w, homography, wf, hw, cb_config)
-    % Computes window points in image coordinates
+function win_points_p = window_points_p(point_w, homography, wf, hw, cb_config)
+    % Computes window points in pixel coordinates
     
     % Get grid of points in world coordinates
     [win_points_y, win_points_x] = ndgrid(linspace(point_w(2)-(cb_config.square_size/2)*wf, ...
@@ -190,7 +190,7 @@ function win_points_i = window_points_i(point_w, homography, wf, hw, cb_config)
     
     % Apply homography to window points to bring them into image
     % coordinates
-    win_points_i = alg.apply_homography(homography,win_points_w);
+    win_points_p = alg.apply_homography(homography,win_points_w);
 end
 
 function weights = window_point_weights(hw)

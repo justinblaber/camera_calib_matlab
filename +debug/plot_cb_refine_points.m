@@ -16,7 +16,7 @@ function plot_cb_refine_points(points,cb_img,homography,cb_config,show_weights,a
     % Plot boxes around points   
     for i = 1:size(points,1)          
         % Get window points in image coordinates
-        [win_points_i,win_point_weights,win_point_corners] = alg.refine_window_i(points(i,:), ...
+        [win_points_p,win_point_weights,win_point_corners] = alg.refine_window_p(points(i,:), ...
                                                                                  homography, ...
                                                                                  cb_img.get_width(), ...
                                                                                  cb_img.get_height(), ...
@@ -25,8 +25,8 @@ function plot_cb_refine_points(points,cb_img,homography,cb_config,show_weights,a
         % Plot points
         if exist('show_weights','var') && show_weights
             % Plot window points with weights - this is slow
-            for j = 1:size(win_points_i,1)
-                plot(win_points_i(j,1),win_points_i(j,2),'bo','Markersize',5*win_point_weights(j),'parent',a);
+            for j = 1:size(win_points_p,1)
+                plot(win_points_p(j,1),win_points_p(j,2),'bo','Markersize',5*win_point_weights(j),'parent',a);
             end   
             drawnow
         else

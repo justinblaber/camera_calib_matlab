@@ -41,8 +41,8 @@ function A = init_intrinsic_params(homographies,width,height)
         % Get orthogonal vanishing points
         v1 = H_bar(:,1);
         v2 = H_bar(:,2);
-        v3 = (H_bar(:,1)+H_bar(:,2))./2;
-        v4 = (H_bar(:,1)-H_bar(:,2))./2;
+        v3 = H_bar(:,1)+H_bar(:,2);
+        v4 = H_bar(:,1)-H_bar(:,2);
         
         % Normalize vanishing points
         v1 = v1./norm(v1);

@@ -1,4 +1,4 @@
-function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,distortion,rotations,translations,board_points_is,R_s,t_s,type,cb_config)
+function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,distortion,rotations,translations,board_points_ps,R_s,t_s,type,cb_config)
     % This will compute nonlinear refinement of intrinsic and extrinsic
     % camera parameters for both left and right cameras.
     %
@@ -17,7 +17,7 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     %   translations - struct; contains:
     %       .L - cell; translations for the left camera
     %       .R - cell; translations for the right camera
-    %   board_points_is - struct; contains:
+    %   board_points_ps - struct; contains:
     %       .L - cell; cell array of calibration board points for the left 
     %           camera.
     %       .R - cell; cell array of calibration board points for the right
@@ -57,7 +57,7 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     board_points_w = alg.cb_points(cb_config);
     
     % Get number of boards, points, and parameters
-    num_boards = length(board_points_is.L);
+    num_boards = length(board_points_ps.L);
     num_points = size(board_points_w,1);
     
     % Supply initial parameter vector. p has a length of 22 + 6*M, where M 
@@ -172,8 +172,8 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
                             board_points_w);
                                         
             % Store residuals
-            res((i-1)*4*num_points+1:((i-1)*4+2)*num_points) = vertcat(p_m_L(:,1)-board_points_is.L{i}(:,1), ...
-                                                                       p_m_L(:,2)-board_points_is.L{i}(:,2)); 
+            res((i-1)*4*num_points+1:((i-1)*4+2)*num_points) = vertcat(p_m_L(:,1)-board_points_ps.L{i}(:,1), ...
+                                                                       p_m_L(:,2)-board_points_ps.L{i}(:,2)); 
             
             % Fill jacobian for right board ------------------------------%
             % Right board is dependent on left board transformation and R_s
@@ -225,8 +225,8 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
                             board_points_w); 
                                         
             % Store residuals
-            res(((i-1)*4+2)*num_points+1:i*4*num_points) = vertcat(p_m_R(:,1)-board_points_is.R{i}(:,1), ...
-                                                                   p_m_R(:,2)-board_points_is.R{i}(:,2)); 
+            res(((i-1)*4+2)*num_points+1:i*4*num_points) = vertcat(p_m_R(:,1)-board_points_ps.R{i}(:,1), ...
+                                                                   p_m_R(:,2)-board_points_ps.R{i}(:,2)); 
         end  
                 
         % Get and store update

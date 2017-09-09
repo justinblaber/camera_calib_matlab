@@ -1,4 +1,4 @@
-function [R,t] = init_extrinsic_params(homography,A,board_points_i,cb_config)
+function [R,t] = init_extrinsic_params(homography,A,board_points_p,cb_config)
     % This will compute initial guesses for rotation and translation of a 
     % single calibration board. It will first compute an initial linear 
     % guess and then perform non-linear refinement.
@@ -12,8 +12,8 @@ function [R,t] = init_extrinsic_params(homography,A,board_points_i,cb_config)
     %       [alpha_x    0       x_o;
     %        0          alpha_y y_o;
     %        0          0       1]
-    %   board_points_i - array; Nx2 array of calibration board points in
-    %       image coordinates.
+    %   board_points_p - array; Nx2 array of calibration board points in
+    %       pixel coordinates.
     %   cb_config - struct; this is the struct returned by
     %       util.load_cb_config()
     %
@@ -48,7 +48,7 @@ function [R,t] = init_extrinsic_params(homography,A,board_points_i,cb_config)
                                          [0 0 0 0], ... % set distortions to zero
                                          {R}, ...
                                          {t}, ...
-                                         {board_points_i}, ...
+                                         {board_points_p}, ...
                                          'extrinsic', ...
                                          cb_config);
     R = R{1};

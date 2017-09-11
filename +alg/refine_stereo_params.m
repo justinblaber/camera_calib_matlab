@@ -126,12 +126,12 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
         A_L = [p(1) 0    p(3);
                0    p(2) p(4);
                0    0    1];
-        distortion_L = p(5:8);
+        distortion_L = p(5:8)';
         % right
         A_R = [p(9) 0     p(11);
                0    p(10) p(12);
                0    0     1];
-        distortion_R = p(13:16);
+        distortion_R = p(13:16)';
         
         % Get R_s and t_s; only need to do this once per iteration
         R_s = alg.euler2rot(p(16+6*num_boards+1:16+6*num_boards+3));
@@ -191,9 +191,7 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
                                                                                       board_points_w); %#ok<SPRIX>
                         
             % Extrinsic params; do dRt_R_dm_L first
-            dRt_R_dRt_L = [R_s         zeros(3)    zeros(3);
-                           zeros(3)    R_s         zeros(3);
-                           zeros(3)    zeros(3)    R_s]; 
+            dRt_R_dRt_L = blkdiag(R_s,R_s,R_s);
             dRt_R_dm_L = dRt_R_dRt_L*dRt_L_dm_L;
             jacob(((i-1)*4+2)*num_points+1:i*4*num_points,16+(i-1)*6+1:16+i*6) = alg.dp_m_dextrinsic(A_R, ...
                                                                                                      distortion_R, ...
@@ -256,8 +254,8 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     A.R = [p(9)     0       p(11);
            0        p(10)   p(12);
            0        0       1];
-    distortion.L = [p(5); p(6); p(7); p(8)];
-    distortion.R = [p(13); p(14); p(15); p(16)]; 
+    distortion.L = p(5:8)';
+    distortion.R = p(13:16)'; 
     
     R_s = alg.euler2rot(p(16+6*num_boards+1:16+6*num_boards+3));
     t_s = p(16+6*num_boards+4:16+6*num_boards+6);

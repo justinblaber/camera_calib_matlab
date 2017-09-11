@@ -24,13 +24,21 @@ function jacob = dR_deuler(euler)
     % TODO: Add checks for degenerate cases, although these will basically
     % never happen with real data.
     
-    jacob = [0                                                                        -sin(euler(2))*cos(euler(3))                -cos(euler(2))*sin(euler(3));
-             0                                                                        -sin(euler(2))*sin(euler(3))                 cos(euler(2))*cos(euler(3));
-             0                                                                        -cos(euler(2))                               0;
-             sin(euler(1))*sin(euler(3))+cos(euler(1))*sin(euler(2))*cos(euler(3))     sin(euler(1))*cos(euler(2))*cos(euler(3))  -cos(euler(1))*cos(euler(3))-sin(euler(1))*sin(euler(2))*sin(euler(3));
-            -sin(euler(1))*cos(euler(3))+cos(euler(1))*sin(euler(2))*sin(euler(3))     sin(euler(1))*cos(euler(2))*sin(euler(3))  -cos(euler(1))*sin(euler(3))+sin(euler(1))*sin(euler(2))*cos(euler(3));
-             cos(euler(1))*cos(euler(2))                                              -sin(euler(1))*sin(euler(2))                 0;
-             cos(euler(1))*sin(euler(3))-sin(euler(1))*sin(euler(2))*cos(euler(3))     cos(euler(1))*cos(euler(2))*cos(euler(3))   sin(euler(1))*cos(euler(3))-cos(euler(1))*sin(euler(2))*sin(euler(3));
-            -cos(euler(1))*cos(euler(3))-sin(euler(1))*sin(euler(2))*sin(euler(3))     cos(euler(1))*cos(euler(2))*sin(euler(3))   sin(euler(1))*sin(euler(3))+cos(euler(1))*sin(euler(2))*cos(euler(3));
-            -sin(euler(1))*cos(euler(2))                                              -cos(euler(1))*sin(euler(2))                 0];
+    c_x = cos(euler(1));
+    c_y = cos(euler(2));
+    c_z = cos(euler(3));
+    
+    s_x = sin(euler(1));
+    s_y = sin(euler(2));
+    s_z = sin(euler(3));    
+    
+    jacob = [0                      -s_y*c_z        -c_y*s_z;
+             0                      -s_y*s_z         c_y*c_z;
+             0                      -c_y             0;
+             s_x*s_z+c_x*s_y*c_z     s_x*c_y*c_z    -c_x*c_z-s_x*s_y*s_z;
+            -s_x*c_z+c_x*s_y*s_z     s_x*c_y*s_z    -c_x*s_z+s_x*s_y*c_z;
+             c_x*c_y                -s_x*s_y         0;
+             c_x*s_z-s_x*s_y*c_z     c_x*c_y*c_z     s_x*c_z-c_x*s_y*s_z;
+            -c_x*c_z-s_x*s_y*s_z     c_x*c_y*s_z     s_x*s_z+c_x*s_y*c_z;
+            -s_x*c_y                -c_x*s_y         0];
 end

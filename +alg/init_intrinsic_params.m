@@ -4,7 +4,7 @@ function A = init_intrinsic_params(homographies,width,height)
     % point is at the center of the image. 
     %
     % This was taken from Bouguet's calibration toolbox. It gives pretty
-    % good results.
+    % good results from the tests I've done.
     %
     % Inputs:
     %   homographies - cell; cell of 3x3 homographies

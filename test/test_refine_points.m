@@ -1,4 +1,4 @@
-%% Set images, load config, and get four corners - stereo
+%% Set images, load config, and get four corners
 clear, clc;
 f1 = figure(1);
 
@@ -59,7 +59,7 @@ cb_config = util.load_cb_config('test/board_single.yaml');
 % Debug
 debug.plot_cb_config(cb_config,subplot(1,3,1,'parent',f1));
 
-% Get four points in image coordinates per calibration board image
+% Get four points in pixel coordinates per calibration board image
 four_points_ps = {};
 switch cb_config.calibration
     case 'four_point_auto'
@@ -95,9 +95,9 @@ end
 % Get homographies for four points ---------------------------------------%
 [board_points_w, four_points_w] = alg.cb_points(cb_config);
 
-homographies_four_points = {};
+homographies = {};
 for i = 1:length(cb_imgs)
-    homographies_four_points{i} = alg.homography(four_points_w, ...
+    homographies{i} = alg.homography(four_points_w, ...
                                                  four_points_ps{i}, ...
                                                  cb_config);  %#ok<SAGROW>
 end
@@ -106,7 +106,7 @@ end
 % Apply homography to points, then refine them
 board_points_ps = {};
 for i = 1:length(cb_imgs)
-    board_points_ps{i} = alg.apply_homography(homographies_four_points{i}, ...
+    board_points_ps{i} = alg.apply_homography(homographies{i}, ...
                                               board_points_w);  %#ok<SAGROW>
 end
 
@@ -114,7 +114,7 @@ end
 for i = 1:length(cb_imgs)    
     board_points_ps{i} = alg.refine_points(board_points_ps{i}, ...
                                            cb_imgs(i), ...
-                                           homographies_four_points{i}, ...
+                                           homographies{i}, ...
                                            cb_config);  %#ok<SAGROW>
                                        
     debug.plot_cb_refine_points(board_points_ps{i}, ...

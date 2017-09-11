@@ -12,7 +12,8 @@ function homography_1_2 = homography(points_1, points_2, cb_config)
     %   homography_1_2 - array; 3x3 array which transforms the points from 
     %       1 to 2. Constraint of homography_1_2(3,3) = 1 is applied.
     
-    % TODO: validate inputs. There must be at least four points?
+    % TODO: validate inputs. There must be at least four points? Any other
+    % conditions?
         
     % Number of points
     num_points = size(points_1,1);

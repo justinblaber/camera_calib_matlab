@@ -1,6 +1,6 @@
 function [points_n, r_n] = p_n(R,t,points_w)
-    % This will convert world points to normalized camera points. It also
-    % outputs normalized camera point distances since this is often used in
+    % This will convert world points to normalized scene points. It also
+    % outputs normalized scene point distances since this is often used in
     % conjunction with normalized coordinates.
     %
     % Inputs:
@@ -9,8 +9,8 @@ function [points_n, r_n] = p_n(R,t,points_w)
     %   points_w - array; Nx2 array of points in world coordinates
     %
     % Outputs:
-    %   points_n - array; Nx2 array of normalized camera points
-    %   r_n - array; Nx1 array of normalized camera point distances
+    %   points_n - array; Nx2 array of normalized scene points
+    %   r_n - array; Nx1 array of normalized scene point distances
     
     % Get points in camera coordinates
     points_s = alg.p_s(R,t,points_w);    

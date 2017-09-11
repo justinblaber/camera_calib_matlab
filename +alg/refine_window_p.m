@@ -1,6 +1,6 @@
 function [win_points_p, win_point_weights, win_point_corners_p] = refine_window_p(point_p,homography,width,height,cb_config)    
     % Computes refinement window points, weights of the window points, and 
-    % the corners of the window points in image coordinates.
+    % the corners of the window points in pixel coordinates.
     %
     % Inputs:
     %   point_p - array; 1x2 point in pixel coordinates
@@ -18,7 +18,7 @@ function [win_points_p, win_point_weights, win_point_corners_p] = refine_window_
     %   win_point_corners_p - array; corners of refinement window. For now,
     %       just use these for plotting/debugging purposes. Currently, 
     %       these corners are not updated if refinement window is truncated
-    %       due to being outside the image).
+    %       due to being outside the image.
             
     % Get point in world coordinates
     point_w = alg.apply_homography(homography^-1,point_p);
@@ -34,7 +34,7 @@ function [win_points_p, win_point_weights, win_point_corners_p] = refine_window_
                      wf, ...
                      cb_config); 
 
-    % Get window points in image coordinates
+    % Get window points in pixel coordinates
     win_points_p = window_points_p(point_w, ...
                                    homography, ...
                                    wf, ...
@@ -45,15 +45,15 @@ function [win_points_p, win_point_weights, win_point_corners_p] = refine_window_
     % Get weights for window_points
     win_point_weights = window_point_weights(hw);   
     
-    % Get window point corners before thresholding based on image bounds.
+    % Get window point corners before thresholding.
     % Corners are stored as:
     %   p1 p3
     %   p2 p4
     l = 2*hw+1;
     win_point_corners_p = [win_points_p(1,1) win_points_p(1,2); ...
                            win_points_p(l,1) win_points_p(l,2); ...
-                           win_points_p(l*l,1) win_points_p(l*l,2); ...
-                           win_points_p(l*(l-1)+1,1) win_points_p(l*(l-1)+1,2)];
+                           win_points_p(l*(l-1)+1,1) win_points_p(l*(l-1)+1,2); ...
+                           win_points_p(l*l,1) win_points_p(l*l,2)];
     
     % Make sure coords are within bounds
     idx_inbounds = win_points_p(:,1) >= 1 & win_points_p(:,1) <= width & ...
@@ -63,8 +63,8 @@ function [win_points_p, win_point_weights, win_point_corners_p] = refine_window_
     win_points_p = win_points_p(idx_inbounds,:);        
     win_point_weights = win_point_weights(idx_inbounds,:);
     
-    % TODO: Possibly win_point_corners_p in the future if the window is out
-    % of bounds
+    % TODO: Possibly update win_point_corners_p in the future if the window
+    % is out of bounds
 end
 
 function l_p = window_lengths_p(point_w,homography,wf,cb_config)
@@ -114,7 +114,7 @@ function wf = window_factor(point_w,homography,cb_config)
     % Initialize window factor
     wf = cb_config.refine_corner_default_window_factor;
         
-    % Get window lengths in image coordinates
+    % Get window lengths in pixel coordinates
     l_p = window_lengths_p(point_w, ...
                            homography, ...
                            wf, ...
@@ -176,7 +176,7 @@ function hw = half_window(point_w,homography,wf,cb_config)
     hw = floor(max(window_lengths_p(point_w,homography,wf,cb_config))/4)*2+1;
 end
 
-function win_points_p = window_points_p(point_w, homography, wf, hw, cb_config)
+function win_points_p = window_points_p(point_w,homography,wf,hw,cb_config)
     % Computes window points in pixel coordinates
     
     % Get grid of points in world coordinates
@@ -188,7 +188,7 @@ function win_points_p = window_points_p(point_w, homography, wf, hw, cb_config)
                                                    2*hw+1));        
     win_points_w = [win_points_x(:) win_points_y(:)];        
     
-    % Apply homography to window points to bring them into image
+    % Apply homography to window points to bring them into pixel
     % coordinates
     win_points_p = alg.apply_homography(homography,win_points_w);
 end

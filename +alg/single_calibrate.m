@@ -23,7 +23,7 @@ function [A,distortion,rotations,translations,board_points_ps] = single_calibrat
     % Get calibration board points in world coordinates
     [board_points_w, four_points_w] = alg.cb_points(cb_config);
     
-    % Initialize homographies using four points in image coordinates -----%
+    % Initialize homographies using four points in pixel coordinates -----%
     homographies = {};
     for i = 1:length(cb_imgs)
         homographies{i} = alg.homography(four_points_w, ...
@@ -31,8 +31,8 @@ function [A,distortion,rotations,translations,board_points_ps] = single_calibrat
                                          cb_config); %#ok<AGROW>
     end
 
-    % Get sub-pixel board points in image coordinates --------------------%
-    % Use homography to initialize board points in image coordinates
+    % Get sub-pixel board points in pixel coordinates --------------------%
+    % Use homography to initialize board points in pixel coordinates
     board_points_ps = {};
     for i = 1:length(cb_imgs)
         board_points_ps{i} = alg.apply_homography(homographies{i}, ...
@@ -75,7 +75,7 @@ function [A,distortion,rotations,translations,board_points_ps] = single_calibrat
 
     % Perform nonlinear refinement of all parameters ---------------------%
     % Initialize distortion parameters to zero
-    distortion = [0 0 0 0];
+    distortion = zeros(4,1);
     
     % Perform full optimization
     disp('--------------------------------------------');

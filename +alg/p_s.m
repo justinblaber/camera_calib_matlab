@@ -1,5 +1,5 @@
 function points_s = p_s(R,t,points_w)
-    % This will convert world points to camera points 
+    % This will convert world points to scene points 
     %
     % Inputs:
     %   R - array; 3x3 rotation matrix

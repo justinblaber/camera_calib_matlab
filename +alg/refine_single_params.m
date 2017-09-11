@@ -51,7 +51,7 @@ function [A,distortion,rotations,translations,norm_res] = refine_single_params(A
     num_params = 8+6*num_boards;
     p = zeros(num_params,1);
     
-    % Do extrinsic parameters first
+    % Do intrinsic parameters first
     p(1) = A(1,1);
     p(2) = A(2,2);
     p(3) = A(1,3);
@@ -95,7 +95,7 @@ function [A,distortion,rotations,translations,norm_res] = refine_single_params(A
         A = [p(1) 0    p(3);
              0    p(2) p(4);
              0    0    1];
-        distortion = p(5:8);
+        distortion = p(5:8)';
                     
         % Fill jacobian and residuals per board
         for i = 1:num_boards
@@ -156,7 +156,7 @@ function [A,distortion,rotations,translations,norm_res] = refine_single_params(A
     A = [p(1) 0    p(3);
          0    p(2) p(4);
          0    0    1];
-    distortion = [p(5); p(6); p(7); p(8)];  
+    distortion = p(5:8)';  
     rotations = {};
     translations = {};
     for i = 1:num_boards

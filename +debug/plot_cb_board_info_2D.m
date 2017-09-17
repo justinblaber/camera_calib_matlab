@@ -1,6 +1,6 @@
-function plot_cb_config(cb_config,a)
+function plot_cb_board_info_2D(cal_config,a)
     % This will plot the calibration board points in world coordinates 
-    % specified in cb_config.
+    % specified in cal_config.
         
     if ~exist('a','var')
         f = figure(); 
@@ -9,7 +9,7 @@ function plot_cb_config(cb_config,a)
     cla(a);
     
     % Get board points in world coordinates
-    [board_points, four_points] = alg.cb_points(cb_config);
+    [board_points, four_points] = alg.cb_points(cal_config);
     
     % Format axes
     axis(a,'equal');
@@ -19,17 +19,25 @@ function plot_cb_config(cb_config,a)
     hold(a,'on');
     
     % Plot patches
-    height_offset = (cb_config.four_point_height-cb_config.num_squares_height*cb_config.square_size)/2;
-    width_offset = (cb_config.four_point_width-cb_config.num_squares_width*cb_config.square_size)/2;
-    for i = 1:cb_config.num_squares_width
-        for j = 1:cb_config.num_squares_height
-            if ~util.is_even((i-1)*cb_config.num_squares_height+j)
-                x = [(i-1)*cb_config.square_size (i-1)*cb_config.square_size ...
-                     i*cb_config.square_size i*cb_config.square_size];
-                y = [(j-1)*cb_config.square_size j*cb_config.square_size ...
-                     j*cb_config.square_size (j-1)*cb_config.square_size];
-                patch(x+width_offset,y+height_offset,'black')
-            end
+    height_offset = (cal_config.four_point_height-cal_config.num_squares_height*cal_config.square_size)/2;
+    width_offset = (cal_config.four_point_width-cal_config.num_squares_width*cal_config.square_size)/2;
+    for i = 1:cal_config.num_squares_width
+        for j = 1:cal_config.num_squares_height
+            % Get checker color
+            if ~util.is_even((i-1)*cal_config.num_squares_height+j)
+                patch_color = 'k';
+            else
+                patch_color = 'w';
+            end         
+            
+            % Get checker coords
+            x_w = [(i-1)*cal_config.square_size (i-1)*cal_config.square_size ...
+                   i*cal_config.square_size i*cal_config.square_size]'+width_offset;
+            y_w = [(j-1)*cal_config.square_size j*cal_config.square_size ...
+                   j*cal_config.square_size (j-1)*cal_config.square_size]'+height_offset;
+
+            % Plot
+            patch(a,x_w,y_w,patch_color);
         end
     end        
     

@@ -1,12 +1,12 @@
-function homography_1_2 = homography(points_1, points_2, cb_config)
+function homography_1_2 = homography(points_1, points_2, cal_config)
     % This will compute a homography using non-linear least squares fit 
     % which transforms the points in "perspective 1" to "perspective 2".
     %
     % Inputs:
     %   points_1 - array; Nx2 array of points
     %   points_2 - array; Nx2 array of points
-    %   cb_config - struct; this is the struct returned by
-    %       util.load_cb_config()
+    %   cal_config - struct; this is the struct returned by
+    %       util.load_cal_config()
     %
     % Outputs:
     %   homography_1_2 - array; 3x3 array which transforms the points from 
@@ -15,6 +15,10 @@ function homography_1_2 = homography(points_1, points_2, cb_config)
     % TODO: validate inputs. There must be at least four points? Any other
     % conditions?
         
+    if cal_config.verbose > 2
+        disp('---');
+    end
+    
     % Number of points
     num_points = size(points_1,1);
     
@@ -51,7 +55,7 @@ function homography_1_2 = homography(points_1, points_2, cb_config)
     res = zeros(2*num_points,1);
     
     % Perform gauss newton iterations until convergence
-    for it = 1:cb_config.homography_it_cutoff
+    for it = 1:cal_config.homography_it_cutoff
         % Form homography from vector
         homography = ones(3,3);
         homography(1:8) = h;
@@ -85,22 +89,22 @@ function homography_1_2 = homography(points_1, points_2, cb_config)
         h = h + delta_h;
         
         % Exit if change in distance is small
-        diff_norm = norm(delta_h);        
-        disp(['Homography refinement iteration #: ' num2str(it)]);
-        disp(['Difference norm for nonlinear parameter refinement: ' num2str(diff_norm)]);
-        if norm(delta_h) < cb_config.homography_norm_cutoff
+        diff_norm = norm(delta_h); 
+        if cal_config.verbose > 2
+            disp(['Homography refinement iteration #: ' num2str(it)]);
+            disp(['Difference norm for nonlinear parameter refinement: ' num2str(diff_norm)]);
+        end
+        if norm(delta_h) < cal_config.homography_norm_cutoff
             break
         end
     end    
-    if it == cb_config.homography_it_cutoff
-        disp('WARNING: Homography iterations hit cutoff before converging!!!');
+    if cal_config.verbose > 2 && it == cal_config.homography_it_cutoff
+        warning('Homography iterations hit cutoff before converging!!!');
     end
     
     % Store final homography
     homography_1_2 = ones(3,3);
     homography_1_2(1:8) = h;
-    
-    disp('--------------------------------------------');
 end
 
 function T_norm = norm_mat(points)

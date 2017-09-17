@@ -18,5 +18,7 @@ function plot_cb_points_disp(points1,points2,cb_img,a)
     % Plot displacements
     quiver(points1(:,1),points1(:,2),points2(:,1)-points1(:,1),points2(:,2)-points1(:,2),'color','g','LineWidth',1,'AutoScale','off','parent',a);
     
-    drawnow;
+    % Remove hold
+    drawnow
+    hold(a,'off');
 end

@@ -1,4 +1,4 @@
-function [R,t] = init_extrinsic_params(homography,A,board_points_p,cb_config)
+function [R,t] = init_extrinsic_params(homography,A,board_points_p,cal_config)
     % This will compute initial guesses for rotation and translation of a 
     % single calibration board. It will first compute an initial linear 
     % guess and then perform non-linear refinement.
@@ -14,13 +14,17 @@ function [R,t] = init_extrinsic_params(homography,A,board_points_p,cb_config)
     %        0          0       1]
     %   board_points_p - array; Nx2 array of calibration board points in
     %       pixel coordinates.
-    %   cb_config - struct; this is the struct returned by
-    %       util.load_cb_config()
+    %   cal_config - struct; this is the struct returned by
+    %       util.load_cal_config()
     %
     % Outputs:
     %   R - array; 3x3 rotation matrix
     %   t - array; 3x1 translation vector
     
+    if cal_config.verbose > 1
+        disp('---');
+    end
+        
     % Get initial guess --------------------------------------------------%
     % Remove intrinsics from homography
     H_bar = A^-1*homography;
@@ -41,16 +45,17 @@ function [R,t] = init_extrinsic_params(homography,A,board_points_p,cb_config)
     % Compute translation - use average of both lambdas to normalize
     t = H_bar(:,3)./mean([lambda1 lambda2]);
         
-    % Perform non-linear refinement --------------------------------------%    
-    disp('--------------------------------------------');
-    disp('Refining initial extrinsic parameters...');
+    % Perform non-linear refinement --------------------------------------% 
+    if cal_config.verbose > 1
+        disp('Refining initial extrinsic parameters...');
+    end
     [~,~,R,t] = alg.refine_single_params(A, ...  
                                          [0 0 0 0], ... % set distortions to zero
                                          {R}, ...
                                          {t}, ...
                                          {board_points_p}, ...
                                          'extrinsic', ...
-                                         cb_config);
+                                         cal_config);
     R = R{1};
     t = t{1};
 end

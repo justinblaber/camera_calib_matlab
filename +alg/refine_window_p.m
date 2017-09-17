@@ -1,4 +1,4 @@
-function [win_points_p, win_point_weights, win_point_corners_p] = refine_window_p(point_p,homography,width,height,cb_config)    
+function [win_points_p, win_point_weights, win_point_corners_p] = refine_window_p(point_p,homography,width,height,cal_config)    
     % Computes refinement window points, weights of the window points, and 
     % the corners of the window points in pixel coordinates.
     %
@@ -8,8 +8,8 @@ function [win_points_p, win_point_weights, win_point_corners_p] = refine_window_
     %       the window around each point.
     %   width - scalar; width of the calibration board image
     %   height - scalar; height of the calibration board image
-    %   cb_config - struct; this is the struct returned by
-    %       util.load_cb_config()
+    %   cal_config - struct; this is the struct returned by
+    %       util.load_cal_config()
     %
     % Outputs:
     %   win_points_p - array; points of refinement window in pixel
@@ -26,20 +26,20 @@ function [win_points_p, win_point_weights, win_point_corners_p] = refine_window_
     % Get window_factor
     wf = window_factor(point_w,...
                        homography, ...
-                       cb_config);
+                       cal_config);
 
     % Get half_window for sampling
     hw = half_window(point_w, ...
                      homography, ...
                      wf, ...
-                     cb_config); 
+                     cal_config); 
 
     % Get window points in pixel coordinates
     win_points_p = window_points_p(point_w, ...
                                    homography, ...
                                    wf, ...
                                    hw, ...
-                                   cb_config);                                       
+                                   cal_config);                                       
 
 
     % Get weights for window_points
@@ -67,9 +67,9 @@ function [win_points_p, win_point_weights, win_point_corners_p] = refine_window_
     % is out of bounds
 end
 
-function l_p = window_lengths_p(point_w,homography,wf,cb_config)
+function l_p = window_lengths_p(point_w,homography,wf,cal_config)
     % Computes a window, in pixel coordinates, using input point in world
-    % coordinates, homography, window_factor and cb_config, then calculates
+    % coordinates, homography, window_factor and cal_config, then calculates
     % the lengths of each side of the window.
     %
     %   Points and lengths are:
@@ -80,14 +80,14 @@ function l_p = window_lengths_p(point_w,homography,wf,cb_config)
     %       p2 - l3 - p4
     
     % Get points in world coordinates
-    p1_w = [point_w(1)-(cb_config.square_size/2)*wf, ...
-            point_w(2)-(cb_config.square_size/2)*wf];
-    p2_w = [point_w(1)-(cb_config.square_size/2)*wf, ...
-            point_w(2)+(cb_config.square_size/2)*wf];
-    p3_w = [point_w(1)+(cb_config.square_size/2)*wf, ...
-            point_w(2)-(cb_config.square_size/2)*wf];
-    p4_w = [point_w(1)+(cb_config.square_size/2)*wf, ...
-            point_w(2)+(cb_config.square_size/2)*wf];
+    p1_w = [point_w(1)-(cal_config.square_size/2)*wf, ...
+            point_w(2)-(cal_config.square_size/2)*wf];
+    p2_w = [point_w(1)-(cal_config.square_size/2)*wf, ...
+            point_w(2)+(cal_config.square_size/2)*wf];
+    p3_w = [point_w(1)+(cal_config.square_size/2)*wf, ...
+            point_w(2)-(cal_config.square_size/2)*wf];
+    p4_w = [point_w(1)+(cal_config.square_size/2)*wf, ...
+            point_w(2)+(cal_config.square_size/2)*wf];
         
     % Apply homography
     p_win_p = alg.apply_homography(homography,vertcat(p1_w,p2_w,p3_w,p4_w));
@@ -99,7 +99,7 @@ function l_p = window_lengths_p(point_w,homography,wf,cb_config)
     l_p(4) = norm(p_win_p(4,:)-p_win_p(3,:));
 end
 
-function wf = window_factor(point_w,homography,cb_config)
+function wf = window_factor(point_w,homography,cal_config)
     % Computes the window factor, which is a proportion of the checkerboard
     % square used to compute the refinement window. This will either:
     %   Return the default window factor if it meets the minimum length
@@ -112,18 +112,20 @@ function wf = window_factor(point_w,homography,cb_config)
     %       window does not overlap with neighboring corners
     
     % Initialize window factor
-    wf = cb_config.refine_corner_default_window_factor;
+    wf = cal_config.refine_corner_default_window_factor;
         
     % Get window lengths in pixel coordinates
     l_p = window_lengths_p(point_w, ...
                            homography, ...
                            wf, ...
-                           cb_config);
+                           cal_config);
         
     % Recompute window_factor if any of the distances are below the minimum
     % window size
-    if any(l_p < cb_config.refine_corner_window_min_size)
-        disp('WARNING: min window constraint met; recomputing window factor for this corner.');
+    if any(l_p < cal_config.refine_corner_window_min_size)
+        if cal_config.verbose > 2
+            warning('min window constraint met; recomputing window factor for this corner.');
+        end
         
         [~, min_idx] = min(l_p);
         switch min_idx
@@ -152,39 +154,41 @@ function wf = window_factor(point_w,homography,cb_config)
         j = homography(1,1)*point_w(1)+homography(1,2)*point_w(2)+homography(1,3);
         k = homography(2,1)*point_w(1)+homography(2,2)*point_w(2)+homography(2,3);
         l = homography(3,1)*point_w(1)+homography(3,2)*point_w(2)+homography(3,3);
-        r = roots([cb_config.refine_corner_window_min_size^2*f^2*e^2-(a*f-e*b)^2-(c*f-e*d)^2 ...
-                   2*cb_config.refine_corner_window_min_size^2*f*e*(l*f+l*e)-2*(a*f-e*b)*(f*j+l*a-e*j-l*b)-2*(c*f-e*d)*(f*k+l*c-e*k-l*d) ...
-                   2*cb_config.refine_corner_window_min_size^2*l^2*f*e+cb_config.refine_corner_window_min_size^2*(l*f+l*e)^2-(f*j+l*a-e*j-l*b)^2-(f*k+l*c-e*k-l*d)^2 ...
-                   2*cb_config.refine_corner_window_min_size^2*l^2*(l*f+l*e) ...
-                   cb_config.refine_corner_window_min_size^2*l^4]);
+        r = roots([cal_config.refine_corner_window_min_size^2*f^2*e^2-(a*f-e*b)^2-(c*f-e*d)^2 ...
+                   2*cal_config.refine_corner_window_min_size^2*f*e*(l*f+l*e)-2*(a*f-e*b)*(f*j+l*a-e*j-l*b)-2*(c*f-e*d)*(f*k+l*c-e*k-l*d) ...
+                   2*cal_config.refine_corner_window_min_size^2*l^2*f*e+cal_config.refine_corner_window_min_size^2*(l*f+l*e)^2-(f*j+l*a-e*j-l*b)^2-(f*k+l*c-e*k-l*d)^2 ...
+                   2*cal_config.refine_corner_window_min_size^2*l^2*(l*f+l*e) ...
+                   cal_config.refine_corner_window_min_size^2*l^4]);
 
         % Get smallest, real, and positive root to get window_factor.
         wf = min(r(arrayfun(@(x)isreal(x(1)),r) & r > 0));
-        wf = 2*wf/cb_config.square_size;
+        wf = 2*wf/cal_config.square_size;
     end
     
     % Threshold window_factor to 4/3 to prevent overlap
     if wf >= 4/3
-        disp('WARNING: max window_factor is being set.');
+        if cal_config.verbose > 2
+            warning('max window_factor is being set.');
+        end
         wf = 4/3;
     end
 end
 
-function hw = half_window(point_w,homography,wf,cb_config)
+function hw = half_window(point_w,homography,wf,cal_config)
     % Computes half window used for refinement window
         
-    hw = floor(max(window_lengths_p(point_w,homography,wf,cb_config))/4)*2+1;
+    hw = floor(max(window_lengths_p(point_w,homography,wf,cal_config))/4)*2+1;
 end
 
-function win_points_p = window_points_p(point_w,homography,wf,hw,cb_config)
+function win_points_p = window_points_p(point_w,homography,wf,hw,cal_config)
     % Computes window points in pixel coordinates
     
     % Get grid of points in world coordinates
-    [win_points_y, win_points_x] = ndgrid(linspace(point_w(2)-(cb_config.square_size/2)*wf, ...
-                                                   point_w(2)+(cb_config.square_size/2)*wf, ...
+    [win_points_y, win_points_x] = ndgrid(linspace(point_w(2)-(cal_config.square_size/2)*wf, ...
+                                                   point_w(2)+(cal_config.square_size/2)*wf, ...
                                                    2*hw+1), ...
-                                          linspace(point_w(1)-(cb_config.square_size/2)*wf, ...
-                                                   point_w(1)+(cb_config.square_size/2)*wf, ...
+                                          linspace(point_w(1)-(cal_config.square_size/2)*wf, ...
+                                                   point_w(1)+(cal_config.square_size/2)*wf, ...
                                                    2*hw+1));        
     win_points_w = [win_points_x(:) win_points_y(:)];        
     

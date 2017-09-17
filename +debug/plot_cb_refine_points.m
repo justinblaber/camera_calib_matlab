@@ -1,4 +1,4 @@
-function plot_cb_refine_points(points,cb_img,homography,cb_config,show_weights,a)
+function plot_cb_refine_points(points,cb_img,homography,cal_config,show_weights,a)
     % This will plot the points and the refinement window around each 
     % point.
         
@@ -20,7 +20,7 @@ function plot_cb_refine_points(points,cb_img,homography,cb_config,show_weights,a
                                                                                  homography, ...
                                                                                  cb_img.get_width(), ...
                                                                                  cb_img.get_height(), ...
-                                                                                 cb_config);
+                                                                                 cal_config);
         
         % Plot points
         if exist('show_weights','var') && show_weights
@@ -36,5 +36,8 @@ function plot_cb_refine_points(points,cb_img,homography,cb_config,show_weights,a
                  'b','parent',a,'LineWidth',0.25);
         end     
     end        
+    
+    % Remove hold
     drawnow
+    hold(a,'off');
 end

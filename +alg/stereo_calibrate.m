@@ -1,4 +1,4 @@
-function [A,distortion,rotations,translations,board_points_ps,R_s,t_s] = stereo_calibrate(cb_imgs,four_points_ps,cb_config)
+function [A,distortion,rotations,translations,board_points_ps,R_s,t_s,res] = stereo_calibrate(cb_imgs,four_points_ps,cal_config)
     % Performs stereo calibration (mostly from Zhang's paper, some stuff
     % adapted from Bouguet's toolbox, and some stuff I've added myself) 
     % given calibration board images for the left and right camera, four 
@@ -12,8 +12,8 @@ function [A,distortion,rotations,translations,board_points_ps,R_s,t_s] = stereo_
     %   four_points_ps - struct; contains:
     %       .L - cell; cell array of four points for the left camera
     %       .R - cell; cell array of four points for the right camera
-    %   cb_config - struct; this is the struct returned by
-    %       util.load_cb_config()
+    %   cal_config - struct; this is the struct returned by
+    %       util.load_cal_config()
     %
     % Outputs:
     %   A - struct; contains:
@@ -41,18 +41,30 @@ function [A,distortion,rotations,translations,board_points_ps,R_s,t_s] = stereo_
     %       camera to the right camera
     %   t_s - array; 3x1 translation vector describing translation from the
     %       left camera to the right camera
+    %   res - struct; contains:
+    %       .L - cell; residuals for the calibration board in the left 
+    %           camera image
+    %       .R - cell; residuals for the calibration board in the right 
+    %           camera image
+                                               
+    disp('--------------------------------------------'); 
+    disp('Performing stereo calibration...');     
     
     % Get number of boards
     num_boards = length(cb_imgs.L);
     
-    % Perform single calibration on the left and right camera ------------%
+    % Perform single calibration on the left and right camera ------------%                                                                
+    disp('---------');
+    disp('Calibrating left camera...');    
     [A.L,distortion.L,rotations.L,translations.L,board_points_ps.L] = alg.single_calibrate(cb_imgs.L, ...
                                                                                            four_points_ps.L, ...
-                                                                                           cb_config);
-
+                                                                                           cal_config);
+                                                                  
+    disp('---------');
+    disp('Calibrating right camera...');  
     [A.R,distortion.R,rotations.R,translations.R,board_points_ps.R] = alg.single_calibrate(cb_imgs.R, ...
                                                                                            four_points_ps.R, ...
-                                                                                           cb_config);
+                                                                                           cal_config);
     % Perform stereo refinement ------------------------------------------%
     % Get least squares linear initial guess for R_s
     r = [];
@@ -84,7 +96,8 @@ function [A,distortion,rotations,translations,board_points_ps,R_s,t_s] = stereo_
 
     % Perform nonlinear refinement of all parameters ---------------------%
     % Perform full optimization
-    disp('--------------------------------------------');
+    disp('---');
+    disp('Refining full stereo parameters...');
     [A,distortion,rotations,translations,R_s,t_s] = alg.refine_stereo_params(A, ...
                                                                              distortion, ...
                                                                              rotations, ...
@@ -93,5 +106,32 @@ function [A,distortion,rotations,translations,board_points_ps,R_s,t_s] = stereo_
                                                                              R_s, ...
                                                                              t_s, ....
                                                                              'full', ...
-                                                                             cb_config);
+                                                                             cal_config);  
+                                               
+    disp('---');                           
+    disp('Stereo refined intrinsic params (left): ')
+    disp(A.L)            
+    disp('Stereo refined intrinsic params (right): ')
+    disp(A.R)
+        
+    % Compute residuals --------------------------------------------------%
+    res.L = {};
+    res.R = {};
+    for i = 1:num_boards
+        % Left
+        p_m_L = alg.p_m(A.L, ...
+                        distortion.L, ...
+                        rotations.L{i}, ...
+                        translations.L{i}, ...
+                        alg.cb_points(cal_config));
+        res.L{i} = p_m_L-board_points_ps.L{i};   
+
+        % Right
+        p_m_R = alg.p_m(A.R, ...
+                        distortion.R, ...
+                        R_s*rotations.L{i}, ...
+                        R_s*translations.L{i}+t_s, ...
+                        alg.cb_points(cal_config));
+        res.R{i} = p_m_R-board_points_ps.R{i};  
+    end  
 end

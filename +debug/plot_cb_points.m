@@ -14,5 +14,7 @@ function plot_cb_points(points,cb_img,a)
     % Plot points
     plot(points(:,1),points(:,2),'go','MarkerSize',6,'LineWidth',1,'parent',a);
     
-    drawnow;
+    % Remove hold
+    drawnow
+    hold(a,'off');
 end

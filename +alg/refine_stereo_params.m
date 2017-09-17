@@ -1,4 +1,4 @@
-function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,distortion,rotations,translations,board_points_ps,R_s,t_s,type,cb_config)
+function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,distortion,rotations,translations,board_points_ps,R_s,t_s,type,cal_config)
     % This will compute nonlinear refinement of intrinsic and extrinsic
     % camera parameters for both left and right cameras.
     %
@@ -28,8 +28,8 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     %       left camera to the right camera
     %   type - string; 
     %       'full' - Attempts to do full calibration
-    %   cb_config - struct; this is the struct returned by
-    %       util.load_cb_config()
+    %   cal_config - struct; this is the struct returned by
+    %       util.load_cal_config()
     %
     % Outputs:
     %   A - struct; contains:
@@ -52,9 +52,11 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     %       camera to the right camera
     %   t_s - array; 3x1 translation vector describing translation from the
     %       left camera to the right camera
+    
+    disp('---');
               
     % Get board points in world coordinates
-    board_points_w = alg.cb_points(cb_config);
+    board_points_w = alg.cb_points(cal_config);
     
     % Get number of boards, points, and parameters
     num_boards = length(board_points_ps.L);
@@ -120,7 +122,7 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     end  
     
     % Perform gauss newton iteration(s)    
-    for it = 1:cb_config.refine_param_it_cutoff      
+    for it = 1:cal_config.refine_param_it_cutoff      
         % Get intrinsic parameters
         % left
         A_L = [p(1) 0    p(3);
@@ -235,16 +237,16 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
         norm_res = norm(res);
         
         % Exit if change in distance is small
-        norm_delta_p = norm(delta_p);        
+        norm_delta_p = norm(delta_p);   
         disp(['Iteration #: ' num2str(it)]);
         disp(['Difference norm for nonlinear parameter refinement: ' num2str(norm_delta_p)]);
         disp(['Norm of residual: ' num2str(norm_res)]);
-        if norm(delta_p) < cb_config.refine_param_norm_cutoff
+        if norm(delta_p) < cal_config.refine_param_norm_cutoff
             break
         end
     end    
-    if it == cb_config.refine_param_it_cutoff
-        disp('WARNING: iterations hit cutoff before converging!!!');
+    if it == cal_config.refine_param_it_cutoff
+        warning('iterations hit cutoff before converging!!!');
     end
         
     % Get outputs from p  
@@ -271,5 +273,5 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
         % Recompute R_R and t_R using R_s and t_s
         rotations.R{i} = R_s*rotations.L{i};  
         translations.R{i} = R_s*translations.L{i} + t_s;
-    end
+    end  
 end

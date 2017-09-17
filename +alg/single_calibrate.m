@@ -1,4 +1,4 @@
-function [A,distortion,rotations,translations,board_points_ps] = single_calibrate(cb_imgs,four_points_ps,cb_config)
+function [A,distortion,rotations,translations,board_points_ps] = single_calibrate(cb_imgs,four_points_ps,cal_config)
     % Performs camera calibration (mostly from Zhang's paper, some stuff
     % adapted from Bouguet's toolbox, and some stuff I've added myself) 
     % given calibration board images, four point boxes around the 
@@ -7,8 +7,8 @@ function [A,distortion,rotations,translations,board_points_ps] = single_calibrat
     % Inputs:
     %   cb_imgs - class.img; calibration board images
     %   four_points_ps - cell; cell array of four points
-    %   cb_config - struct; this is the struct returned by
-    %       util.load_cb_config()
+    %   cal_config - struct; this is the struct returned by
+    %       util.load_cal_config()
     %
     % Outputs:
     %   A - array; optimized camera matrix
@@ -19,16 +19,19 @@ function [A,distortion,rotations,translations,board_points_ps] = single_calibrat
     %   translations - cell; optimized translations  
     %   board_points_ps - cell; cell array of optimized subpixel 
     %       calibration board points.
-
+                                                             
+    disp('---');
+    disp('Performing single calibration...');       
+    
     % Get calibration board points in world coordinates
-    [board_points_w, four_points_w] = alg.cb_points(cb_config);
+    [board_points_w, four_points_w] = alg.cb_points(cal_config);
     
     % Initialize homographies using four points in pixel coordinates -----%
     homographies = {};
     for i = 1:length(cb_imgs)
         homographies{i} = alg.homography(four_points_w, ...
                                          four_points_ps{i}, ...
-                                         cb_config); %#ok<AGROW>
+                                         cal_config); %#ok<AGROW>
     end
 
     % Get sub-pixel board points in pixel coordinates --------------------%
@@ -44,14 +47,14 @@ function [A,distortion,rotations,translations,board_points_ps] = single_calibrat
         board_points_ps{i} = alg.refine_points(board_points_ps{i}, ...
                                                cb_imgs(i), ...
                                                homographies{i}, ...
-                                               cb_config); %#ok<AGROW>
+                                               cal_config); %#ok<AGROW>
     end
 
     % Update homographies using refined points ---------------------------%
     for i = 1:length(cb_imgs)
         homographies{i} = alg.homography(board_points_w, ...
                                          board_points_ps{i}, ...
-                                         cb_config); %#ok<AGROW>
+                                         cal_config); %#ok<AGROW>
     end
 
     % Get initial guess for intrinsic camera parameters using all homographies
@@ -60,6 +63,7 @@ function [A,distortion,rotations,translations,board_points_ps] = single_calibrat
                                   cb_imgs(1).get_height()); 
                               
     % Display initial intrinsic params for debugging purposes
+    disp('---');
     disp('Initial intrinsic params: ')
     disp(A)
 
@@ -70,7 +74,7 @@ function [A,distortion,rotations,translations,board_points_ps] = single_calibrat
         [rotations{i}, translations{i}] = alg.init_extrinsic_params(homographies{i}, ...
                                                                     A, ...
                                                                     board_points_ps{i}, ...
-                                                                    cb_config); %#ok<AGROW>
+                                                                    cal_config); %#ok<AGROW>
     end
 
     % Perform nonlinear refinement of all parameters ---------------------%
@@ -78,13 +82,17 @@ function [A,distortion,rotations,translations,board_points_ps] = single_calibrat
     distortion = zeros(4,1);
     
     % Perform full optimization
-    disp('--------------------------------------------');
-    disp('Refining full parameters...');
+    disp('---');
+    disp('Refining full single parameters...');
     [A,distortion,rotations,translations] = alg.refine_single_params(A, ... 
                                                                      distortion, ...
                                                                      rotations, ...
                                                                      translations, ...
                                                                      board_points_ps, ...
                                                                      'full', ...
-                                                                     cb_config);      
+                                                                     cal_config);   
+                                                    
+    disp('---');             
+    disp('Refined intrinsic params: ')
+    disp(A)
 end

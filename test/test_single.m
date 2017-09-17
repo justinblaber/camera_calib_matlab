@@ -1,6 +1,7 @@
 %% Set images, load config, and get four corners - single
 clear, clc;
 f1 = figure(1);
+clf(f1);
 
 cb_img_paths = {'test/test_images/Image1.tif', ...
                 'test/test_images/Image2.tif', ...
@@ -14,20 +15,20 @@ cb_img_paths = {'test/test_images/Image1.tif', ...
 % Validate all calibration board images
 cb_imgs = class.img.validate_similar_imgs(cb_img_paths);
                      
-% Load calibration board config file
-cb_config = util.load_cb_config('test/board_single.yaml');
+% Load calibration config file
+cal_config = util.load_cal_config('test/single.yaml');
 
 % Debug
-debug.plot_cb_config(cb_config,subplot(3,3,1,'parent',f1));
+debug.plot_cb_board_info_2D(cal_config,subplot(3,3,1,'parent',f1));
 
 % Get four points in pixel coordinates per calibration board image
 four_points_ps = {};
-switch cb_config.calibration
+switch cal_config.calibration
     case 'four_point_auto'
         error('Automatic four point detection has not been implemented yet');
     case 'four_point_manual'
         % Four points are selected manually
-        [~, four_points_w] = alg.cb_points(cb_config);
+        [~, four_points_w] = alg.cb_points(cal_config);
 
         % Board 1 
         four_points_ps{1} = [168 179;
@@ -80,13 +81,13 @@ switch cb_config.calibration
         for i = 1:length(four_points_ps)
             four_points_ps{i} = alg.refine_points(four_points_ps{i}, ...
                                                   cb_imgs(i), ...
-                                                  alg.homography(four_points_w,four_points_ps{i},cb_config), ...
-                                                  cb_config); 
+                                                  alg.homography(four_points_w,four_points_ps{i},cal_config), ...
+                                                  cal_config); 
           
             debug.plot_cb_refine_points(four_points_ps{i}, ...
                                         cb_imgs(i), ...
-                                        alg.homography(four_points_w,four_points_ps{i},cb_config), ...                                        
-                                        cb_config, ...
+                                        alg.homography(four_points_w,four_points_ps{i},cal_config), ...                                        
+                                        cal_config, ...
                                         false, ...
                                         subplot(3,3,i+1,'parent',f1));
         end   
@@ -95,10 +96,11 @@ end
 %% Perform single calibration
 [A,distortion,rotations,translations,board_points_ps] = alg.single_calibrate(cb_imgs, ...
                                                                              four_points_ps, ...
-                                                                             cb_config);
+                                                                             cal_config);
 
 % Debug by reprojecting points
 f2 = figure(2);
+clf(f2);
 res = [];
 for i = 1:length(cb_imgs)
     % Get residuals
@@ -106,7 +108,7 @@ for i = 1:length(cb_imgs)
                   distortion, ...
                   rotations{i}, ...
                   translations{i}, ...
-                  alg.cb_points(cb_config));
+                  alg.cb_points(cal_config));
     res = vertcat(res,p_m-board_points_ps{i});   %#ok<AGROW>
     
     % Plot both points
@@ -118,4 +120,17 @@ end
 % Plot residuals
 plot(res(:,1),res(:,2),'bo','parent',subplot(3,3,1,'parent',f2));
 set(subplot(3,3,1,'parent',f2),'xlim',[-0.5 0.5],'ylim',[-0.5 0.5]);
-daspect([1 1 1]);
+daspect(subplot(3,3,1,'parent',f2),[1 1 1]);
+
+%% Plot extrinsics
+
+f3 = figure(3);
+clf(f3);
+a = axes(f3);
+
+debug.plot_single_extrinsic(rotations, ...
+                            translations, ...
+                            0.75*ones(length(cb_imgs),1), ...
+                            0.75*ones(length(cb_imgs),1), ...
+                            cal_config, ...
+                            a);

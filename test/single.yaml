@@ -1,18 +1,21 @@
 --- 
-%% These are required parameters ---------%%
+%%  Calibration board info ---------------%%
 
 %% Checkerboard parameters
-num_squares_height = 5
-num_squares_width = 7
+num_squares_height = 9
+num_squares_width = 9
 square_size = 100
 units = mm
 
 %% Four-point detection parameters
 calibration = four_point_manual
-four_point_height = 100*5
-four_point_width = 100*7
+four_point_height = 100*11
+four_point_width = 100*11
 
-%% Beyond here are optional parameters ----%%
+%% Algorithmic info ----------------------%%
+
+%% Verbosity
+verbose = 1
 
 %% Homography parameters
 homography_it_cutoff = 10
@@ -27,3 +30,8 @@ refine_corner_window_min_size = 10
 %% Parameter refinement parameters
 refine_param_it_cutoff = 20
 refine_param_norm_cutoff = 1e-6
+
+%% Plotting info -------------------------%%
+
+%% Camera size
+camera_size = 150

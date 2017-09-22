@@ -12,10 +12,11 @@ function plot_cb_board_info_2D(cal_config,a)
     [board_points, four_points] = alg.cb_points(cal_config);
     
     % Format axes
+    padding = cal_config.square_size/2;
     axis(a,'equal');
     set(a,'Ydir','reverse', ...
-        'Xlim',[min(four_points(:,1))-10, max(four_points(:,1)) + 10], ...        
-        'Ylim',[min(four_points(:,2))-10, max(four_points(:,2)) + 10]);  
+        'Xlim',[min(four_points(:,1))-padding, max(four_points(:,1)) + padding], ...        
+        'Ylim',[min(four_points(:,2))-padding, max(four_points(:,2)) + padding]);  
     hold(a,'on');
     
     % Plot patches
@@ -40,6 +41,26 @@ function plot_cb_board_info_2D(cal_config,a)
             patch(a,x_w,y_w,patch_color);
         end
     end        
+    
+    % Plot axes
+    axes_coords_w = [0 0;
+                     cal_config.square_size 0;
+                     0 0;
+                     0 cal_config.square_size];
+    quiver(axes_coords_w(1:2:end,1), ...
+           axes_coords_w(1:2:end,2), ...
+           axes_coords_w(2:2:end,1)-axes_coords_w(1:2:end,1), ...
+           axes_coords_w(2:2:end,2)-axes_coords_w(1:2:end,2), ...
+           'color','r','LineWidth',2,'AutoScale','off','parent',a);
+       
+    text_coords_w = [1.5*cal_config.square_size 0;
+                     0 1.5*cal_config.square_size];
+    text(text_coords_w(1,1),text_coords_w(1,2),'x', ...
+         'FontSize',12,'HorizontalAlignment','center','color','r', ...
+         'FontWeight','bold','parent',a);
+    text(text_coords_w(2,1),text_coords_w(2,2),'y', ...
+         'FontSize',12,'HorizontalAlignment','center','color','r', ...
+         'FontWeight','bold','parent',a);
     
     % Plot board points    
     plot(board_points(:,1),board_points(:,2),'gs','MarkerSize',12, ...

@@ -2,7 +2,7 @@ function [A,distortion,rotations,translations,board_points_ps,homographies_refin
     % Performs camera calibration (mostly from Zhang's paper, some stuff
     % adapted from Bouguet's toolbox, and some stuff I've added myself) 
     % given calibration board images, four point boxes around the 
-    % calibration board images, and the calibration board config.
+    % calibration board images, and the calibration config.
     %
     % Inputs:
     %   cb_imgs - class.img; calibration board images
@@ -20,7 +20,7 @@ function [A,distortion,rotations,translations,board_points_ps,homographies_refin
     %   board_points_ps - cell; cell array of optimized subpixel 
     %       calibration board points.
     %   homographies_refine - cell; cell array of homographies used for
-    %       subpixel checkerboard corner refinement
+    %       subpixel checkerboard corner refinement. Used for debugging.
                                                              
     disp('---');
     disp('Performing single calibration...');       
@@ -51,6 +51,7 @@ function [A,distortion,rotations,translations,board_points_ps,homographies_refin
                                                homographies{i}, ...
                                                cal_config); %#ok<AGROW>
     end
+    % Store for debugging purposes
     homographies_refine = homographies;
 
     % Update homographies using refined points ---------------------------%

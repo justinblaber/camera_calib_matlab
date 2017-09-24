@@ -39,8 +39,7 @@ function [win_points_p, win_point_weights, win_point_corners_p] = refine_window_
                                    homography, ...
                                    wf, ...
                                    hw, ...
-                                   cal_config);                                       
-
+                                   cal_config);             
 
     % Get weights for window_points
     win_point_weights = window_point_weights(hw);   

@@ -1,5 +1,5 @@
-function plot_cb_img_info_2D(four_points_ps,points_p,points_m,A,distortion,rotation,translation,cb_img,homography_refine,cal_config,a)
-    % This overlays point displacements on cb_img and plots it.
+function plot_cb_img_info_2D(cb_img,points_p,four_points_p,A,distortion,rotation,translation,homography_refine,cal_config,a)
+    % This will plot calibration info over a calibration board image
         
     if ~exist('a','var')
         f = figure(); 
@@ -62,8 +62,7 @@ function plot_cb_img_info_2D(four_points_ps,points_p,points_m,A,distortion,rotat
            axes_coords_p(2:2:end,1)-axes_coords_p(1:2:end,1), ...
            axes_coords_p(2:2:end,2)-axes_coords_p(1:2:end,2), ...
            'color','r','LineWidth',2,'AutoScale','off','parent',a);
-                   
-       
+             
     text_coords_w = [1.5*cal_config.square_size 0;
                      0 1.5*cal_config.square_size];                 
     text_coords_p = alg.p_m(A, ...
@@ -78,7 +77,7 @@ function plot_cb_img_info_2D(four_points_ps,points_p,points_m,A,distortion,rotat
          'FontSize',12,'HorizontalAlignment','center','color','r', ...
          'FontWeight','bold','parent',a);
      
-    % Plot boxes around points   
+    % Plot refinement windows around points   
     for i = 1:size(points_p,1)          
         % Get window points in pixel coordinates
         [~,~,win_point_corners] = alg.refine_window_p(points_p(i,:), ...
@@ -91,10 +90,15 @@ function plot_cb_img_info_2D(four_points_ps,points_p,points_m,A,distortion,rotat
         
         % Plot        
         patch(a,win_point_corners([1 2 4 3],1),win_point_corners([1 2 4 3],2), ...
-              'k','FaceAlpha',0.15,'EdgeColor','w','EdgeAlpha',0.15);
+              'k','FaceAlpha',0.25,'EdgeColor','w','EdgeAlpha',0.25);
     end     
         
-    % Plot displacements
+    % Plot displacements    
+    points_m = alg.p_m(A, ...
+                       distortion, ...
+                       rotation, ...
+                       translation, ...
+                       alg.cb_points(cal_config));    
     quiver(points_p(:,1), ...
            points_p(:,2), ...
            points_m(:,1)-points_p(:,1), ...
@@ -105,13 +109,17 @@ function plot_cb_img_info_2D(four_points_ps,points_p,points_m,A,distortion,rotat
     plot(points_m(:,1),points_m(:,2),'r+','MarkerSize',6,'LineWidth',1,'parent',a);
     plot(points_p(:,1),points_p(:,2),'gs','MarkerSize',6,'LineWidth',1,'parent',a);
     
-    % Plot four point boxes  
-    plot(four_points_ps(:,1),four_points_ps(:,2),'bo','MarkerSize',12,'LineWidth',2,'parent',a); 
+    % Plot four points
+    plot(four_points_p(:,1),four_points_p(:,2),'bo','MarkerSize',12,'LineWidth',2,'parent',a); 
        
     % Plot principle point
-    plot([A(1,3) A(1,3)],[1 cb_img.get_height()],'--r','parent',a);
-    plot([1 cb_img.get_width()],[A(2,3) A(2,3)],'--r','parent',a);
+    plot([A(1,3) A(1,3)],[1 cb_img.get_height()],'--g','parent',a);
+    plot([1 cb_img.get_width()],[A(2,3) A(2,3)],'--g','parent',a);
        
+    % Plot center of image (to compare principle point)
+    plot([(cb_img.get_width()+1)/2 (cb_img.get_width()+1)/2],[1 cb_img.get_height()],'--r','parent',a);
+    plot([1 cb_img.get_width()],[(cb_img.get_height()+1)/2 (cb_img.get_height()+1)/2],'--r','parent',a);
+    
     % Remove hold
     drawnow
     hold(a,'off');

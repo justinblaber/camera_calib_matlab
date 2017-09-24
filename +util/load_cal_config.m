@@ -3,8 +3,7 @@ function cal_config = load_cal_config(cal_config_path)
     % Outputs a struct containing calibration related info.
     % 
     % Inputs:
-    %   cal_config_path - path to calibration config file. Assumes 
-    %       first line in config file is a header (for yaml).
+    %   cal_config_path - path to calibration config file.
     %
     % Outputs:
     %   cal_config - struct containing the following fields:
@@ -59,14 +58,14 @@ function cal_config = load_cal_config(cal_config_path)
     
     % Display contents of config file    
     disp('--------------------------------------------');
-    disp('Calibration board config file:');
-    type(cal_config_path); % displays config file
+    disp('Calibration config file:');
+    type(cal_config_path);
     disp(' ');
     
     % Attempt to load config file
     try
         f = fopen(cal_config_path);
-        C = textscan(f,'%s %s','delimiter','=','headerlines',1);
+        C = textscan(f,'%s %s','delimiter','=');
         fclose(f);
     catch e
         error(['Could not read config file; reason: ' getReport(e)]);
@@ -81,8 +80,8 @@ function cal_config = load_cal_config(cal_config_path)
                'file. Please make sure each row has a single equal sign.'])
     end      
     
-    % Remove comments - make sure '%%'' is the first substring found
-    comment_idx = cellfun(@(x)ismember(1,x),strfind(C{1},'%%'));
+    % Remove comments - make sure '%'' is the first substring found
+    comment_idx = cellfun(@(x)ismember(1,x),strfind(C{1},'%'));
     C{1}(comment_idx) = [];
     C{2}(comment_idx) = [];    
     
@@ -119,7 +118,7 @@ function cal_config = load_cal_config(cal_config_path)
     for i = 1:length(cal_config_fields)
         if ~any(strcmp(cal_config_fields{i},{field_info.field}))
             error(['Unrecognized field: "' cal_config_fields{i} '" ' ...
-                   'in calibration board config file.']);
+                   'in calibration config file.']);
         end        
     end
     
@@ -129,7 +128,7 @@ function cal_config = load_cal_config(cal_config_path)
         if ~any(strcmp(field_info(i).field,cal_config_fields))            
             if field_info(i).required
                 error(['Required field: "' field_info(i).field '" was ' ...
-                       'not found in calibration board config file.']);
+                       'not found in calibration config file.']);
             else
                 % This is an optional field; set the default value since it
                 % was not set

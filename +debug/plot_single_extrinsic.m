@@ -15,7 +15,7 @@ function plot_single_extrinsic(rotations,translations,colors,alphas,cal_config,a
     % Hold
     hold(a,'on');
 
-    % Plot checker boards ------------------------------------------------%
+    % Plot checker boards
     height_offset = (cal_config.four_point_height-cal_config.num_squares_height*cal_config.square_size)/2;
     width_offset = (cal_config.four_point_width-cal_config.num_squares_width*cal_config.square_size)/2;
     for i = 1:length(rotations)    
@@ -26,7 +26,6 @@ function plot_single_extrinsic(rotations,translations,colors,alphas,cal_config,a
         debug.plot_cb_board_3D(cal_config, ...
                                xform, ...
                                colors(i,:), ...
-                               alphas(i), ...
                                alphas(i), ...
                                a);
 
@@ -42,7 +41,7 @@ function plot_single_extrinsic(rotations,translations,colors,alphas,cal_config,a
                            a);
     end
 
-    % Plot camera -------------------------------------------------------%
+    % Plot camera
     debug.plot_camera_3D(eye(4), ...
                          'k', ...
                          0.5, ...
@@ -53,12 +52,15 @@ function plot_single_extrinsic(rotations,translations,colors,alphas,cal_config,a
                          cal_config, ...
                          a);
 
-    % Finish formatting plot ---------------------------------------------%
+    % Format plot
     set(a,'Ydir','reverse');
     set(a,'Zdir','reverse');
     daspect(a,[1 1 1]);
     grid(a,'on');
-    view(a,3)
+    view(a,3);
     axis(a,'tight');
+    
+    % Remove hold
+    drawnow
     hold(a,'off');
 end

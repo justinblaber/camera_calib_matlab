@@ -9,7 +9,7 @@ function points_m = p_m(A,distortion,R,t,points_w)
     %        0          alpha_y y_o;
     %        0          0       1]
     %   distortion - array; 4x1 distortions (radial and tangential)
-    %       stored as: [beta1 beta2 beta3 beta4]
+    %       stored as: [beta1; beta2; beta3; beta4]
     %   R - array; 3x3 rotation matrix
     %   t - array; 3x1 translation
     %   points_w - array; Nx2 array of points in world coordinates

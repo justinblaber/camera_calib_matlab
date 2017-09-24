@@ -3,7 +3,7 @@ function [A,distortion,rotations,translations,R_s,t_s,board_points_ps,homographi
     % adapted from Bouguet's toolbox, and some stuff I've added myself) 
     % given calibration board images for the left and right camera, four 
     % point boxes around the calibration board images for the left and
-    % right camera, and the calibration board config.
+    % right camera, and the calibration config.
     %
     % Inputs:
     %   cb_imgs - struct; contains:
@@ -43,9 +43,11 @@ function [A,distortion,rotations,translations,R_s,t_s,board_points_ps,homographi
     %           points for the right camera.
     %   homographies_refine - struct; contains:
     %       .L - cell; cell array of homographies used for subpixel 
-    %           checkerboard corner refinement for the left camera image
+    %           checkerboard corner refinement for the left camera image. 
+    %           Used for debugging.
     %       .R - cell; cell array of homographies used for subpixel 
-    %           checkerboard corner refinement for the right camera image
+    %           checkerboard corner refinement for the right camera image. 
+    %           Used for debugging.
                                                
     disp('--------------------------------------------'); 
     disp('Performing stereo calibration...');     
@@ -95,7 +97,6 @@ function [A,distortion,rotations,translations,R_s,t_s,board_points_ps,homographi
     t_s = pinv(T)*t;
 
     % Perform nonlinear refinement of all parameters ---------------------%
-    % Perform full optimization
     disp('---');
     disp('Refining full stereo parameters...');
     [A,distortion,rotations,translations,R_s,t_s] = alg.refine_stereo_params(A, ...

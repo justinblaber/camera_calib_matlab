@@ -12,13 +12,13 @@ function jacob = dR_deuler(euler)
     %
     %               dtheta_x dtheta_y dtheta_z
     %       dr11    
-    %       dr12
-    %       dr13
     %       dr21
-    %       dr22
-    %       dr23
     %       dr31
+    %       dr12
+    %       dr22
     %       dr32
+    %       dr13
+    %       dr23
     %       dr33
        
     % TODO: Add checks for degenerate cases, although these will basically

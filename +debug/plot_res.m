@@ -19,9 +19,12 @@ function plot_res(res,colors,alphas,a)
                 'MarkerEdgeAlpha',0,'parent',a);        
     end
     
-    % Plot dashed line
+    % Plot dashed line to indicate zero
     plot([0 0],[-0.5 0.5],'--r','parent',a);
     plot([-0.5 0.5],[0 0],'--r','parent',a);
+    
+    % TODO: maybe scale limits based on data instead of having a fixed
+    % 0.5x0.5 window
     
     % Format plot
     set(a,'xlim',[-0.5 0.5],'ylim',[-0.5 0.5]);

@@ -24,7 +24,8 @@ function plot_cb_board_info_2D(cal_config,a)
     width_offset = (cal_config.four_point_width-cal_config.num_squares_width*cal_config.square_size)/2;
     for i = 1:cal_config.num_squares_width
         for j = 1:cal_config.num_squares_height
-            % Get checker color
+            % Get checker color; only odd # of checkers are allowed on
+            % each side, so this is ok
             if ~util.is_even((i-1)*cal_config.num_squares_height+j)
                 patch_color = 'k';
             else
@@ -73,7 +74,8 @@ function plot_cb_board_info_2D(cal_config,a)
          'MarkerFaceColor','w','LineWidth',1.5,'parent',a);
     text(four_points(:,1),four_points(:,2),cellstr(num2str([1:4]')), ...
          'FontSize',8,'HorizontalAlignment','center','parent',a); %#ok<NBRAK>    
+     
+    % Remove hold
+    drawnow
     hold(a,'off');
-    
-    drawnow;
 end

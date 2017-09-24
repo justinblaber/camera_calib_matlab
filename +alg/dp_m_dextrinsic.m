@@ -8,7 +8,7 @@ function jacob = dp_m_dextrinsic(A,distortion,R,t,dRt_dm,points_w)
     %        0          alpha_y y_o;
     %        0          0       1]
     %   distortion - array; 4x1 distortions (radial and tangential)
-    %       stored as: [beta1 beta2 beta3 beta4]
+    %       stored as: [beta1; beta2; beta3; beta4]
     %   R - array; 3x3 rotation matrix
     %   t - array; 3x1 translation
     %   dRt_dm - array; jacobian of rotation and translation with respect

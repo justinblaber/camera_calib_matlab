@@ -16,7 +16,7 @@ function plot_stereo_extrinsic(rotations,translations,R_s,t_s,colors,alphas,cal_
     % Hold
     hold(a,'on');
 
-    % Plot checker boards ------------------------------------------------%
+    % Plot checker boards
     % Note that xform is applied to get the checkerboard in the coordinates of 
     % the left camera
     height_offset = (cal_config.four_point_height-cal_config.num_squares_height*cal_config.square_size)/2;
@@ -44,9 +44,7 @@ function plot_stereo_extrinsic(rotations,translations,R_s,t_s,colors,alphas,cal_
                            a);
     end
 
-    % Plot cameras -------------------------------------------------------%
-
-    % Left camera
+    % Plot left camera
     debug.plot_camera_3D(eye(4), ...
                          'k', ...
                          0.5, ...
@@ -57,7 +55,7 @@ function plot_stereo_extrinsic(rotations,translations,R_s,t_s,colors,alphas,cal_
                          cal_config, ...
                          a);
 
-    % Right camera
+    % Plot right camera
     xform_s_inv = inv([R_s t_s; zeros(1,3) 1]);
     debug.plot_camera_3D(xform_s_inv, ...
                          'k', ...
@@ -69,12 +67,15 @@ function plot_stereo_extrinsic(rotations,translations,R_s,t_s,colors,alphas,cal_
                          cal_config, ...
                          a);
 
-    % Finish formatting plot ---------------------------------------------%
+    % Format plot
     set(a,'Ydir','reverse');
     set(a,'Zdir','reverse');
     daspect(a,[1 1 1]);
     grid(a,'on');
     view(a,3)
     axis(a,'tight');
+    
+    % Remove hold
+    drawnow
     hold(a,'off');
 end

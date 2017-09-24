@@ -1,4 +1,4 @@
-function [A,distortion,rotations,translations,norm_res] = refine_single_params(A,distortion,rotations,translations,board_points_ps,type,cal_config)
+function [A,distortion,rotations,translations] = refine_single_params(A,distortion,rotations,translations,board_points_ps,type,cal_config)
     % This will compute nonlinear refinement of intrinsic and extrinsic
     % camera parameters.
     %
@@ -29,8 +29,6 @@ function [A,distortion,rotations,translations,norm_res] = refine_single_params(A
     %       [beta_1; beta_2; beta_3; beta_4]
     %   rotations - cell; optimized rotations
     %   translations - cell; optimized translations
-    %   norm_res - scalar; norm of the residuals of modelled board points vs
-    %       measured board points
           
     % TODO: make sure rotations and translations have the same length
         
@@ -75,12 +73,12 @@ function [A,distortion,rotations,translations,norm_res] = refine_single_params(A
     % Determine which parameters to update based on type
     update_idx = false(num_params,1);
     switch type
-        case 'extrinsic'
-            % Only update rotations and translations
-            update_idx(9:end) = true;
         case 'intrinsic'
             % Only update camera matrix
             update_idx(1:8) = true;
+        case 'extrinsic'
+            % Only update rotations and translations
+            update_idx(9:end) = true;
         case 'full'
             % Attempt to calibrate everything
             update_idx(1:end) = true;

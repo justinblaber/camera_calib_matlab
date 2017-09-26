@@ -62,56 +62,30 @@ function cal_config = load_cal_config(cal_config_path)
     type(cal_config_path);
     disp(' ');
     
-    % Attempt to load config file
-    try
-        f = fopen(cal_config_path);
-        C = textscan(f,'%s %s','delimiter','=');
-        fclose(f);
-    catch e
-        error(['Could not read config file; reason: ' getReport(e)]);
-    end
-       
-    % Make sure, after text is delimited, that two columns of equal
-    % length are loaded
-    if ~isvector(C) || length(C) ~= 2 || ...
-        ~isvector(C{1}) || ~isvector(C{2}) || ...
-        length(C{1}) ~= length(C{2})
-        error(['Config file does not contain a properly delimited ' ...
-               'file. Please make sure each row has a single equal sign.'])
-    end      
-    
-    % Remove comments - make sure '%'' is the first substring found
-    comment_idx = cellfun(@(x)ismember(1,x),strfind(C{1},'%'));
-    C{1}(comment_idx) = [];
-    C{2}(comment_idx) = [];    
-    
-    % Store configuration
-    cal_config = struct();
-    for i = 1:size(C{1},1)
-        cal_config.(strtrim(C{1}{i})) = strtrim(C{2}{i});
-    end    
+    % Load config file
+    cal_config = util.read_data(cal_config_path);
     
     % Perform validations on input fields    
     % Calibration board info
-    field_info        = struct('field','num_squares_height'                 ,'required',true ,'default',''    ,'validation_fun',@validate_pos_odd_int);
-    field_info(end+1) = struct('field','num_squares_width'                  ,'required',true ,'default',''    ,'validation_fun',@validate_pos_odd_int);
-    field_info(end+1) = struct('field','square_size'                        ,'required',true ,'default',''    ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','units'                              ,'required',true ,'default',''    ,'validation_fun',[]);
-    field_info(end+1) = struct('field','calibration'                        ,'required',true ,'default',''    ,'validation_fun',@validate_calibration);
-    field_info(end+1) = struct('field','four_point_height'                  ,'required',true ,'default',''    ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','four_point_width'                   ,'required',true ,'default',''    ,'validation_fun',@validate_pos_num);
+    field_info        = struct('field','num_squares_height'                 ,'required',true ,'default',''  ,'validation_fun',@validate_pos_odd_int);
+    field_info(end+1) = struct('field','num_squares_width'                  ,'required',true ,'default',''  ,'validation_fun',@validate_pos_odd_int);
+    field_info(end+1) = struct('field','square_size'                        ,'required',true ,'default',''  ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','units'                              ,'required',true ,'default',''  ,'validation_fun',@validate_string);
+    field_info(end+1) = struct('field','calibration'                        ,'required',true ,'default',''  ,'validation_fun',@validate_calibration);
+    field_info(end+1) = struct('field','four_point_height'                  ,'required',true ,'default',''  ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','four_point_width'                   ,'required',true ,'default',''  ,'validation_fun',@validate_pos_num);
     % Algorithmic info
-    field_info(end+1) = struct('field','verbose'                            ,'required',false,'default','1'   ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','homography_it_cutoff'               ,'required',false,'default','10'  ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','homography_norm_cutoff'             ,'required',false,'default','1e-6','validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','refine_corner_it_cutoff'            ,'required',false,'default','10'  ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','refine_corner_norm_cutoff'          ,'required',false,'default','0.05','validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','refine_corner_default_window_factor','required',false,'default','2/3' ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','refine_corner_window_min_size'      ,'required',false,'default','10'  ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','refine_param_it_cutoff'             ,'required',false,'default','20'  ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','refine_param_norm_cutoff'           ,'required',false,'default','1e-6','validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','verbose'                            ,'required',false,'default',1   ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','homography_it_cutoff'               ,'required',false,'default',10  ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','homography_norm_cutoff'             ,'required',false,'default',1e-6,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','refine_corner_it_cutoff'            ,'required',false,'default',10  ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','refine_corner_norm_cutoff'          ,'required',false,'default',0.05,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','refine_corner_default_window_factor','required',false,'default',2/3 ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','refine_corner_window_min_size'      ,'required',false,'default',10  ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','refine_param_it_cutoff'             ,'required',false,'default',20  ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','refine_param_norm_cutoff'           ,'required',false,'default',1e-6,'validation_fun',@validate_pos_num);
     % Plotting info
-    field_info(end+1) = struct('field','camera_size'                        ,'required',false,'default','eps' ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','camera_size'                        ,'required',false,'default',eps ,'validation_fun',@validate_pos_num);
     
     % Check to see if any unrecognized fields exist
     cal_config_fields = fields(cal_config);
@@ -147,34 +121,42 @@ end
 % the cal_config. This makes things easier.
 
 function cal_config = validate_calibration(cal_config,field)
-    switch cal_config.(field)
-        case 'four_point_auto'
-        case 'four_point_manual'
-        otherwise
-            error(['Calibration type: "' cal_config.calibration '" is not supported.']);
+    try
+        switch cal_config.(field)
+            case 'four_point_auto'
+            case 'four_point_manual'
+            otherwise
+                error('Calibration type is not supported.');
+        end
+    catch
+        error('Calibration type is not supported.');
     end
+end
+
+function cal_config = validate_string(cal_config,field)
+    if ~ischar(cal_config.(field)) 
+        error(['Field: ' field ' has a value which is not a string.']);
+    end
+    cal_config.(field) = cal_config.(field);
 end
 
 function cal_config = validate_pos_num(cal_config,field)
-    num = str2num(cal_config.(field)); %#ok<ST2NM>
-    if ~util.is_pos(num) 
-        error(['Field: ' field ' has value: "' cal_config.(field) '" which is not a positive number.']);
+    if ~util.is_pos(cal_config.(field)) 
+        error(['Field: ' field ' has a value which is not a positive number.']);
     end
-    cal_config.(field) = num;
+    cal_config.(field) = cal_config.(field);
 end
 
 function cal_config = validate_pos_int(cal_config,field)
-    num = str2num(cal_config.(field)); %#ok<ST2NM>
-    if ~util.is_pos(num) || ~util.is_int(num)
-        error(['Field: ' field ' has value: "' cal_config.(field) '" which is not a positive integer.']);
+    if ~util.is_pos(cal_config.(field)) || ~util.is_int(cal_config.(field))
+        error(['Field: ' field ' has a value which is not a positive integer.']);
     end
-    cal_config.(field) = num;
+    cal_config.(field) = cal_config.(field);
 end
 
 function cal_config = validate_pos_odd_int(cal_config,field)
-    num = str2num(cal_config.(field)); %#ok<ST2NM>
-    if ~util.is_pos(num) || ~util.is_int(num) || util.is_even(num)
-        error(['Field: ' field ' has value: "' cal_config.(field) '" which is not a positive odd integer.']);
+    if ~util.is_pos(cal_config.(field)) || ~util.is_int(cal_config.(field)) || util.is_even(cal_config.(field))
+        error(['Field: ' field ' has a value which is not a positive odd integer.']);
     end
-    cal_config.(field) = num;
+    cal_config.(field) = cal_config.(field);
 end

@@ -1,6 +1,6 @@
 function write_array(array,name,file_path)
     % Writes array to data file. Has format:
-    %   name=
+    %   name = 
     %   array
     % This will append to the file and writes with 16 significant figures 
     % in ascii format, which allows it to be human readable/modifiable 
@@ -13,7 +13,7 @@ function write_array(array,name,file_path)
       
     % Write name
     f = fopen(file_path,'a');
-    fprintf(f,[name ' = \n']);
+    fprintf(f,'%s = \n',name);
     fclose(f);
     
     % Write array

@@ -48,7 +48,7 @@ function data = read_data(file_path)
                     data.(name) = {};
                 end             
                 
-                % Test if array is a num, string, or array    
+                % Test if name is a num, string, or array    
                 param = strtrim(line_split{2});
                 if ~isempty(param)                
                     % This is either a num or string

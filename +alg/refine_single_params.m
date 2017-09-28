@@ -160,7 +160,7 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
     A = [p(1) 0    p(3);
          0    p(2) p(4);
          0    0    1];
-    distortion = p(5:8)';  
+    distortion = p(5:8);  
     rotations = {};
     translations = {};
     for i = 1:num_boards

@@ -2,15 +2,15 @@
 clear, clc;
 
 %% Set images
-cb_img_paths.L = {'test/test_images/left01.jpg'};
-cb_img_paths.R = {'test/test_images/right01.jpg'};
+cb_img_paths.L = {'images/left01.jpg'};
+cb_img_paths.R = {'images/right01.jpg'};
 
 % Validate all calibration board images
 cb_imgs.L = class.img.validate_similar_imgs(cb_img_paths.L);
 cb_imgs.R = class.img.validate_similar_imgs(cb_img_paths.R);
                      
 %% Load calibration config file
-cal_config = util.load_cal_config('stereo.conf');
+cal_config = util.load_cal_config('configs/stereo.conf');
 
 %% Get four points in pixel coordinates per calibration board image
 four_points_ps.L = {};
@@ -49,7 +49,23 @@ end
 [A,distortion,rotations,translations,R_s,t_s,board_points_ps,homographies_refine] = alg.stereo_calibrate(cb_imgs, ...
                                                                                                          four_points_ps, ...
                                                                                                          cal_config);
-        
+
+%% Save calibration
+calibration_path = 'calibrations/stereo2.txt';
+util.write_stereo_calib(cb_imgs, ...
+                        board_points_ps, ...
+                        four_points_ps, ...
+                        A, ...
+                        distortion, ...
+                        rotations, ...
+                        translations, ...
+                        homographies_refine, ...
+                        cal_config, ...
+                        calibration_path);
+                    
+%% Read calibration
+[cb_imgs,board_points_ps,four_points_ps,A,distortion,rotations,translations,homographies_refine,cal_config] = util.read_stereo_calib(calibration_path);
+                    
 %% Debug with stereo gui
 f = figure(1);
 debug.gui_stereo(cb_imgs, ...

@@ -1,4 +1,4 @@
-function write_stereo_calib(cb_imgs,board_points_ps,four_points_ps,A,distortion,rotations,translations,homographies_refine,cal_config,file_path)
+function write_stereo_calib(cb_imgs,board_points_ps,four_points_ps,A,distortion,rotations,translations,R_s,t_s,homographies_refine,cal_config,file_path)
     % Writes outputs of stereo calibration to a file, so it can be read
     % again later.
     % 
@@ -28,6 +28,10 @@ function write_stereo_calib(cb_imgs,board_points_ps,four_points_ps,A,distortion,
     %   translations - struct; contains:
     %       .L - cell; translations for the left camera
     %       .R - cell; translations for the right camera
+    %   R_s - array; 3x3 rotation matrix describing rotation from the left
+    %       camera to the right camera
+    %   t_s - array; 3x1 translation vector describing translation from the
+    %       left camera to the right camera
     %   homographies_refine - struct; contains:
     %       .L - cell; cell array of homographies used for subpixel 
     %           checkerboard corner refinement for the left camera image. 
@@ -65,4 +69,10 @@ function write_stereo_calib(cb_imgs,board_points_ps,four_points_ps,A,distortion,
                             file_path, ...
                             '_R', ...
                             true);
+                        
+    % Write R_s and t_s    
+    util.write_array(R_s,'R_s',file_path);
+    util.write_newline(file_path);
+    util.write_array(t_s,'t_s',file_path);
+    util.write_newline(file_path);
 end

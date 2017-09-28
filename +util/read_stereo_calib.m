@@ -1,4 +1,4 @@
-function [cb_imgs,board_points_ps,four_points_ps,A,distortion,rotations,translations,homographies_refine,cal_config] = read_stereo_calib(file_path)
+function [cb_imgs,board_points_ps,four_points_ps,A,distortion,rotations,translations,R_s,t_s,homographies_refine,cal_config] = read_stereo_calib(file_path)
     % Reads stereo calibration file
     %
     % Inputs:
@@ -30,6 +30,10 @@ function [cb_imgs,board_points_ps,four_points_ps,A,distortion,rotations,translat
     %   translations - struct; contains:
     %       .L - cell; translations for the left camera
     %       .R - cell; translations for the right camera
+    %   R_s - array; 3x3 rotation matrix describing rotation from the left
+    %       camera to the right camera
+    %   t_s - array; 3x1 translation vector describing translation from the
+    %       left camera to the right camera
     %   homographies_refine - struct; contains:
     %       .L - cell; cell array of homographies used for subpixel 
     %           checkerboard corner refinement for the left camera image. 
@@ -54,5 +58,17 @@ function [cb_imgs,board_points_ps,four_points_ps,A,distortion,rotations,translat
     [cb_imgs.L,board_points_ps.L,four_points_ps.L,A.L,distortion.L,rotations.L,translations.L,homographies_refine.L,calib] = util.parse_single_calib(calib,'_L');
     
     % Parse out right
-    [cb_imgs.R,board_points_ps.R,four_points_ps.R,A.R,distortion.R,rotations.R,translations.R,homographies_refine.R,cal_config] = util.parse_single_calib(calib,'_R');
+    [cb_imgs.R,board_points_ps.R,four_points_ps.R,A.R,distortion.R,rotations.R,translations.R,homographies_refine.R,calib] = util.parse_single_calib(calib,'_R');
+    
+    % Read R_s and t_s
+    [R_s,calib] = read_and_remove(calib,'R_s');
+    [t_s,calib] = read_and_remove(calib,'t_s');
+    
+    % The remainder is cal_config
+    cal_config = calib;
+end
+
+function [param, calib] = read_and_remove(calib,field)
+    param = calib.(field);
+    calib = rmfield(calib,field);
 end

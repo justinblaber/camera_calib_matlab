@@ -26,49 +26,41 @@ switch cal_config.calibration
         % Four points are selected manually
         [~, four_points_w] = alg.cb_points(cal_config);
 
-        % Board 1 
         four_points_ps{1} = [168 179;
                              135 376;
                              415 194;
                              472 385];
-                                     
-        % Board 2 
+                       
         four_points_ps{2} = [173 106;
                              138 378;
                              443 127;
                              481 389];
-                         
-        % Board 3 
+                      
         four_points_ps{3} = [199 97;
                              117 354;
                              472 142;
                              461 412]; 
-                         
-        % Board 4 
+                     
         four_points_ps{4} = [250 113;
                              145 359;
                              533 88;
                              509 392]; 
-                                
-        % Board 5 
+                     
         four_points_ps{5} = [84 196;
                              403 429;
                              222 43;
                              432 217]; 
-                         
-        % Board 6
+                    
         four_points_ps{6} = [90 127;
                              117 398;
                              535 172;
                              423 413]; 
-                         
-        % Board 7
+                    
         four_points_ps{7} = [181 128;
                              164 452;
                              482 94;
                              406 350]; 
-                         
-        % Board 8
+                     
         four_points_ps{8} = [72 100;
                              88 426;
                              372 65;
@@ -87,8 +79,24 @@ end
                                                                                                  four_points_ps, ...
                                                                                                  cal_config);
 
+%% Save calibration
+calibration_path = 'calibrations/single1.txt';
+util.write_single_calib(cb_imgs, ...
+                        board_points_ps, ...
+                        four_points_ps, ...
+                        A, ...
+                        distortion, ...
+                        rotations, ...
+                        translations, ...
+                        homographies_refine, ...
+                        cal_config, ...
+                        calibration_path);
+                    
+%% Read calibration
+[cb_imgs,board_points_ps,four_points_ps,A,distortion,rotations,translations,homographies_refine,cal_config] = util.read_single_calib(calibration_path);
+
 %% Debug with gui
-f = figure(2);
+f = figure(1);
 debug.gui_single(cb_imgs, ...
                  board_points_ps, ...
                  four_points_ps, ...
@@ -99,15 +107,3 @@ debug.gui_single(cb_imgs, ...
                  homographies_refine, ...
                  cal_config, ...
                  f);
-             
-%% Save calibration
-util.write_single_calib(cb_imgs, ...
-                        board_points_ps, ...
-                        four_points_ps, ...
-                        A, ...
-                        distortion, ...
-                        rotations, ...
-                        translations, ...
-                        homographies_refine, ...
-                        cal_config, ...
-                        'calibrations/single1.txt');

@@ -256,8 +256,8 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     A.R = [p(9)     0       p(11);
            0        p(10)   p(12);
            0        0       1];
-    distortion.L = p(5:8)';
-    distortion.R = p(13:16)'; 
+    distortion.L = p(5:8);
+    distortion.R = p(13:16); 
     
     R_s = alg.euler2rot(p(16+6*num_boards+1:16+6*num_boards+3));
     t_s = p(16+6*num_boards+4:16+6*num_boards+6);

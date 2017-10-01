@@ -1,12 +1,12 @@
-function cal_config = load_cal_config(cal_config_path)
-    % Reads the calibration config file given in cal_config_path. 
+function calib_config = load_calib_config(calib_config_path)
+    % Reads the calibration config file given in calib_config_path. 
     % Outputs a struct containing calibration related info.
     % 
     % Inputs:
-    %   cal_config_path - path to calibration config file.
+    %   calib_config_path - path to calibration config file.
     %
     % Outputs:
-    %   cal_config - struct containing the following fields:
+    %   calib_config - struct containing the following fields:
     %
     %       Calibration board info:    
     %
@@ -52,18 +52,18 @@ function cal_config = load_cal_config(cal_config_path)
     %           for plotting extrinsic parameters.
 
     % Check to make sure config file exists
-    if exist(cal_config_path,'file') == 0
-        error(['Config file: ' cal_config_path ' does not exist.']);
+    if exist(calib_config_path,'file') == 0
+        error(['Config file: ' calib_config_path ' does not exist.']);
     end
     
     % Display contents of config file    
     disp('--------------------------------------------');
     disp('Calibration config file:');
-    type(cal_config_path);
+    type(calib_config_path);
     disp(' ');
     
     % Load config file
-    cal_config = util.read_data(cal_config_path);
+    calib_config = util.read_data(calib_config_path);
     
     % Perform validations on input fields    
     % Calibration board info
@@ -88,10 +88,10 @@ function cal_config = load_cal_config(cal_config_path)
     field_info(end+1) = struct('field','camera_size'                        ,'required',false,'default',eps ,'validation_fun',@validate_pos_num);
     
     % Check to see if any unrecognized fields exist
-    cal_config_fields = fields(cal_config);
-    for i = 1:length(cal_config_fields)
-        if ~any(strcmp(cal_config_fields{i},{field_info.field}))
-            error(['Unrecognized field: "' cal_config_fields{i} '" ' ...
+    calib_config_fields = fields(calib_config);
+    for i = 1:length(calib_config_fields)
+        if ~any(strcmp(calib_config_fields{i},{field_info.field}))
+            error(['Unrecognized field: "' calib_config_fields{i} '" ' ...
                    'in calibration config file.']);
         end        
     end
@@ -99,30 +99,30 @@ function cal_config = load_cal_config(cal_config_path)
     % Validate all inputs
     for i = 1:length(field_info)
         % For optional fields that dont exist, set the default value
-        if ~any(strcmp(field_info(i).field,cal_config_fields))            
+        if ~any(strcmp(field_info(i).field,calib_config_fields))            
             if field_info(i).required
                 error(['Required field: "' field_info(i).field '" was ' ...
                        'not found in calibration config file.']);
             else
                 % This is an optional field; set the default value since it
                 % was not set
-                cal_config.(field_info(i).field) = field_info(i).default;
+                calib_config.(field_info(i).field) = field_info(i).default;
             end            
         end
         
         % Validate field if a validation function was set
         if ~isempty(field_info(i).validation_fun)
-            cal_config = field_info(i).validation_fun(cal_config,field_info(i).field);
+            calib_config = field_info(i).validation_fun(calib_config,field_info(i).field);
         end
     end
 end
 
-% Make all validate_* functions take cal_config and the field, and return
-% the cal_config. This makes things easier.
+% Make all validate_* functions take calib_config and the field, and return
+% the calib_config. This makes things easier.
 
-function cal_config = validate_calibration(cal_config,field)
+function calib_config = validate_calibration(calib_config,field)
     try
-        switch cal_config.(field)
+        switch calib_config.(field)
             case 'four_point_auto'
             case 'four_point_manual'
             otherwise
@@ -133,30 +133,30 @@ function cal_config = validate_calibration(cal_config,field)
     end
 end
 
-function cal_config = validate_string(cal_config,field)
-    if ~ischar(cal_config.(field)) 
+function calib_config = validate_string(calib_config,field)
+    if ~ischar(calib_config.(field)) 
         error(['Field: ' field ' has a value which is not a string.']);
     end
-    cal_config.(field) = cal_config.(field);
+    calib_config.(field) = calib_config.(field);
 end
 
-function cal_config = validate_pos_num(cal_config,field)
-    if ~util.is_pos(cal_config.(field)) 
+function calib_config = validate_pos_num(calib_config,field)
+    if ~util.is_pos(calib_config.(field)) 
         error(['Field: ' field ' has a value which is not a positive number.']);
     end
-    cal_config.(field) = cal_config.(field);
+    calib_config.(field) = calib_config.(field);
 end
 
-function cal_config = validate_pos_int(cal_config,field)
-    if ~util.is_pos(cal_config.(field)) || ~util.is_int(cal_config.(field))
+function calib_config = validate_pos_int(calib_config,field)
+    if ~util.is_pos(calib_config.(field)) || ~util.is_int(calib_config.(field))
         error(['Field: ' field ' has a value which is not a positive integer.']);
     end
-    cal_config.(field) = cal_config.(field);
+    calib_config.(field) = calib_config.(field);
 end
 
-function cal_config = validate_pos_odd_int(cal_config,field)
-    if ~util.is_pos(cal_config.(field)) || ~util.is_int(cal_config.(field)) || util.is_even(cal_config.(field))
+function calib_config = validate_pos_odd_int(calib_config,field)
+    if ~util.is_pos(calib_config.(field)) || ~util.is_int(calib_config.(field)) || util.is_even(calib_config.(field))
         error(['Field: ' field ' has a value which is not a positive odd integer.']);
     end
-    cal_config.(field) = cal_config.(field);
+    calib_config.(field) = calib_config.(field);
 end

@@ -1,4 +1,4 @@
-function [R,t] = init_extrinsic_params(homography,A,board_points_p,cal_config)
+function [R,t] = init_extrinsic_params(homography,A,board_points_p,calib_config)
     % This will compute initial guesses for rotation and translation of a 
     % single calibration board. It will first compute an initial linear 
     % guess and then perform non-linear refinement.
@@ -14,14 +14,14 @@ function [R,t] = init_extrinsic_params(homography,A,board_points_p,cal_config)
     %        0          0       1]
     %   board_points_p - array; Nx2 array of calibration board points in
     %       pixel coordinates.
-    %   cal_config - struct; this is the struct returned by
-    %       util.load_cal_config()
+    %   calib_config - struct; this is the struct returned by
+    %       util.load_calib_config()
     %
     % Outputs:
     %   R - array; 3x3 rotation matrix
     %   t - array; 3x1 translation vector
     
-    if cal_config.verbose > 1
+    if calib_config.verbose > 1
         disp('---');
     end
         
@@ -46,7 +46,7 @@ function [R,t] = init_extrinsic_params(homography,A,board_points_p,cal_config)
     t = H_bar(:,3)./mean([lambda1 lambda2]);
         
     % Perform non-linear refinement --------------------------------------% 
-    if cal_config.verbose > 1
+    if calib_config.verbose > 1
         disp('Refining initial extrinsic parameters...');
     end
     [~,~,R,t] = alg.refine_single_params(A, ...  
@@ -55,7 +55,7 @@ function [R,t] = init_extrinsic_params(homography,A,board_points_p,cal_config)
                                          {t}, ...
                                          {board_points_p}, ...
                                          'extrinsic', ...
-                                         cal_config);
+                                         calib_config);
     R = R{1};
     t = t{1};
 end

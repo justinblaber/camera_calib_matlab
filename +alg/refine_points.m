@@ -1,4 +1,4 @@
-function points_p = refine_points(points_p,cb_img,homography,cal_config)
+function points_p = refine_points(points_p,cb_img,homography,calib_config)
     % This will return refined point coordinates. This uses the technique 
     % of getting the dot product, in a window, of the displacement vector 
     % and gradient, which should be zero for all points within the window.
@@ -8,13 +8,13 @@ function points_p = refine_points(points_p,cb_img,homography,cal_config)
     %   cb_img - class.img; calibration board image
     %   homography - array; 3x3 homography matrix. This is used to compute
     %       the window around each point.
-    %   cal_config - struct; this is the struct returned by
-    %       util.load_cal_config()
+    %   calib_config - struct; this is the struct returned by
+    %       util.load_calib_config()
     %
     % Outputs:
     %   points_p - array; Nx2 array of refined points.
         
-    if cal_config.verbose > 1
+    if calib_config.verbose > 1
         disp('---');
     end
     
@@ -26,11 +26,11 @@ function points_p = refine_points(points_p,cb_img,homography,cal_config)
     cb_gs_dy = alg.array_grad(cb_gs,'y');
                                    
     % Perform iterations until convergence
-    if cal_config.verbose > 1
+    if calib_config.verbose > 1
         disp(['Refining points for: ' cb_img.get_path() '...']);
     end
     for i = 1:size(points_p,1)           
-        for it = 1:cal_config.refine_corner_it_cutoff
+        for it = 1:calib_config.refine_corner_it_cutoff
             % Keep copy of point before updating it        
             point_prev = points_p(i,:);   
             
@@ -39,7 +39,7 @@ function points_p = refine_points(points_p,cb_img,homography,cal_config)
                                                                    homography, ...
                                                                    cb_img.get_width(), ...
                                                                    cb_img.get_height(), ...
-                                                                   cal_config);
+                                                                   calib_config);
                 
             % Refine point
             points_p(i,:) = refine_point_it(cb_gs_dx, ...
@@ -49,12 +49,12 @@ function points_p = refine_points(points_p,cb_img,homography,cal_config)
                                                   
             % Exit if change in distance is small
             diff_norm = norm(point_prev-points_p(i,:));
-            if diff_norm < cal_config.refine_corner_norm_cutoff
+            if diff_norm < calib_config.refine_corner_norm_cutoff
                 break
             end
         end  
-        if cal_config.verbose > 2
-            if it == cal_config.refine_corner_it_cutoff
+        if calib_config.verbose > 2
+            if it == calib_config.refine_corner_it_cutoff
                 warning('iterations hit cutoff before converging!!!');
             else
                 disp(['Iterations: ' num2str(it)]);

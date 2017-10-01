@@ -30,14 +30,13 @@ function [calib,calib_raw] = parse_single_calib(calib_raw,suffix)
     end
     
     % Intrinsics ---------------------------------------------------------%
-    % Store these directly into calib
     [calib.intrin.A, calib_raw] = read_and_remove(calib_raw,['A' suffix]);    
     [calib.intrin.distortion, calib_raw] = read_and_remove(calib_raw,['distortion' suffix]);
     
     % Extrinsics ---------------------------------------------------------%
-    % Read everything first
+    % Read everything
     [cb_img_paths, calib_raw] = read_and_remove(calib_raw,['cb_img' suffix]);
-    cb_imgs = class.img.validate_similar_imgs(cell_check(cb_img_paths));
+    cb_img_paths = cell_check(cb_img_paths);
     [rotations, calib_raw] = read_and_remove(calib_raw,['rotation' suffix]);
     rotations = cell_check(rotations);    
     [translations, calib_raw] = read_and_remove(calib_raw,['translation' suffix]);
@@ -46,23 +45,13 @@ function [calib,calib_raw] = parse_single_calib(calib_raw,suffix)
     board_points_ps = cell_check(board_points_ps); 
     [four_points_ps, calib_raw] = read_and_remove(calib_raw,['four_points_p' suffix]);
     four_points_ps = cell_check(four_points_ps);   
-    [homographies_refine, calib_raw] = read_and_remove(calib_raw,['homography_refine' suffix]);
+    [homographies_refine, calib_raw] = read_and_remove(calib_raw,['homographies_refine' suffix]);
     homographies_refine = cell_check(homographies_refine);
-    
-    % Cycle over everything and store into calib
-    for i = 1:length(cb_imgs)
-        calib.extrin(i).cb_img = cb_imgs(i);
-        calib.extrin(i).rotation = rotations{i};
-        calib.extrin(i).translation = translations{i};
-        calib.extrin(i).four_points_p = four_points_ps{i}';   % Must transpose
-        calib.extrin(i).board_points_p = board_points_ps{i}'; % Must transpose
-        calib.extrin(i).debug.homography_refine = homographies_refine{i};
-    end
 end
 
-function [param, calib_raw] = read_and_remove(calib_raw,field)
-    param = calib_raw.(field);
-    calib_raw = rmfield(calib_raw,field);
+function [param, calib] = read_and_remove(calib,field)
+    param = calib.(field);
+    calib = rmfield(calib,field);
 end
 
 function param = cell_check(param)

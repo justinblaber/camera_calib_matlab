@@ -1,12 +1,12 @@
-function homography_1_2 = homography(points_1, points_2, cal_config)
+function homography_1_2 = homography(points_1, points_2, calib_config)
     % This will compute a homography using non-linear least squares fit 
     % which transforms the points in "perspective 1" to "perspective 2".
     %
     % Inputs:
     %   points_1 - array; Nx2 array of points
     %   points_2 - array; Nx2 array of points
-    %   cal_config - struct; this is the struct returned by
-    %       util.load_cal_config()
+    %   calib_config - struct; this is the struct returned by
+    %       util.load_calib_config()
     %
     % Outputs:
     %   homography_1_2 - array; 3x3 array which transforms the points from 
@@ -15,7 +15,7 @@ function homography_1_2 = homography(points_1, points_2, cal_config)
     % TODO: validate inputs. There must be at least four points? Any other
     % conditions?
         
-    if cal_config.verbose > 2
+    if calib_config.verbose > 2
         disp('---');
     end
     
@@ -55,7 +55,7 @@ function homography_1_2 = homography(points_1, points_2, cal_config)
     res = zeros(2*num_points,1);
     
     % Perform gauss newton iterations until convergence
-    for it = 1:cal_config.homography_it_cutoff
+    for it = 1:calib_config.homography_it_cutoff
         % Form homography from vector
         homography = ones(3,3);
         homography(1:8) = h;
@@ -90,15 +90,15 @@ function homography_1_2 = homography(points_1, points_2, cal_config)
         
         % Exit if change in distance is small
         diff_norm = norm(delta_h); 
-        if cal_config.verbose > 2
+        if calib_config.verbose > 2
             disp(['Homography refinement iteration #: ' num2str(it)]);
             disp(['Difference norm for nonlinear parameter refinement: ' num2str(diff_norm)]);
         end
-        if norm(delta_h) < cal_config.homography_norm_cutoff
+        if norm(delta_h) < calib_config.homography_norm_cutoff
             break
         end
     end    
-    if cal_config.verbose > 2 && it == cal_config.homography_it_cutoff
+    if calib_config.verbose > 2 && it == calib_config.homography_it_cutoff
         warning('Homography iterations hit cutoff before converging!!!');
     end
     

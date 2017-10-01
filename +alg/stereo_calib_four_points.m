@@ -1,4 +1,4 @@
-function [A,distortion,rotations,translations,R_s,t_s,board_points_ps,homographies_refine] = stereo_calibrate(cb_imgs,four_points_ps,cal_config)
+function [A,distortion,rotations,translations,R_s,t_s,board_points_ps,homographies_refine] = stereo_calib_four_points(cb_imgs,four_points_ps,calib_config)
     % Performs stereo calibration (mostly from Zhang's paper, some stuff
     % adapted from Bouguet's toolbox, and some stuff I've added myself) 
     % given calibration board images for the left and right camera, four 
@@ -12,8 +12,8 @@ function [A,distortion,rotations,translations,R_s,t_s,board_points_ps,homographi
     %   four_points_ps - struct; contains:
     %       .L - cell; cell array of four points for the left camera
     %       .R - cell; cell array of four points for the right camera
-    %   cal_config - struct; this is the struct returned by
-    %       util.load_cal_config()
+    %   calib_config - struct; this is the struct returned by
+    %       util.load_calib_config()
     %
     % Outputs:
     %   A - struct; contains:
@@ -60,13 +60,13 @@ function [A,distortion,rotations,translations,R_s,t_s,board_points_ps,homographi
     disp('Calibrating left camera...');    
     [A.L,distortion.L,rotations.L,translations.L,board_points_ps.L,homographies_refine.L] = alg.single_calibrate(cb_imgs.L, ...
                                                                                                                  four_points_ps.L, ...
-                                                                                                                 cal_config);
+                                                                                                                 calib_config);
                                                                   
     disp('---------');
     disp('Calibrating right camera...');  
     [A.R,distortion.R,rotations.R,translations.R,board_points_ps.R,homographies_refine.R] = alg.single_calibrate(cb_imgs.R, ...
                                                                                                                  four_points_ps.R, ...
-                                                                                                                 cal_config);
+                                                                                                                 calib_config);
     % Perform stereo refinement ------------------------------------------%
     % Get least squares linear initial guess for R_s
     r = [];
@@ -107,7 +107,7 @@ function [A,distortion,rotations,translations,R_s,t_s,board_points_ps,homographi
                                                                              R_s, ...
                                                                              t_s, ....
                                                                              'full', ...
-                                                                             cal_config);  
+                                                                             calib_config);  
                                                
     disp('---');                           
     disp('Stereo refined intrinsic params (left): ')

@@ -1,4 +1,4 @@
-function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,distortion,rotations,translations,board_points_ps,R_s,t_s,type,cal_config)
+function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,distortion,rotations,translations,board_points_ps,R_s,t_s,type,calib_config)
     % This will compute nonlinear refinement of intrinsic and extrinsic
     % camera parameters for both left and right cameras.
     %
@@ -28,8 +28,8 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     %       left camera to the right camera
     %   type - string; 
     %       'full' - Attempts to do full calibration
-    %   cal_config - struct; this is the struct returned by
-    %       util.load_cal_config()
+    %   calib_config - struct; this is the struct returned by
+    %       util.load_calib_config()
     %
     % Outputs:
     %   A - struct; contains:
@@ -56,7 +56,7 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     disp('---');
               
     % Get board points in world coordinates
-    board_points_w = alg.cb_points(cal_config);
+    board_points_w = alg.cb_points(calib_config);
     
     % Get number of boards, points, and parameters
     num_boards = length(board_points_ps.L);
@@ -122,7 +122,7 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     end  
     
     % Perform gauss newton iteration(s)    
-    for it = 1:cal_config.refine_param_it_cutoff      
+    for it = 1:calib_config.refine_param_it_cutoff      
         % Get intrinsic parameters
         % left
         A_L = [p(1) 0    p(3);
@@ -241,11 +241,11 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
         disp(['Iteration #: ' num2str(it)]);
         disp(['Difference norm for nonlinear parameter refinement: ' num2str(norm_delta_p)]);
         disp(['Norm of residual: ' num2str(norm_res)]);
-        if norm(delta_p) < cal_config.refine_param_norm_cutoff
+        if norm(delta_p) < calib_config.refine_param_norm_cutoff
             break
         end
     end    
-    if it == cal_config.refine_param_it_cutoff
+    if it == calib_config.refine_param_it_cutoff
         warning('iterations hit cutoff before converging!!!');
     end
         

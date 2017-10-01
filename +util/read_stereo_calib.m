@@ -1,4 +1,4 @@
-function [cb_imgs,board_points_ps,four_points_ps,A,distortion,rotations,translations,R_s,t_s,homographies_refine,cal_config] = read_stereo_calib(file_path)
+function [cb_imgs,board_points_ps,four_points_ps,A,distortion,rotations,translations,R_s,t_s,homographies_refine,calib_config] = read_stereo_calib(file_path)
     % Reads stereo calibration file
     %
     % Inputs:
@@ -41,8 +41,8 @@ function [cb_imgs,board_points_ps,four_points_ps,A,distortion,rotations,translat
     %       .R - cell; cell array of homographies used for subpixel 
     %           checkerboard corner refinement for the right camera image. 
     %           Used for debugging.
-    %   cal_config - struct; this is the struct returned by
-    %       util.load_cal_config()
+    %   calib_config - struct; this is the struct returned by
+    %       util.load_calib_config()
                    
     % TODO: add checks to validate file
     
@@ -64,8 +64,8 @@ function [cb_imgs,board_points_ps,four_points_ps,A,distortion,rotations,translat
     [R_s,calib] = read_and_remove(calib,'R_s');
     [t_s,calib] = read_and_remove(calib,'t_s');
     
-    % The remainder is cal_config
-    cal_config = calib;
+    % The remainder is calib_config
+    calib_config = calib;
 end
 
 function [param, calib] = read_and_remove(calib,field)

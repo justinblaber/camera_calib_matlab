@@ -1,4 +1,4 @@
-function [A,distortion,rotations,translations] = refine_single_params(A,distortion,rotations,translations,board_points_ps,type,cal_config)
+function [A,distortion,rotations,translations] = refine_single_params(A,distortion,rotations,translations,board_points_ps,type,calib_config)
     % This will compute nonlinear refinement of intrinsic and extrinsic
     % camera parameters.
     %
@@ -19,8 +19,8 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
     %       'intrisic' - Only camera parameters (A and distortion) are 
     %           optimized
     %       'full' - Attempts to do full calibration
-    %   cal_config - struct; this is the struct returned by
-    %       util.load_cal_config()
+    %   calib_config - struct; this is the struct returned by
+    %       util.load_calib_config()
     %
     % Outputs:
     %   A - array; optimized A
@@ -32,12 +32,12 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
           
     % TODO: make sure rotations and translations have the same length
         
-    if cal_config.verbose > 1    
+    if calib_config.verbose > 1    
         disp('---');
     end
     
     % Get board points in world coordinates
-    board_points_w = alg.cb_points(cal_config);
+    board_points_w = alg.cb_points(calib_config);
     
     % Get number of boards and number of points
     num_boards = length(board_points_ps);
@@ -92,7 +92,7 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
     end  
     
     % Perform gauss newton iteration(s)    
-    for it = 1:cal_config.refine_param_it_cutoff        
+    for it = 1:calib_config.refine_param_it_cutoff        
         % Get intrinsic parameters
         A = [p(1) 0    p(3);
              0    p(2) p(4);
@@ -143,16 +143,16 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
         
         % Exit if change in distance is small
         norm_delta_p = norm(delta_p);          
-        if cal_config.verbose > 1 
+        if calib_config.verbose > 1 
             disp(['Iteration #: ' num2str(it)]);
             disp(['Difference norm for nonlinear parameter refinement: ' num2str(norm_delta_p)]);
             disp(['Norm of residual: ' num2str(norm_res)]);
         end
-        if norm(delta_p) < cal_config.refine_param_norm_cutoff
+        if norm(delta_p) < calib_config.refine_param_norm_cutoff
             break
         end
     end    
-    if cal_config.verbose > 1 && it == cal_config.refine_param_it_cutoff
+    if calib_config.verbose > 1 && it == calib_config.refine_param_it_cutoff
         warning('iterations hit cutoff before converging!!!');
     end
         

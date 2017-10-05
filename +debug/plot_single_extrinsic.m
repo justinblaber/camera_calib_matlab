@@ -11,6 +11,7 @@ function plot_single_extrinsic(rotations,translations,colors,alphas,calib_config
         f = figure(); 
         a = axes(f);
     end
+    cla(a);
         
     % Hold
     hold(a,'on');

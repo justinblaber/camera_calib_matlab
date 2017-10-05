@@ -4,7 +4,7 @@ function [board_points_w, four_points_w] = cb_points(calib_config)
     %
     % Inputs:
     %   calib_config - struct; this is the struct returned by
-    %       util.load_calib_config()
+    %       util.read_calib_config()
     %
     % Outputs:
     %   board_points_w - array; Nx2 array of calibration board points in 

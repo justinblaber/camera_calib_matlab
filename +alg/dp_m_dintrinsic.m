@@ -14,7 +14,7 @@ function jacob = dp_m_dintrinsic(A,distortion,R,t,points_w)
     %   points_w - array; Nx2 array of points in world coordinates
     %
     % Outputs:
-    %   jacob - array; 2*num_pointsx8 array. 
+    %   jacob - array; 2*Nx8 array. 
     %       Format of jacobian is:
     %
     %               dalpha_x dalpha_y dx_o dy_o dbeta_1 dbeta_2 dbeta_3 dbeta_4

@@ -9,7 +9,7 @@ function [win_points_p, win_point_weights, win_point_corners_p] = refine_window_
     %   width - scalar; width of the calibration board image
     %   height - scalar; height of the calibration board image
     %   calib_config - struct; this is the struct returned by
-    %       util.load_calib_config()
+    %       util.read_calib_config()
     %
     % Outputs:
     %   win_points_p - array; points of refinement window in pixel

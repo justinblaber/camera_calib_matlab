@@ -16,7 +16,7 @@ function jacob = dp_m_dextrinsic(A,distortion,R,t,dRt_dm,points_w)
     %   points_w - array; Nx2 array of points in world coordinates
     %
     % Outputs:
-    %   jacob - array; 2*num_pointsx6 array. 
+    %   jacob - array; 2*Nx6 array. 
     %       Format of jacobian is:
     %
     %               dtheta_x dtheta_y dtheta_z dtx dty dtz

@@ -16,114 +16,72 @@ cb_img_paths.R = {'images/right01.jpg', ...
 % Validate all calibration board images
 cb_imgs.L = class.img.validate_similar_imgs(cb_img_paths.L);
 cb_imgs.R = class.img.validate_similar_imgs(cb_img_paths.R);
-                     
+
 %% Load calibration config file
-calib_config = util.load_calib_config('configs/stereo.conf');
+calib_config = util.read_calib_config('configs/stereo.conf');
 
 %% Get four points in pixel coordinates per calibration board image
-four_points_ps.L = {};
-four_points_ps.R = {};
-switch calib_config.calibration
-    case 'four_point_auto'
-        error('Automatic four point detection has not been implemented yet');
-    case 'four_point_manual'
-        % Four points are selected manually; Do refinement of four points 
-        % here since automatic detection may not be on corners.
-        [~, four_points_w] = alg.cb_points(calib_config);
+four_points_ps.L{1} = [245.4038  95.1070
+                       249.9282  254.6160
+                       478.6004  87.1966
+                       476.3041  265.6548];                            
+four_points_ps.R{1} = [128.7735  111.3728
+                       136.6242  266.9293
+                       345.0131  95.2422
+                       346.9742  278.7228];
 
-        four_points_ps.L{1} = [244 94;
-                               249 254;
-                               479 86;
-                               476 264];                            
-        four_points_ps.R{1} = [128 110;
-                               137 266;
-                               346 94;
-                               347 278];
-       
-        four_points_ps.L{2} = [251 127;
-                               526 182;
-                               257 359;
-                               439 397];
-        four_points_ps.R{2} = [71 148;
-                               324 191;
-                               128 367;
-                               301 411];
-        
-        four_points_ps.L{3} = [279 72;
-                               189 257;
-                               564 154;
-                               499 375];
-        four_points_ps.R{3} = [134 89;
-                               42 270;
-                               403 160;
-                               314 392];
-                           
-        four_points_ps.L{4} = [189 131;
-                               180 327;
-                               471 110;
-                               476 338]; 
-        four_points_ps.R{4} = [59 149;
-                               48 337;
-                               309 120;
-                               306 353];
-               
-        four_points_ps.L{5} = [242 98;
-                               437 49;
-                               280 378;
-                               544 313]; 
-        four_points_ps.R{5} = [103 114;
-                               289 58;
-                               99 384;
-                               351 330];
-                           
-        % Refine
-        for i = 1:length(cb_imgs.L)
-            four_points_ps.L{i} = alg.refine_points(four_points_ps.L{i}, ...
-                                                    cb_imgs.L(i), ...
-                                                    alg.homography(four_points_w,four_points_ps.L{i},calib_config), ...
-                                                    calib_config);  
-            four_points_ps.R{i} = alg.refine_points(four_points_ps.R{i}, ...
-                                                    cb_imgs.R(i), ...
-                                                    alg.homography(four_points_w,four_points_ps.R{i},calib_config), ...
-                                                    calib_config);   
-        end   
-end
+four_points_ps.L{2} = [252.0843  128.9690
+                       524.5152  182.0328
+                       257.1694  358.2938
+                       438.8563  397.7544];
+four_points_ps.R{2} = [71.4858   148.5386
+                       323.8698  192.3194
+                       128.0974  367.5743
+                       300.7801  412.2106];
+
+four_points_ps.L{3} = [278.1340  73.1726
+                       188.3629  258.4665
+                       563.2866  154.6281
+                       498.8266  375.6217];
+four_points_ps.R{3} = [134.1454  90.5307
+                       42.7467   270.7947
+                       403.1969  161.8248
+                       314.5314  392.5653];
+
+four_points_ps.L{4} = [189.5038  131.6406
+                       180.3775  329.1699
+                       471.2737  111.2002
+                       476.1010  339.2265]; 
+four_points_ps.R{4} = [59.3682   149.9321
+                       47.9803   337.7430
+                       308.5367  120.6371
+                       305.7566  354.4247];
+
+four_points_ps.L{5} = [241.9079  98.0027
+                       437.3147  50.8201
+                       280.5987  379.7500
+                       543.3684  314.8763]; 
+four_points_ps.R{5} = [102.6426  116.3835
+                       289.0113  60.3427
+                       98.5459   386.5158
+                       352.2258  331.3822];
 
 %% Perform stereo calibration
-[A,distortion,rotations,translations,R_s,t_s,board_points_ps,homographies_refine] = alg.stereo_calibrate(cb_imgs, ...
-                                                                                                         four_points_ps, ...
-                                                                                                         calib_config);
+[calib,R_s,t_s] = alg.stereo_calib_four_points(cb_imgs, ...
+                                               four_points_ps, ...
+                                               calib_config);
                 
 %% Save calibration
-util.write_stereo_calib(cb_imgs, ...
-                        board_points_ps, ...
-                        four_points_ps, ...
-                        A, ...
-                        distortion, ...
-                        rotations, ...
-                        translations, ...
+util.write_stereo_calib(calib, ...
                         R_s, ...
                         t_s, ...
-                        homographies_refine, ...
-                        calib_config, ...
                         'calibrations/stereo1.txt');
                     
 %% Read calibration
 clear;
 
-[cb_imgs,board_points_ps,four_points_ps,A,distortion,rotations,translations,R_s,t_s,homographies_refine,calib_config] = util.read_stereo_calib('calibrations/stereo1.txt');
+[calib,R_s,t_s] = util.read_stereo_calib('calibrations/stereo1.txt');
 
 %% Debug with stereo gui
 f = figure(2);
-debug.gui_stereo(cb_imgs, ...
-                 board_points_ps, ...
-                 four_points_ps, ...
-                 A, ...
-                 distortion, ...
-                 rotations, ...
-                 translations, ...
-                 R_s, ...
-                 t_s, ...
-                 homographies_refine, ...
-                 calib_config, ...
-                 f);
+debug.gui_stereo_calib(calib,R_s,t_s,f);

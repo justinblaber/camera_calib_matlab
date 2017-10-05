@@ -5,7 +5,7 @@ function write_single_calib(calib,file_path,suffix,append_calib)
     % Inputs:
     %   calib - struct; contains:
     %       .config - struct; this is the struct returned by
-    %           util.load_calib_config()
+    %           util.read_calib_config()
     %       .intrin.A - array; optimized camera matrix
     %       .intrin.distortion - array; optimized distortions (radial and
     %           tangential) stored as: 
@@ -13,6 +13,8 @@ function write_single_calib(calib,file_path,suffix,append_calib)
     %       .extrin(i).cb_img - class.img; ith calibration board image
     %       .extrin(i).rotation - array; ith optimized rotation
     %       .extrin(i).translation - array; ith optimized translation
+    %       .extrin(i).four_points_p - array; ith array of four points
+    %           around calibration board in pixel coordinates.
     %       .extrin(i).board_points_p - array; ith array of optimized 
     %           subpixel calibration board points in pixel coordinates.
     %       .extrin(i).debug.homography_refine - array; ith homography used
@@ -21,9 +23,9 @@ function write_single_calib(calib,file_path,suffix,append_calib)
     %   suffix - string; optional suffix to add to names.
     %   append_calib - logical; optional parameter to append another
     %       calibration to output file. If defined and set to true, this
-    %       will append the calibration but skip the calib_config, as it is
+    %       will append the calibration but skip calib.config, as it is
     %       assumed it is getting appended to another calibration output 
-    %       and that the calib_configs are the same.
+    %       and that the calib.config's are the same.
     
     if ~exist('suffix','var')
         suffix = '';
@@ -67,10 +69,10 @@ function write_single_calib(calib,file_path,suffix,append_calib)
     for i = 1:length(calib.extrin)
         util.write_comment(['Calibration' suffix ' ' num2str(i)],file_path);
         util.write_string(calib.extrin(i).cb_img.get_path(),['cb_img' suffix],file_path);
-        util.write_array(calib.extrin(i).board_points_p',['board_points_p' suffix],file_path);
-        util.write_array(calib.extrin(i).four_points_p',['four_points_p' suffix],file_path);
         util.write_array(calib.extrin(i).rotation,['rotation' suffix],file_path);
         util.write_array(calib.extrin(i).translation,['translation' suffix],file_path);
+        util.write_array(calib.extrin(i).four_points_p',['four_points_p' suffix],file_path);
+        util.write_array(calib.extrin(i).board_points_p',['board_points_p' suffix],file_path);
         util.write_array(calib.extrin(i).debug.homography_refine,['homography_refine' suffix],file_path);
         util.write_newline(file_path);
     end

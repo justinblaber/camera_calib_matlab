@@ -8,12 +8,12 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config)
     %   cb_imgs - class.img; Mx1 calibration board images
     %   four_points_ps - cell; Mx1 cell array of four points
     %   calib_config - struct; this is the struct returned by
-    %       util.load_calib_config()
+    %       util.read_calib_config()
     %
     % Outputs:
     %   calib - struct; contains:
     %       .config - struct; this is the struct returned by
-    %           util.load_calib_config()
+    %           util.read_calib_config()
     %       .intrin.A - array; optimized camera matrix
     %       .intrin.distortion - array; optimized distortions (radial and
     %           tangential) stored as: 
@@ -21,6 +21,8 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config)
     %       .extrin(i).cb_img - class.img; ith calibration board image
     %       .extrin(i).rotation - array; ith optimized rotation
     %       .extrin(i).translation - array; ith optimized translation
+    %       .extrin(i).four_points_p - array; ith array of four points
+    %           around calibration board in pixel coordinates.
     %       .extrin(i).board_points_p - array; ith array of optimized 
     %           subpixel calibration board points in pixel coordinates.
     %       .extrin(i).debug.homography_refine - array; ith homography used
@@ -40,8 +42,8 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config)
                                          calib_config); %#ok<AGROW>
     end
 
-    % Get sub-pixel board points in pixel coordinates --------------------%
-    % Use homography to initialize board points
+    % Get sub-pixel board points -----------------------------------------%
+    % Use homography to initialize
     board_points_ps = {};
     for i = 1:length(cb_imgs)
         board_points_ps{i} = alg.apply_homography(homographies{i}, ...
@@ -70,7 +72,6 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config)
                                   cb_imgs(1).get_width(), ...
                                   cb_imgs(1).get_height()); 
                               
-    % Display initial intrinsic params for debugging purposes
     disp('---');
     disp('Initial intrinsic params: ')
     disp(A)

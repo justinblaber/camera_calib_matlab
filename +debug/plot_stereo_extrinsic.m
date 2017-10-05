@@ -17,8 +17,8 @@ function plot_stereo_extrinsic(rotations,translations,R_s,t_s,colors,alphas,cali
     hold(a,'on');
 
     % Plot checker boards
-    % Note that xform is applied to get the checkerboard in the coordinates of 
-    % the left camera
+    % Note that xform is applied to get the checkerboard in the coordinates
+    % of the left camera
     height_offset = (calib_config.four_point_height-calib_config.num_squares_height*calib_config.square_size)/2;
     width_offset = (calib_config.four_point_width-calib_config.num_squares_width*calib_config.square_size)/2;
     for i = 1:length(rotations.L)    

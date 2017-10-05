@@ -1,4 +1,4 @@
-function calib_config = load_calib_config(calib_config_path)
+function calib_config = read_calib_config(calib_config_path)
     % Reads the calibration config file given in calib_config_path. 
     % Outputs a struct containing calibration related info.
     % 

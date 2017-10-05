@@ -14,8 +14,8 @@ cb_img_paths = {'images/Image1.tif', ...
 % Validate all calibration board images
 cb_imgs = class.img.validate_similar_imgs(cb_img_paths);
                      
-%% Load calibration config file
-calib_config = util.load_calib_config('configs/single.conf');
+%% Read calibration config
+calib_config = util.read_calib_config('configs/single.conf');
 
 %% Get four points in pixel coordinates per calibration board image
 four_points_ps{1} = [168.7272  179.7808

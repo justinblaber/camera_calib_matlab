@@ -17,6 +17,8 @@ function [calib,calib_raw] = parse_single_calib(calib_raw,suffix)
     %       .extrin(i).cb_img - class.img; ith calibration board image
     %       .extrin(i).rotation - array; ith optimized rotation
     %       .extrin(i).translation - array; ith optimized translation
+    %       .extrin(i).four_points_p - array; ith array of four points
+    %           around calibration board in pixel coordinates.
     %       .extrin(i).board_points_p - array; ith array of optimized 
     %           subpixel calibration board points in pixel coordinates.
     %       .extrin(i).debug.homography_refine - array; ith homography used
@@ -42,10 +44,10 @@ function [calib,calib_raw] = parse_single_calib(calib_raw,suffix)
     rotations = cell_check(rotations);    
     [translations, calib_raw] = read_and_remove(calib_raw,['translation' suffix]);
     translations = cell_check(translations);
-    [board_points_ps, calib_raw] = read_and_remove(calib_raw,['board_points_p' suffix]);
-    board_points_ps = cell_check(board_points_ps); 
     [four_points_ps, calib_raw] = read_and_remove(calib_raw,['four_points_p' suffix]);
     four_points_ps = cell_check(four_points_ps);   
+    [board_points_ps, calib_raw] = read_and_remove(calib_raw,['board_points_p' suffix]);
+    board_points_ps = cell_check(board_points_ps); 
     [homographies_refine, calib_raw] = read_and_remove(calib_raw,['homography_refine' suffix]);
     homographies_refine = cell_check(homographies_refine);
     

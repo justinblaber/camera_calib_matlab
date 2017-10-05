@@ -6,7 +6,7 @@ function homography_1_2 = homography(points_1, points_2, calib_config)
     %   points_1 - array; Nx2 array of points
     %   points_2 - array; Nx2 array of points
     %   calib_config - struct; this is the struct returned by
-    %       util.load_calib_config()
+    %       util.read_calib_config()
     %
     % Outputs:
     %   homography_1_2 - array; 3x3 array which transforms the points from 

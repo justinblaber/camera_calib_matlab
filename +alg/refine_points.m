@@ -9,7 +9,7 @@ function points_p = refine_points(points_p,cb_img,homography,calib_config)
     %   homography - array; 3x3 homography matrix. This is used to compute
     %       the window around each point.
     %   calib_config - struct; this is the struct returned by
-    %       util.load_calib_config()
+    %       util.read_calib_config()
     %
     % Outputs:
     %   points_p - array; Nx2 array of refined points.

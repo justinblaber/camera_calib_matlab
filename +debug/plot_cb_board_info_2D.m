@@ -9,14 +9,14 @@ function plot_cb_board_info_2D(calib_config,a)
     cla(a);
     
     % Get board points in world coordinates
-    [board_points, four_points] = alg.cb_points(calib_config);
+    [board_points_w, four_points_w] = alg.cb_points(calib_config);
     
     % Format axes
     padding = calib_config.square_size/2;
     axis(a,'equal');
     set(a,'Ydir','reverse', ...
-        'Xlim',[min(four_points(:,1))-padding, max(four_points(:,1)) + padding], ...        
-        'Ylim',[min(four_points(:,2))-padding, max(four_points(:,2)) + padding]);  
+        'Xlim',[min(four_points_w(:,1))-padding, max(four_points_w(:,1)) + padding], ...        
+        'Ylim',[min(four_points_w(:,2))-padding, max(four_points_w(:,2)) + padding]);  
     hold(a,'on');
     
     % Plot patches
@@ -64,15 +64,15 @@ function plot_cb_board_info_2D(calib_config,a)
          'FontWeight','bold','parent',a);
     
     % Plot board points    
-    plot(board_points(:,1),board_points(:,2),'gs','MarkerSize',12, ...
+    plot(board_points_w(:,1),board_points_w(:,2),'gs','MarkerSize',12, ...
          'MarkerFaceColor','w','parent',a);
-    text(board_points(:,1),board_points(:,2),cellstr(num2str([1:size(board_points,1)]')), ...
+    text(board_points_w(:,1),board_points_w(:,2),cellstr(num2str([1:size(board_points_w,1)]')), ...
          'FontSize',6,'HorizontalAlignment','center','color','k','parent',a); %#ok<NBRAK>
     
     % Plot four points 
-    plot(four_points(:,1),four_points(:,2),'bo','MarkerSize',14, ...
+    plot(four_points_w(:,1),four_points_w(:,2),'bo','MarkerSize',14, ...
          'MarkerFaceColor','w','LineWidth',1.5,'parent',a);
-    text(four_points(:,1),four_points(:,2),cellstr(num2str([1:4]')), ...
+    text(four_points_w(:,1),four_points_w(:,2),cellstr(num2str([1:4]')), ...
          'FontSize',8,'HorizontalAlignment','center','parent',a); %#ok<NBRAK>    
      
     % Remove hold

@@ -2,55 +2,46 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     % This will compute nonlinear refinement of intrinsic and extrinsic
     % camera parameters for both left and right cameras.
     %
-    % Inputs: 
-    %   A - struct; contains:
-    %       .L - array; camera matrix for the left camera
-    %       .R - array; camera matrix for the right camera
+    % Inputs:
+    %	A - struct; contains:
+    %       .L and .R - array; initial guess of camera matrix containing:
+    %           [alpha    0       x_o;
+    %            0        alpha   y_o;
+    %            0        0       1]
     %   distortion - struct; contains:
-    %       .L - array; 4x1 array of distortions for the left camera
-    %       .R - array; 4x1 array of distortions for the right camera
-    %       stored as: 
+    %       .L and .R - array; initial guess of distortions (radial and 
+    %           tangential) stored as: 
     %           [beta1; beta2; beta3; beta4]  
     %   rotations - struct; contains:
-    %       .L - cell; rotations for the left camera
-    %       .R - cell; rotations for the right camera
+    %       .L and .R - cell; Mx1 initial guesses of rotations
     %   translations - struct; contains:
-    %       .L - cell; translations for the left camera
-    %       .R - cell; translations for the right camera
+    %       .L and .R - cell; Mx1 initial guesses of translations
     %   board_points_ps - struct; contains:
-    %       .L - cell; cell array of calibration board points for the left 
-    %           camera.
-    %       .R - cell; cell array of calibration board points for the right
-    %           camera.
-    %   R_s - array; 3x3 rotation matrix describing rotation from the left
-    %       camera to the right camera
-    %   t_s - array; 3x1 translation vector describing translation from the
+    %       .L and .R - cell; Mx1 of optimized subpixel calibration 
+    %           board points in pixel coordinates.
+    %   R_s - array; initial guess of rotation describing rotation from the 
     %       left camera to the right camera
+    %   t_s - array; initial guess of translation describing translation 
+    %       from the left camera to the right camera
     %   type - string; 
     %       'full' - Attempts to do full calibration
     %   calib_config - struct; this is the struct returned by
-    %       util.load_calib_config()
+    %       util.read_calib_config()
     %
     % Outputs:
-    %   A - struct; contains:
-    %       .L - array; optimized camera matrix for the left camera
-    %       .R - array; optimized camera matrix for the right camera
+    %	A - struct; contains:
+    %       .L and .R - array; optimized camera matrix
     %   distortion - struct; contains:
-    %       .L - array; 4x1 array of optimized distortions for the left
-    %           camera
-    %       .R - array; 4x1 array of optimized distortions for the right
-    %           camera
-    %       stored as: 
+    %       .L and .R - array; optimized distortions (radial and 
+    %           tangential) stored as: 
     %           [beta1; beta2; beta3; beta4]  
     %   rotations - struct; contains:
-    %       .L - cell; optimized rotations for the left camera
-    %       .R - cell; optimized rotations for the right camera
+    %       .L and .R - cell; Mx1 optimized rotations
     %   translations - struct; contains:
-    %       .L - cell; optimized translations for the left camera
-    %       .R - cell; optimized translations for the right camera
-    %   R_s - array; 3x3 rotation matrix describing rotation from the left
+    %       .L and .R - cell; Mx1 optimized translations
+    %   R_s - array; optimized rotation describing rotation from the left 
     %       camera to the right camera
-    %   t_s - array; 3x1 translation vector describing translation from the
+    %   t_s - array; optimized translation describing translation from the 
     %       left camera to the right camera
     
     disp('---');

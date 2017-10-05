@@ -1,4 +1,4 @@
-function [A,distortion,rotations,translations,R_s,t_s,board_points_ps,homographies_refine] = stereo_calib_four_points(cb_imgs,four_points_ps,calib_config)
+function [calib,R_s,t_s] = stereo_calib_four_points(cb_imgs,four_points_ps,calib_config)
     % Performs stereo calibration (mostly from Zhang's paper, some stuff
     % adapted from Bouguet's toolbox, and some stuff I've added myself) 
     % given calibration board images for the left and right camera, four 
@@ -7,47 +7,34 @@ function [A,distortion,rotations,translations,R_s,t_s,board_points_ps,homographi
     %
     % Inputs:
     %   cb_imgs - struct; contains:
-    %       .L - class.img; calibration board images for the left camera
-    %       .R - class.img; calibration board images for the right camera
+    %       .L and .R - class.img; Mx1 calibration board images
     %   four_points_ps - struct; contains:
-    %       .L - cell; cell array of four points for the left camera
-    %       .R - cell; cell array of four points for the right camera
+    %       .L and .R - cell; Mx1 cell array of four points
     %   calib_config - struct; this is the struct returned by
-    %       util.load_calib_config()
+    %       util.read_calib_config()
     %
     % Outputs:
-    %   A - struct; contains:
-    %       .L - array; optimized camera matrix for the left camera
-    %       .R - array; optimized camera matrix for the right camera
-    %   distortion - struct; contains:
-    %       .L - array; 4x1 array of optimized distortions for the left
-    %           camera
-    %       .R - array; 4x1 array of optimized distortions for the right
-    %           camera
-    %       stored as: 
-    %           [beta1; beta2; beta3; beta4]  
-    %   rotations - struct; contains:
-    %       .L - cell; optimized rotations for the left camera
-    %       .R - cell; optimized rotations for the right camera
-    %   translations - struct; contains:
-    %       .L - cell; optimized translations for the left camera
-    %       .R - cell; optimized translations for the right camera
-    %   R_s - array; 3x3 rotation matrix describing rotation from the left
+    %   calib - struct; contains:
+    %       .L and .R - struct; contains:
+    %           .config - struct; this is the struct returned by
+    %               util.read_calib_config()
+    %           .intrin.A - array; optimized camera matrix
+    %           .intrin.distortion - array; optimized distortions (radial 
+    %               and tangential) stored as: 
+    %               [beta1; beta2; beta3; beta4]  
+    %           .extrin(i).cb_img - class.img; ith calibration board image
+    %           .extrin(i).rotation - array; ith optimized rotation
+    %           .extrin(i).translation - array; ith optimized translation
+    %           .extrin(i).four_points_p - array; ith array of four points
+    %               around calibration board in pixel coordinates.
+    %           .extrin(i).board_points_p - array; ith array of optimized 
+    %               subpixel calibration board points in pixel coordinates.
+    %           .extrin(i).debug.homography_refine - array; ith homography 
+    %               used for subpixel checkerboard corner refinement.
+    %   R_s - array; optimized rotation describing rotation from the left 
     %       camera to the right camera
-    %   t_s - array; 3x1 translation vector describing translation from the
+    %   t_s - array; optimized translation describing translation from the 
     %       left camera to the right camera
-    %   board_points_ps - struct; contains:
-    %       .L - cell; cell array of optimized subpixel calibration board 
-    %           points for the left camera.
-    %       .R - cell; cell array of optimized subpixel calibration board 
-    %           points for the right camera.
-    %   homographies_refine - struct; contains:
-    %       .L - cell; cell array of homographies used for subpixel 
-    %           checkerboard corner refinement for the left camera image. 
-    %           Used for debugging.
-    %       .R - cell; cell array of homographies used for subpixel 
-    %           checkerboard corner refinement for the right camera image. 
-    %           Used for debugging.
                                                
     disp('--------------------------------------------'); 
     disp('Performing stereo calibration...');     
@@ -58,15 +45,28 @@ function [A,distortion,rotations,translations,R_s,t_s,board_points_ps,homographi
     % Perform single calibration on the left and right camera ------------%                                                                
     disp('---------');
     disp('Calibrating left camera...');    
-    [A.L,distortion.L,rotations.L,translations.L,board_points_ps.L,homographies_refine.L] = alg.single_calibrate(cb_imgs.L, ...
-                                                                                                                 four_points_ps.L, ...
-                                                                                                                 calib_config);
+    calib.L = alg.single_calib_four_points(cb_imgs.L, ...
+                                           four_points_ps.L, ...
+                                           calib_config);
                                                                   
     disp('---------');
     disp('Calibrating right camera...');  
-    [A.R,distortion.R,rotations.R,translations.R,board_points_ps.R,homographies_refine.R] = alg.single_calibrate(cb_imgs.R, ...
-                                                                                                                 four_points_ps.R, ...
-                                                                                                                 calib_config);
+    calib.R = alg.single_calib_four_points(cb_imgs.R, ...
+                                           four_points_ps.R, ...
+                                           calib_config);
+                           
+    % Repackage initial guesses and other parameters ---------------------%
+    A.L = calib.L.intrin.A;
+    A.R = calib.R.intrin.A;
+    distortion.L = calib.L.intrin.distortion;
+    distortion.R = calib.R.intrin.distortion;
+    rotations.L = {calib.L.extrin.rotation};
+    rotations.R = {calib.R.extrin.rotation};
+    translations.L = {calib.L.extrin.translation};
+    translations.R = {calib.R.extrin.translation};
+    board_points_ps.L = {calib.L.extrin.board_points_p};
+    board_points_ps.R = {calib.R.extrin.board_points_p};
+                               
     % Perform stereo refinement ------------------------------------------%
     % Get least squares linear initial guess for R_s
     r = [];
@@ -93,7 +93,7 @@ function [A,distortion,rotations,translations,R_s,t_s,board_points_ps,homographi
         T = vertcat(T,eye(3)); %#ok<AGROW>
     end
 
-    % Get leasts squares approximation
+    % Get least squares approximation
     t_s = pinv(T)*t;
 
     % Perform nonlinear refinement of all parameters ---------------------%
@@ -108,10 +108,23 @@ function [A,distortion,rotations,translations,R_s,t_s,board_points_ps,homographi
                                                                              t_s, ....
                                                                              'full', ...
                                                                              calib_config);  
-                                               
+    
     disp('---');                           
-    disp('Stereo refined intrinsic params (left): ')
-    disp(A.L)            
-    disp('Stereo refined intrinsic params (right): ')
-    disp(A.R) 
+    disp('Stereo refined intrinsic params (left): ');
+    disp(A.L);
+    disp('Stereo refined intrinsic params (right): ');
+    disp(A.R);
+    
+    % Repackage outputs --------------------------------------------------%
+    % Only need to redo outputs of refine_stereo_params
+    calib.L.intrin.A = A.L;
+    calib.R.intrin.A = A.R;
+    calib.L.intrin.distortion = distortion.L;
+    calib.R.intrin.distortion = distortion.R;
+    for i = 1:num_boards
+        calib.L.extrin(i).rotation = rotations.L{i};
+        calib.R.extrin(i).rotation = rotations.R{i};
+        calib.L.extrin(i).translation = translations.L{i};
+        calib.R.extrin(i).translation = translations.R{i};
+    end
 end

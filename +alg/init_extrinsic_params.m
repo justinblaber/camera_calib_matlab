@@ -15,7 +15,7 @@ function [R,t] = init_extrinsic_params(homography,A,board_points_p,calib_config)
     %   board_points_p - array; Nx2 array of calibration board points in
     %       pixel coordinates.
     %   calib_config - struct; this is the struct returned by
-    %       util.load_calib_config()
+    %       util.read_calib_config()
     %
     % Outputs:
     %   R - array; 3x3 rotation matrix

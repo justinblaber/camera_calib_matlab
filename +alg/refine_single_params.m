@@ -3,32 +3,32 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
     % camera parameters.
     %
     % Inputs:    
-    %   A - array; 3x3 array containing:
-    %       [alpha_x    0       x_o;
-    %        0          alpha_y y_o;
-    %        0          0       1]    
-    %   distortion - array; 4x1 array of distortions (radial and 
+    %	A - array; initial guess of camera matrix containing:
+    %           [alpha    0       x_o;
+    %            0        alpha   y_o;
+    %            0        0       1]
+    %   distortion - array; initial guess of distortions (radial and 
     %       tangential) stored as: 
-    %       [beta_1; beta_2; beta_3; beta_4]
-    %   rotations - cell; Mx1 cell array containing 3x3 rotation matrices
-    %   translations - cell; Mx1 cell array containing 3x1 translation
-    %       vectors
-    %   board_points_ps - cell; Mx1 cell array of calibration board points 
+    %       [beta1; beta2; beta3; beta4]  
+    %   rotations - cell; Mx1 initial guesses of rotations
+    %   translations - cell; Mx1 initial guesses of translations
+    %   board_points_ps - cell; Mx1 of optimized subpixel calibration 
+    %       board points in pixel coordinates.
     %   type - string; 
     %       'extrinsic' - Only rotations and translations are optimized
     %       'intrisic' - Only camera parameters (A and distortion) are 
     %           optimized
     %       'full' - Attempts to do full calibration
     %   calib_config - struct; this is the struct returned by
-    %       util.load_calib_config()
+    %       util.read_calib_config()
     %
     % Outputs:
-    %   A - array; optimized A
-    %   distortion - array; 4x1 array of optimized distortions (radial and 
+    %	A - array; optimized camera matrix
+    %   distortion - array; optimized distortions (radial and 
     %       tangential) stored as: 
-    %       [beta_1; beta_2; beta_3; beta_4]
-    %   rotations - cell; optimized rotations
-    %   translations - cell; optimized translations
+    %       [beta1; beta2; beta3; beta4]  
+    %   rotations - cell; Mx1 optimized rotations
+    %   translations - cell; Mx1 optimized translations
           
     % TODO: make sure rotations and translations have the same length
         

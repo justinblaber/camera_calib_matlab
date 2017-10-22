@@ -1,4 +1,4 @@
-function homography_1_2 = homography(points_1, points_2, calib_config)
+function homography_1_2 = homography(points_1,points_2,calib_config)
     % This will compute a homography using non-linear least squares fit 
     % which transforms the points in "perspective 1" to "perspective 2".
     %

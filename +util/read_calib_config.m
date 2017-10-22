@@ -46,6 +46,14 @@ function calib_config = read_calib_config(calib_config_path)
     %       refine_param_norm_cutoff - scalar; cutoff for the difference in
     %           norm of calibration parameters
     %
+    %       blob_detect_s - int; number of partitions of scale space
+    %       blob_detect_num_octaves - int; number of octaves of scale space
+    %       blob_detect_contrast_cutoff - scalar; cutoff for DoG contrast
+    %       blob_detect_r_cutoff - scalar; cutoff for r parameter described
+    %           in Lowe's SIFT paper
+    %       blob_detect_second_moment_cutoff - scalar; cutoff for ratio of
+    %           sqrt of max and min eigenvalues of second moment matrix
+    %
     %       Plotting info:
     %
     %       camera_size - scalar; size of camera in specified units; used
@@ -84,6 +92,12 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','refine_corner_window_min_size'      ,'required',false,'default',10  ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','refine_param_it_cutoff'             ,'required',false,'default',20  ,'validation_fun',@validate_pos_int);
     field_info(end+1) = struct('field','refine_param_norm_cutoff'           ,'required',false,'default',1e-6,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','blob_detect_s'                      ,'required',false,'default',2   ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','blob_detect_num_octaves'            ,'required',false,'default',4   ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','blob_detect_contrast_cutoff'        ,'required',false,'default',0.03,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','blob_detect_r_cutoff'               ,'required',false,'default',10  ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','blob_detect_second_moment_cutoff'   ,'required',false,'default',3   ,'validation_fun',@validate_pos_num);
+        
     % Plotting info
     field_info(end+1) = struct('field','camera_size'                        ,'required',false,'default',eps ,'validation_fun',@validate_pos_num);
     

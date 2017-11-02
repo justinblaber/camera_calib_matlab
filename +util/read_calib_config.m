@@ -54,6 +54,9 @@ function calib_config = read_calib_config(calib_config_path)
     %       blob_detect_second_moment_cutoff - scalar; cutoff for ratio of
     %           sqrt of max and min eigenvalues of second moment matrix
     %
+    %       marker_config_path - string; path to marker configuration
+    %       marker_templates_path - string; path to marker_templates
+    %
     %       Plotting info:
     %
     %       camera_size - scalar; size of camera in specified units; used
@@ -97,6 +100,8 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','blob_detect_contrast_cutoff'        ,'required',false,'default',0.03,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','blob_detect_r_cutoff'               ,'required',false,'default',10  ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','blob_detect_second_moment_cutoff'   ,'required',false,'default',3   ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','marker_config_path'                 ,'required',false,'default',''  ,'validation_fun',@validate_file_path);
+    field_info(end+1) = struct('field','marker_templates_path'              ,'required',false,'default',''  ,'validation_fun',@validate_file_path);
         
     % Plotting info
     field_info(end+1) = struct('field','camera_size'                        ,'required',false,'default',eps ,'validation_fun',@validate_pos_num);
@@ -171,6 +176,15 @@ end
 function calib_config = validate_pos_odd_int(calib_config,field)
     if ~util.is_pos(calib_config.(field)) || ~util.is_int(calib_config.(field)) || util.is_even(calib_config.(field))
         error(['Field: ' field ' has a value which is not a positive odd integer.']);
+    end
+    calib_config.(field) = calib_config.(field);
+end
+
+function calib_config = validate_file_path(calib_config,field)
+    % This needs to either be empty, or if its not empty, the file needs to
+    % exist
+    if ~isempty(calib_config.(field)) && exist(calib_config.(field),'file') ~= 2
+        error(['Field: ' field ' has a value which is not an existing file.']);
     end
     calib_config.(field) = calib_config.(field);
 end

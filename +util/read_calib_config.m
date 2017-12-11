@@ -50,7 +50,8 @@ function calib_config = read_calib_config(calib_config_path)
     %           this is non-inclusive.
     %       blob_detect_r2 - scalar; upper bound of blob radius search;
     %           this is non-inclusive.
-    %       blob_detect_s - int; number of partitions of scale space
+    %       blob_detect_step - scalar; pixels between samplings of scale
+    %           space
     %       blob_detect_num_cutoff - int; only processes this number of the
     %           strongest blob responses
     %       blob_detect_it_cutoff - int; number of iterations performed 
@@ -60,6 +61,12 @@ function calib_config = read_calib_config(calib_config_path)
     %
     %       marker_config_path - string; path to marker configuration
     %       marker_templates_path - string; path to marker_templates
+    %       marker_padding - int; amount of padding used for radius samples
+    %           to allow for "wiggle" room
+    %       marker_it_cutoff - int; cutoff for the number of gradient
+    %           ascent iterations
+    %       marker_norm_cutoff - scalar; cutoff for the difference in
+    %           norm of ellipse parameters
     %
     %       Plotting info:
     %
@@ -101,12 +108,15 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','refine_param_norm_cutoff'           ,'required',false,'default',1e-6   ,'validation_fun',@validate_pos_num);    
     field_info(end+1) = struct('field','blob_detect_r1'                     ,'required',false,'default',2      ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','blob_detect_r2'                     ,'required',false,'default',realmax,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','blob_detect_s'                      ,'required',false,'default',12     ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','blob_detect_step'                   ,'required',false,'default',0.5    ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','blob_detect_num_cutoff'             ,'required',false,'default',50     ,'validation_fun',@validate_pos_int);   
     field_info(end+1) = struct('field','blob_detect_it_cutoff'              ,'required',false,'default',5      ,'validation_fun',@validate_pos_int);
     field_info(end+1) = struct('field','blob_detect_norm_cutoff'            ,'required',false,'default',1e-2   ,'validation_fun',@validate_pos_num);    
     field_info(end+1) = struct('field','marker_config_path'                 ,'required',false,'default',''     ,'validation_fun',@validate_file_path);
-    field_info(end+1) = struct('field','marker_templates_path'              ,'required',false,'default',''     ,'validation_fun',@validate_file_path);        
+    field_info(end+1) = struct('field','marker_templates_path'              ,'required',false,'default',''     ,'validation_fun',@validate_file_path);   
+    field_info(end+1) = struct('field','marker_padding'                     ,'required',false,'default',5      ,'validation_fun',@validate_pos_int);     
+    field_info(end+1) = struct('field','marker_it_cutoff'                   ,'required',false,'default',50     ,'validation_fun',@validate_pos_int);   
+    field_info(end+1) = struct('field','marker_norm_cutoff'                 ,'required',false,'default',1e-6   ,'validation_fun',@validate_pos_num);          
     % Plotting info
     field_info(end+1) = struct('field','camera_size'                        ,'required',false,'default',eps    ,'validation_fun',@validate_pos_num);
     

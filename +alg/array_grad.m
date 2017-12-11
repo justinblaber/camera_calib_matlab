@@ -11,9 +11,9 @@ function grad = array_grad(array,direc)
     
     switch direc
         case 'x'
-            grad = imfilter(array,-fspecial('sobel')','same','replicate');
+            grad = imfilter(array,-fspecial('sobel')'/8,'same','replicate');
         case 'y'
-            grad = imfilter(array,-fspecial('sobel'),'same','replicate');
+            grad = imfilter(array,-fspecial('sobel')/8,'same','replicate');
         otherwise 
             error(['Direction of gradient calculation can either be: x or y' ...
                    ', but : ' direc ' was input']);

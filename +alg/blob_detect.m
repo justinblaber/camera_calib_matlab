@@ -20,12 +20,16 @@ function blobs = blob_detect(array,calib_config)
         r2 = min(size(array))/60 + r1;
     else
         r2 = calib_config.blob_detect_r2;
-    end    
+    end  
+    
+    % Make sure r2 is an integer number of steps away from r1
+    num_scales = ceil((r2-r1)/calib_config.blob_detect_step+1);
+    r2 = r1 + (num_scales-1)*calib_config.blob_detect_step;
             
     % Create scale normalized LoG stack
-    stack_LoG = zeros([size(array) calib_config.blob_detect_s]);
-    for i = 1:calib_config.blob_detect_s
-        sigma = ((r2-r1)/(calib_config.blob_detect_s-1)*(i-1)+r1)/sqrt(2);
+    stack_LoG = zeros([size(array) num_scales]);
+    for i = 1:num_scales
+        sigma = (calib_config.blob_detect_step*(i-1)+r1)/sqrt(2);
         window = 2*ceil(4*sigma)+1; % Dimensions must be odd 
         kernel_LoG = sigma^2*fspecial('log',window,sigma);    
     
@@ -143,21 +147,16 @@ function blobs = blob_detect(array,calib_config)
         
     % Remove any NaNs and any big changes in movement from the initial
     % position
-    bad_idx = isnan(maxima_x) | isnan(maxima_y) | isnan(maxima_r_idx) | ...
+    idx_bad = isnan(maxima_x) | isnan(maxima_y) | isnan(maxima_r_idx) | ...
               abs(maxima_x-maxima_x_init) >= 1 | ...
               abs(maxima_y-maxima_y_init) >= 1 | ...
               abs(maxima_r_idx-maxima_r_idx_init) >= 1;
-    maxima_x(bad_idx) = [];
-    maxima_y(bad_idx) = [];
-    maxima_r_idx(bad_idx) = [];
+    maxima_x(idx_bad) = [];
+    maxima_y(idx_bad) = [];
+    maxima_r_idx(idx_bad) = [];
     
     % Assign outputs
-    blobs = struct('x',cell(1,length(maxima_x)), ...
-                   'y',cell(1,length(maxima_y)), ...
-                   'r',cell(1,length(maxima_r_idx)));
-    for i = 1:length(blobs)
-        blobs(i).x = maxima_x(i);
-        blobs(i).y = maxima_y(i);
-        blobs(i).r = (r2-r1)/(calib_config.blob_detect_s-1)*(maxima_r_idx(i)-1)+r1;
-    end    
+    blobs = struct('x',num2cell(maxima_x), ...
+                   'y',num2cell(maxima_y), ...
+                   'r',num2cell((r2-r1)/(num_scales-1)*(maxima_r_idx-1)+r1));
 end

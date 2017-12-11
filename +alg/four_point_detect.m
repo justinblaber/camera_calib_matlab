@@ -22,12 +22,7 @@ function four_points_p = four_point_detect(array,calib_config)
     if ~isfield(marker_templates,'polar_patches') || length(marker_templates.polar_patches) ~= 4
         error('There must be four templates in the marker templates file!');
     end
-        
-    % DEBUG
-    figure(3), imshow(array,[])
-    hold on;   
-    % DEBUG    
-          
+                  
     % Get normalized radius and theta samples
     r_samples = linspace(marker_config.radius_norm_range(1), ...
                          marker_config.radius_norm_range(2), ...
@@ -38,10 +33,9 @@ function four_points_p = four_point_detect(array,calib_config)
     
     % Apply marker padding to r_samples. This allows some wiggle incase the
     % size of blob is slightly off
-    if 2*calib_config.marker_padding >= length(r_samples)
+    if 2*calib_config.marker_padding+1 >= length(r_samples)
         error(['marker_padding size of: ' num2str(calib_config.marker_padding) ' ' ...
-               'exceeds half the size of radius samples: ' num2str(length(r_samples)) '. ' ...
-               'Please reduce the amount of padding.']);
+               'is too large. Please reduce the amount of padding.']);
     end    
     r_samples(1:calib_config.marker_padding) = [];
     r_samples(end-calib_config.marker_padding+1:end) = [];
@@ -84,7 +78,7 @@ function four_points_p = four_point_detect(array,calib_config)
         rot = -atan2(V(1,2),V(2,2));     
                                
         % Now, do nonlinear refinement using initial guess
-        % Get sub array around blob
+        % First, get sub array around blob
         width_ellipse = sqrt(r1_pix^2*cos(rot)^2 + r2_pix^2*sin(rot)^2);
         height_ellipse = sqrt(r1_pix^2*sin(rot)^2 + r2_pix^2*cos(rot)^2); 
         % bounding box
@@ -95,8 +89,6 @@ function four_points_p = four_point_detect(array,calib_config)
         bb_b = ceil(blobs(i).y + scale_factor*height_ellipse);        
         if (bb_l < 1 || bb_r > size(array,2) || ...
             bb_t < 1 || bb_b > size(array,1))
-            % Out of bounds sampling means matching won't work properly
-            % anyway, so just move on to next point
             continue
         end        
         sub_array = array(bb_t:bb_b,bb_l:bb_r);
@@ -108,18 +100,8 @@ function four_points_p = four_point_detect(array,calib_config)
         % precompute gradients
         cost_sub_array_grad_x = alg.array_grad(cost_sub_array,'x');
         cost_sub_array_grad_y = alg.array_grad(cost_sub_array,'y');
-        
-        % DEBUG
-        disp('begin');
-        figure(1); imshow(cost_sub_array,[]);
-        hold on;
-        x = r1_pix*cos(rot)*cos(theta_samples) - r2_pix*sin(rot)*sin(theta_samples) + (blobs(i).x-bb_l+1);
-        y = r1_pix*sin(rot)*cos(theta_samples) + r2_pix*cos(rot)*sin(theta_samples) + (blobs(i).y-bb_t+1);
-        plot(x,y,'-r');
-        hold off;
-        % DEBUG
-        
-        % Perform gradient descent with backtracking
+                
+        % Perform gradient ascent with backtracking
         % initialize parameter vector with current ellipse
         p = [blobs(i).x blobs(i).y r1_pix r2_pix rot]';
         for it = 1:calib_config.marker_it_cutoff
@@ -145,9 +127,9 @@ function four_points_p = four_point_detect(array,calib_config)
             p = p_init + n*grad;
             x = p(3)*cos(p(5))*cos(theta_samples) - p(4)*sin(p(5))*sin(theta_samples) + (p(1)-bb_l+1);
             y = p(3)*sin(p(5))*cos(theta_samples) + p(4)*cos(p(5))*sin(theta_samples) + (p(2)-bb_t+1);
-            while all(x >= 1) && all(x <= size(cost_sub_array,2)) &&...
-                  all(y >= 1) && all(y <= size(cost_sub_array,1)) && ...
-                  sum(alg.array_interp(cost_sub_array,[x' y'],'bicubic')) < cost_init+(1/2)*n*dot(grad,grad) % Backtracking has gaurantee to exit this condition eventually
+            while all(x >= 1 & x <= size(cost_sub_array,2) & ...
+                      y >= 1 & y <= size(cost_sub_array,1)) && ...
+                  sum(alg.array_interp(cost_sub_array,[x' y'],'bicubic')) < cost_init+(1/2)*n*dot(grad,grad) % Backtracking guaranteed to exit this condition eventually
                 % Half step size
                 n = (1/2)*n;
                 p = p_init + n*grad;
@@ -155,26 +137,12 @@ function four_points_p = four_point_detect(array,calib_config)
                 y = p(3)*sin(p(5))*cos(theta_samples) + p(4)*cos(p(5))*sin(theta_samples) + (p(2)-bb_t+1);
             end
                
-            if any(x < 1) || any(x > size(cost_sub_array,2)) || ...
-               any(y < 1) || any(y > size(cost_sub_array,1))
+            % Exit if the ellipse went out of the bounding box
+            if any(x < 1 | x > size(cost_sub_array,2) | ...
+                   y < 1 | y > size(cost_sub_array,1))
                 p(:) = NaN;
                 break
             end
-            
-            % DEBUG
-            disp(['n: ' num2str(n)]);            
-            disp('norm grad:');
-            norm(grad)
-            disp('grad:');
-            grad
-            disp(norm(p-p_init))
-            disp(' --- ')            
-            drawnow
-            figure(2); imshow(cost_sub_array,[]);
-            hold on;
-            plot(x,y,'-r');
-            hold off;
-            % DEBUG
             
             % Exit if change in distance is small
             diff_norm = norm(p-p_init);            
@@ -189,18 +157,9 @@ function four_points_p = four_point_detect(array,calib_config)
         if calib_config.verbose > 2 && it == calib_config.marker_it_cutoff
             warning('Marker iterations hit cutoff before converging!!!');
         end
-        
-        % DEBUG
-        pause(1)
-        figure(2); imshow(sub_array,[]);
-        hold on;
-        plot(x,y,'-r');
-        hold off;
-        pause(1)
-        % DEBUG
-        
-        % Check if any coordinates are NaNs which means interpolation when
-        % out of bounds
+                
+        % Check if any params are NaNs which means sampling went out of
+        % bounds
         if any(isnan(p))
             continue
         end
@@ -223,37 +182,21 @@ function four_points_p = four_point_detect(array,calib_config)
         p_affine = xform * vertcat(x(:)',y(:)');
         p_affine(1,:) = p_affine(1,:)+blobs(i).x;
         p_affine(2,:) = p_affine(2,:)+blobs(i).y;
-        
-        % DEBUG
-        figure(3)
-        plot(p_affine(1,:),p_affine(2,:),'-r');
-        util.ellipse(r1_pix, ...
-                     r2_pix, ...
-                     rot, ...
-                     blobs(i).x, ...
-                     blobs(i).y, ...
-                     'b');
-        % DEBUG
-        
+                
         % Check for out of bounds points
-        idx_out = p_affine(1,:) < 1 | p_affine(1,:) > size(array,2) | ...
-                  p_affine(2,:) < 1 | p_affine(2,:) > size(array,1);              
-        if any(idx_out)
-            % Out of bounds sampling means matching won't work properly
-            % anyway, so just move on to next point
+        if any(p_affine(1,:) < 1 | p_affine(1,:) > size(array,2) | ...
+               p_affine(2,:) < 1 | p_affine(2,:) > size(array,1))
             continue
         end
             
         % Resample
-        polar_patch = alg.array_interp(array, ...
-                                       vertcat(p_affine(1,:),p_affine(2,:))', ...
-                                       'bicubic');
+        polar_patch = alg.array_interp(array, p_affine', 'bicubic');
         polar_patches{i} = reshape(polar_patch,marker_config.theta_num_samples,[]);    
     end        
     
     % Normalize template patches - note that due to padding, the template
-    % polar patches won't be normalized exactly correctly, but it should be
-    % close enough.
+    % polar patches won't be normalized exactly correctly, but it shouldn't
+    % be too big of a deal.
     for i = 1:4
         marker_templates.polar_patches{i} = marker_templates.polar_patches{i} - mean(marker_templates.polar_patches{i}(:));
         marker_templates.polar_patches{i} = marker_templates.polar_patches{i}./norm(marker_templates.polar_patches{i}(:));
@@ -261,17 +204,9 @@ function four_points_p = four_point_detect(array,calib_config)
     
     % Cross correlate each polar patch with 4 templates. 
     cc_mat = -Inf(length(polar_patches),4); 
-    
-    % DEBUG
-    idx_mat_i = -ones(length(polar_patches),4); 
-    idx_mat_j = -ones(length(polar_patches),4); 
-    % DEBUG
-    
     for i = 1:length(polar_patches)
         % Make sure polar patch isn't empty, which can happen if sampling
-        % points are outside image field of view. continue'ing is safe
-        % because the cross correlation value will be negative Inf by 
-        % default
+        % points were outside image field of view.
         if isempty(polar_patches{i})
             continue
         end
@@ -280,30 +215,22 @@ function four_points_p = four_point_detect(array,calib_config)
         polar_patches{i} = polar_patches{i} - mean(polar_patches{i}(:));
         polar_patches{i} = polar_patches{i}./norm(polar_patches{i}(:));
         
-        % Compare to four templates with cross correlation
+        % Compare to four templates with circular cross correlation over
+        % theta and slide over radius if padding is provided.
         for j = 1:4
-            % Do circular cross correlation over theta
             cc_buf = zeros(marker_config.theta_num_samples,2*calib_config.marker_padding+1);
             for m = 1:2*calib_config.marker_padding+1
                 for n = 1:size(polar_patches{i},2)
                     cc_buf(:,m) = cc_buf(:,m) + ifft(fft(polar_patches{i}(:,n)).*conj(fft(marker_templates.polar_patches{j}(:,m+n-1))));
                 end
             end
-            % Store in cc_mat
+            
+            % Get max correlation and store in cc_mat
             [i_max, j_max] = find(cc_buf == max(cc_buf(:)),1);
             cc_mat(i,j) = cc_buf(i_max,j_max);
-            
-            % DEBUG
-            idx_mat_i(i,j) = i_max;
-            idx_mat_j(i,j) = j_max;
-            % DEBUG
         end
     end   
-    
-    % DEBUG
-    figure(4)
-    % DEBUG    
-    
+        
     % Get best matches
     four_points_p = zeros(4,2);
     for i = 1:4
@@ -312,15 +239,7 @@ function four_points_p = four_point_detect(array,calib_config)
                      
         % Set coordinates
         four_points_p(j_max,:) = [blobs(i_max).x blobs(i_max).y];
-                
-        % DEBUG
-        [blobs(i_max).x blobs(i_max).y]        
-        disp('-')
-        sort(cc_mat)        
-        subplot(4,2,2*i-1); imshow(circshift(polar_patches{i_max},-(idx_mat_i(i_max,j_max)-1)),[])
-        subplot(4,2,2*i); imshow(marker_templates.polar_patches{j_max}(:,idx_mat_j(i_max,j_max):idx_mat_j(i_max,j_max)+length(r_samples)-1),[]);
-        % DEBUG
-                       
+                                       
         % "disable" this blob and this marker
         cc_mat(i_max,:) = -Inf; % blob
         cc_mat(:,j_max) = -Inf; % marker

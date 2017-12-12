@@ -1,4 +1,4 @@
-function four_points_p = four_point_detect(array,calib_config)
+function [four_points_p,blobs,ellipses,patch_matches] = four_point_detect(array,calib_config)
     % Obtains the locations of the four points (fiducial markers) around 
     % the calibration board automatically.
     % 
@@ -10,10 +10,17 @@ function four_points_p = four_point_detect(array,calib_config)
     % Outputs:
     %   four_points_p - array; 4x2 array of four points in pixel
     %       coordinates
-    
-    % Get blobs which should detect center of fiducial marker
-    blobs = alg.blob_detect(array,calib_config);
-    
+    %   blobs - struct; output from alg.blob_detect()
+    %   ellipses - struct; 
+    %       .x - x location of ellipse
+    %       .y - y location of ellipse
+    %       .r1 - major axis in pixels
+    %       .r2 - minor axis in pixels
+    %       .rot - rotation of major axis in radians
+    %   patch_matches - cell; 4x2 cell of patches. First column is detected
+    %       patch, circularly shifted to match the template. The second
+    %       column is the template with radius shift applied.
+            
     % Read marker config and marker templates
     marker_config = util.read_data(calib_config.marker_config_path);
     marker_templates = util.read_data(calib_config.marker_templates_path);
@@ -22,7 +29,15 @@ function four_points_p = four_point_detect(array,calib_config)
     if ~isfield(marker_templates,'polar_patches') || length(marker_templates.polar_patches) ~= 4
         error('There must be four templates in the marker templates file!');
     end
-                  
+                   
+    % Normalize template patches - note that due to padding, the template
+    % polar patches won't be normalized exactly correctly, but it shouldn't
+    % be too big of a deal.
+    for i = 1:4
+        marker_templates.polar_patches{i} = marker_templates.polar_patches{i} - mean(marker_templates.polar_patches{i}(:));
+        marker_templates.polar_patches{i} = marker_templates.polar_patches{i}./norm(marker_templates.polar_patches{i}(:));
+    end
+    
     % Get normalized radius and theta samples
     r_samples = linspace(marker_config.radius_norm_range(1), ...
                          marker_config.radius_norm_range(2), ...
@@ -31,22 +46,31 @@ function four_points_p = four_point_detect(array,calib_config)
     theta_samples = linspace(0,2*pi,marker_config.theta_num_samples+1);
     theta_samples(end) = []; 
     
-    % Apply marker padding to r_samples. This allows some wiggle incase the
-    % size of blob is slightly off
+    % Apply marker padding to r_samples. This allows some wiggle in case 
+    % the size of blob is slightly off
     if 2*calib_config.marker_padding+1 >= length(r_samples)
         error(['marker_padding size of: ' num2str(calib_config.marker_padding) ' ' ...
                'is too large. Please reduce the amount of padding.']);
     end    
-    r_samples(1:calib_config.marker_padding) = [];
-    r_samples(end-calib_config.marker_padding+1:end) = [];
+    r_samples = r_samples(calib_config.marker_padding+1: ...
+                          end-calib_config.marker_padding);
     
-    % Get polar patches of blobs
+    % Normalize array so gradients aren't ginormous
+    array = (array-min(array(:)))./(max(array(:))-min(array(:)));
+       
+    % Get blobs which should detect center of fiducial marker
+    blobs = alg.blob_detect(array,calib_config);
+    
+    % Get ellipses
+    ellipses = struct('x',cell(1,length(blobs)), ...
+                      'y',cell(1,length(blobs)), ...
+                      'r1',cell(1,length(blobs)), ...
+                      'r2',cell(1,length(blobs)), ...
+                      'rot',cell(1,length(blobs)));
     array_grad_x = alg.array_grad(array,'x');
     array_grad_y = alg.array_grad(array,'y');
-    polar_patches = cell(1,length(blobs));
     for i = 1:length(blobs)
-        % Get initial guess of ellipse shape of blob using second moment
-        % matrix
+        % Get initial guess of ellipse by using second moment matrix
         window = 2*ceil(2*blobs(i).r)+1; % Dimensions must be odd 
         kernel_gauss = fspecial('gaussian',[window window],blobs(i).r);
 
@@ -71,16 +95,16 @@ function four_points_p = four_point_detect(array,calib_config)
         
         % Ellipse sides are proportional to sqrt of eigenvalues
         scale_factor = 2*blobs(i).r/(sqrt(D(1))+sqrt(D(2))); % have minor and major axis sum to diameter of blob
-        r1_pix = sqrt(D(2))*scale_factor;                    % major axis radius
-        r2_pix = sqrt(D(1))*scale_factor;                    % minor axis radius
+        r1 = sqrt(D(2))*scale_factor; % major axis radius
+        r2 = sqrt(D(1))*scale_factor; % minor axis radius
         
         % Rotation of major axis
         rot = -atan2(V(1,2),V(2,2));     
                                
         % Now, do nonlinear refinement using initial guess
         % First, get sub array around blob
-        width_ellipse = sqrt(r1_pix^2*cos(rot)^2 + r2_pix^2*sin(rot)^2);
-        height_ellipse = sqrt(r1_pix^2*sin(rot)^2 + r2_pix^2*cos(rot)^2); 
+        width_ellipse = sqrt(r1^2*cos(rot)^2 + r2^2*sin(rot)^2);
+        height_ellipse = sqrt(r1^2*sin(rot)^2 + r2^2*cos(rot)^2); 
         % bounding box
         scale_factor = 4;
         bb_l = floor(blobs(i).x - scale_factor*width_ellipse);
@@ -94,8 +118,8 @@ function four_points_p = four_point_detect(array,calib_config)
         sub_array = array(bb_t:bb_b,bb_l:bb_r);
                 
         % Get "cost" array
-        cost_sub_array = alg.array_grad(alg.array_gauss(sub_array,r2_pix/2),'x').^2 + ...
-                         alg.array_grad(alg.array_gauss(sub_array,r2_pix/2),'y').^2;
+        cost_sub_array = alg.array_grad(alg.array_gauss(sub_array,r2/2),'x').^2 + ...
+                         alg.array_grad(alg.array_gauss(sub_array,r2/2),'y').^2;
         
         % precompute gradients
         cost_sub_array_grad_x = alg.array_grad(cost_sub_array,'x');
@@ -103,7 +127,7 @@ function four_points_p = four_point_detect(array,calib_config)
                 
         % Perform gradient ascent with backtracking
         % initialize parameter vector with current ellipse
-        p = [blobs(i).x blobs(i).y r1_pix r2_pix rot]';
+        p = [blobs(i).x blobs(i).y r1 r2 rot]';
         for it = 1:calib_config.marker_it_cutoff
             % Set p_init to p from previous iteration
             p_init = p;
@@ -165,23 +189,37 @@ function four_points_p = four_point_detect(array,calib_config)
         end
 
         % Store refined outputs
-        blobs(i).x = p(1);
-        blobs(i).y = p(2);
-        r1_pix = p(3);
-        r2_pix = p(4);
-        rot = p(5);
+        ellipses(i).x = p(1);
+        ellipses(i).y = p(2);
+        ellipses(i).r1 = p(3);
+        ellipses(i).r2 = p(4);
+        ellipses(i).rot = p(5);
+    end
+         
+    % Get polar patches based on ellipses
+    polar_patches = cell(1,length(ellipses));
+    for i = 1:length(ellipses)   
+        if isempty(ellipses(i).x) || isempty(ellipses(i).y) || ...
+           isempty(ellipses(i).r1) || isempty(ellipses(i).r2) || ...
+           isempty(ellipses(i).rot)
+            continue
+        end
         
         % Make xform to apply to coordinates of circle: rotation * scaling
-        xform = [cos(rot) -sin(rot); sin(rot) cos(rot)] * [r1_pix 0; 0 r2_pix];
+        rotation = [cos(ellipses(i).rot) -sin(ellipses(i).rot);  ...
+                    sin(ellipses(i).rot)  cos(ellipses(i).rot)];
+        scaling = [ellipses(i).r1 0; ...
+                   0 ellipses(i).r2];
+        xform = rotation * scaling;
                
         % Get normalized coordinates
         x = bsxfun(@times,cos(theta_samples)',r_samples); 
         y = bsxfun(@times,sin(theta_samples)',r_samples); 
         
-        % Apply transformation and translate to center of blob
+        % Apply transformation and translate to center of ellipse
         p_affine = xform * vertcat(x(:)',y(:)');
-        p_affine(1,:) = p_affine(1,:)+blobs(i).x;
-        p_affine(2,:) = p_affine(2,:)+blobs(i).y;
+        p_affine(1,:) = p_affine(1,:)+ellipses(i).x;
+        p_affine(2,:) = p_affine(2,:)+ellipses(i).y;
                 
         % Check for out of bounds points
         if any(p_affine(1,:) < 1 | p_affine(1,:) > size(array,2) | ...
@@ -192,21 +230,15 @@ function four_points_p = four_point_detect(array,calib_config)
         % Resample
         polar_patch = alg.array_interp(array, p_affine', 'bicubic');
         polar_patches{i} = reshape(polar_patch,marker_config.theta_num_samples,[]);    
-    end        
-    
-    % Normalize template patches - note that due to padding, the template
-    % polar patches won't be normalized exactly correctly, but it shouldn't
-    % be too big of a deal.
-    for i = 1:4
-        marker_templates.polar_patches{i} = marker_templates.polar_patches{i} - mean(marker_templates.polar_patches{i}(:));
-        marker_templates.polar_patches{i} = marker_templates.polar_patches{i}./norm(marker_templates.polar_patches{i}(:));
-    end
+    end    
     
     % Cross correlate each polar patch with 4 templates. 
-    cc_mat = -Inf(length(polar_patches),4); 
+    cc_mat = -Inf(length(polar_patches),4);
+    i_idx_mat = -1*ones(length(polar_patches),4);  
+    j_idx_mat = -1*ones(length(polar_patches),4);  
     for i = 1:length(polar_patches)
         % Make sure polar patch isn't empty, which can happen if sampling
-        % points were outside image field of view.
+        % points were outside of field of view.
         if isempty(polar_patches{i})
             continue
         end
@@ -228,20 +260,27 @@ function four_points_p = four_point_detect(array,calib_config)
             % Get max correlation and store in cc_mat
             [i_max, j_max] = find(cc_buf == max(cc_buf(:)),1);
             cc_mat(i,j) = cc_buf(i_max,j_max);
+            i_idx_mat(i,j) = i_max; % Theta shift
+            j_idx_mat(i,j) = j_max; % Radial shift
         end
     end   
         
     % Get best matches
+    patch_matches = cell(4,2);
     four_points_p = zeros(4,2);
     for i = 1:4
         % Get max value
         [i_max, j_max] = find(cc_mat == max(cc_mat(:)),1);
                      
         % Set coordinates
-        four_points_p(j_max,:) = [blobs(i_max).x blobs(i_max).y];
+        four_points_p(j_max,:) = [ellipses(i_max).x ellipses(i_max).y];
                                        
-        % "disable" this blob and this marker
-        cc_mat(i_max,:) = -Inf; % blob
-        cc_mat(:,j_max) = -Inf; % marker
+        % "disable" this patch and template
+        cc_mat(i_max,:) = -Inf; % patch
+        cc_mat(:,j_max) = -Inf; % template
+        
+        % Store best patch matches
+        patch_matches{i,1} = circshift(polar_patches{i_max},-(i_idx_mat(i_max,j_max)-1));
+        patch_matches{i,2} = marker_templates.polar_patches{j_max}(:,j_idx_mat(i_max,j_max):j_idx_mat(i_max,j_max)+length(r_samples)-1);
     end        
 end

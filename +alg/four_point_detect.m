@@ -1,6 +1,6 @@
 function [four_points_p,blobs,ellipses,patch_matches] = four_point_detect(array,calib_config)
     % Obtains the locations of the four points (fiducial markers) around 
-    % the calibration board automatically.
+    % the calibration board.
     % 
     % Inputs:
     %   array - array; MxN array
@@ -10,16 +10,18 @@ function [four_points_p,blobs,ellipses,patch_matches] = four_point_detect(array,
     % Outputs:
     %   four_points_p - array; 4x2 array of four points in pixel
     %       coordinates
-    %   blobs - struct; output from alg.blob_detect()
-    %   ellipses - struct; 
-    %       .x - x location of ellipse
-    %       .y - y location of ellipse
-    %       .r1 - major axis in pixels
-    %       .r2 - minor axis in pixels
-    %       .rot - rotation of major axis in radians
+    %   blobs - struct; output from alg.blob_detect(). Mainly used for
+    %       debugging
+    %   ellipses - struct; mainly used for debugging
+    %       .x - scalar; x location of ellipse
+    %       .y - scalar; y location of ellipse
+    %       .r1 - scalar; major axis in pixels
+    %       .r2 - scalar; minor axis in pixels
+    %       .rot - scalar; rotation of major axis in radians
     %   patch_matches - cell; 4x2 cell of patches. First column is detected
     %       patch, circularly shifted to match the template. The second
-    %       column is the template with radius shift applied.
+    %       column is the template with radius shift applied. Mainly used
+    %       for debugging
             
     % Read marker config and marker templates
     marker_config = util.read_data(calib_config.marker_config_path);
@@ -38,7 +40,7 @@ function [four_points_p,blobs,ellipses,patch_matches] = four_point_detect(array,
         marker_templates.polar_patches{i} = marker_templates.polar_patches{i}./norm(marker_templates.polar_patches{i}(:));
     end
     
-    % Get normalized radius and theta samples
+    % Get normalized radius and theta samples used for sampling polar patch
     r_samples = linspace(marker_config.radius_norm_range(1), ...
                          marker_config.radius_norm_range(2), ...
                          marker_config.radius_num_samples);
@@ -48,14 +50,14 @@ function [four_points_p,blobs,ellipses,patch_matches] = four_point_detect(array,
     
     % Apply marker padding to r_samples. This allows some wiggle in case 
     % the size of blob is slightly off
-    if 2*calib_config.marker_padding+1 >= length(r_samples)
+    if 2*calib_config.marker_padding >= length(r_samples)
         error(['marker_padding size of: ' num2str(calib_config.marker_padding) ' ' ...
                'is too large. Please reduce the amount of padding.']);
     end    
     r_samples = r_samples(calib_config.marker_padding+1: ...
                           end-calib_config.marker_padding);
     
-    % Normalize array so gradients aren't ginormous
+    % Normalize array so gradients for gradient ascent aren't ginormous
     array = (array-min(array(:)))./(max(array(:))-min(array(:)));
        
     % Get blobs which should detect center of fiducial marker
@@ -100,7 +102,7 @@ function [four_points_p,blobs,ellipses,patch_matches] = four_point_detect(array,
         
         % Rotation of major axis
         rot = -atan2(V(1,2),V(2,2));     
-                               
+        
         % Now, do nonlinear refinement using initial guess
         % First, get sub array around blob
         width_ellipse = sqrt(r1^2*cos(rot)^2 + r2^2*sin(rot)^2);
@@ -117,7 +119,7 @@ function [four_points_p,blobs,ellipses,patch_matches] = four_point_detect(array,
         end        
         sub_array = array(bb_t:bb_b,bb_l:bb_r);
                 
-        % Get "cost" array
+        % Get "cost" array - has high values along edge of ellipse
         cost_sub_array = alg.array_grad(alg.array_gauss(sub_array,r2/2),'x').^2 + ...
                          alg.array_grad(alg.array_gauss(sub_array,r2/2),'y').^2;
         
@@ -126,8 +128,7 @@ function [four_points_p,blobs,ellipses,patch_matches] = four_point_detect(array,
         cost_sub_array_grad_y = alg.array_grad(cost_sub_array,'y');
                 
         % Perform gradient ascent with backtracking
-        % initialize parameter vector with current ellipse
-        p = [blobs(i).x blobs(i).y r1 r2 rot]';
+        p = [blobs(i).x blobs(i).y r1 r2 rot]'; % initialize parameter vector with current ellipse
         for it = 1:calib_config.marker_it_cutoff
             % Set p_init to p from previous iteration
             p_init = p;
@@ -195,7 +196,7 @@ function [four_points_p,blobs,ellipses,patch_matches] = four_point_detect(array,
         ellipses(i).r2 = p(4);
         ellipses(i).rot = p(5);
     end
-         
+
     % Get polar patches based on ellipses
     polar_patches = cell(1,length(ellipses));
     for i = 1:length(ellipses)   
@@ -211,16 +212,16 @@ function [four_points_p,blobs,ellipses,patch_matches] = four_point_detect(array,
         scaling = [ellipses(i).r1 0; ...
                    0 ellipses(i).r2];
         xform = rotation * scaling;
-               
+
         % Get normalized coordinates
         x = bsxfun(@times,cos(theta_samples)',r_samples); 
         y = bsxfun(@times,sin(theta_samples)',r_samples); 
-        
+
         % Apply transformation and translate to center of ellipse
         p_affine = xform * vertcat(x(:)',y(:)');
         p_affine(1,:) = p_affine(1,:)+ellipses(i).x;
         p_affine(2,:) = p_affine(2,:)+ellipses(i).y;
-                
+
         % Check for out of bounds points
         if any(p_affine(1,:) < 1 | p_affine(1,:) > size(array,2) | ...
                p_affine(2,:) < 1 | p_affine(2,:) > size(array,1))
@@ -230,7 +231,7 @@ function [four_points_p,blobs,ellipses,patch_matches] = four_point_detect(array,
         % Resample
         polar_patch = alg.array_interp(array, p_affine', 'bicubic');
         polar_patches{i} = reshape(polar_patch,marker_config.theta_num_samples,[]);    
-    end    
+    end
     
     % Cross correlate each polar patch with 4 templates. 
     cc_mat = -Inf(length(polar_patches),4);
@@ -269,6 +270,9 @@ function [four_points_p,blobs,ellipses,patch_matches] = four_point_detect(array,
     patch_matches = cell(4,2);
     four_points_p = zeros(4,2);
     for i = 1:4
+        % TODO: possibly use max difference between best and 2nd best match
+        % per template instead of just the best match overall
+        
         % Get max value
         [i_max, j_max] = find(cc_mat == max(cc_mat(:)),1);
                      

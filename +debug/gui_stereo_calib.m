@@ -24,7 +24,7 @@ function gui_stereo_calib(calib,R_s,t_s,f)
     res_height = extrinsics_height;
     
     % Initialize plot
-    plot();
+    plot_gui();
     
     % Set KeyPressFcn callback
     set(f,'KeyPressFcn',@KeyPressFcn);
@@ -63,7 +63,7 @@ function gui_stereo_calib(calib,R_s,t_s,f)
             alphas(idx_board) = 1;             
 
             % Replot
-            plot();        
+            plot_gui();        
 
             % Set KeyPressFcn callback
             set(f,'KeyPressFcn',@KeyPressFcn);  
@@ -74,7 +74,7 @@ function gui_stereo_calib(calib,R_s,t_s,f)
         end
     end
     
-    function plot()  
+    function plot_gui()  
         try        
             % Clear figure and replot everything for simplicity
             clf(f);

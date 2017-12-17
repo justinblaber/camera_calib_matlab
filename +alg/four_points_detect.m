@@ -1,4 +1,4 @@
-function [four_points_p,blobs,ellipses,patch_matches] = four_point_detect(array,calib_config)
+function [four_points_p,four_points_debug] = four_points_detect(array,calib_config)
     % Obtains the locations of the four points (fiducial markers) around 
     % the calibration board.
     % 
@@ -10,19 +10,22 @@ function [four_points_p,blobs,ellipses,patch_matches] = four_point_detect(array,
     % Outputs:
     %   four_points_p - array; 4x2 array of four points in pixel
     %       coordinates
-    %   blobs - struct; output from alg.blob_detect(). Mainly used for
-    %       debugging
-    %   ellipses - struct; mainly used for debugging
-    %       .x - scalar; x location of ellipse
-    %       .y - scalar; y location of ellipse
-    %       .r1 - scalar; major axis in pixels
-    %       .r2 - scalar; minor axis in pixels
-    %       .rot - scalar; rotation of major axis in radians
-    %   patch_matches - cell; 4x2 cell of patches. First column is detected
-    %       patch, circularly shifted to match the template. The second
-    %       column is the template with radius shift applied. Mainly used
-    %       for debugging
+    %   four_points_debug - struct; Used for debugging purposes
+    %       .blobs - struct; output from alg.blob_detect().
+    %       .ellipses - struct;
+    %           .x - scalar; x location of ellipse
+    %           .y - scalar; y location of ellipse
+    %           .r1 - scalar; major axis in pixels
+    %           .r2 - scalar; minor axis in pixels
+    %           .rot - scalar; rotation of major axis in radians
+    %       .patch_matches - cell; 4x2 cell of patches. First column is 
+    %           detected patch, circularly shifted to match the template. 
+    %           The second column is the template with radius shift 
+    %           applied.
             
+    % Normalize array so gradients for gradient ascent aren't ginormous
+    array = (array-min(array(:)))./(max(array(:))-min(array(:)));
+    
     % Read marker config and marker templates
     marker_config = util.read_data(calib_config.marker_config_path);
     marker_templates = util.read_data(calib_config.marker_templates_path);
@@ -56,10 +59,7 @@ function [four_points_p,blobs,ellipses,patch_matches] = four_point_detect(array,
     end    
     r_samples = r_samples(calib_config.marker_padding+1: ...
                           end-calib_config.marker_padding);
-    
-    % Normalize array so gradients for gradient ascent aren't ginormous
-    array = (array-min(array(:)))./(max(array(:))-min(array(:)));
-       
+           
     % Get blobs which should detect center of fiducial marker
     blobs = alg.blob_detect(array,calib_config);
     
@@ -284,7 +284,12 @@ function [four_points_p,blobs,ellipses,patch_matches] = four_point_detect(array,
         cc_mat(:,j_max) = -Inf; % template
         
         % Store best patch matches
-        patch_matches{i,1} = circshift(polar_patches{i_max},-(i_idx_mat(i_max,j_max)-1));
-        patch_matches{i,2} = marker_templates.polar_patches{j_max}(:,j_idx_mat(i_max,j_max):j_idx_mat(i_max,j_max)+length(r_samples)-1);
-    end        
+        patch_matches{j_max,1} = circshift(polar_patches{i_max},-(i_idx_mat(i_max,j_max)-1));
+        patch_matches{j_max,2} = marker_templates.polar_patches{j_max}(:,j_idx_mat(i_max,j_max):j_idx_mat(i_max,j_max)+length(r_samples)-1);
+    end     
+    
+    % Set debugging output
+    four_points_debug.blobs = blobs;
+    four_points_debug.ellipses = ellipses;
+    four_points_debug.patch_matches = patch_matches;
 end

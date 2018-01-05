@@ -1,4 +1,4 @@
-function [win_points_p, win_point_weights, win_point_corners_p] = refine_window_p(point_p,homography,width,height,calib_config)    
+function [win_points_p, win_point_weights, win_point_corners_p] = refine_window_p(point_p,homography,homography_inv,width,height,calib_config)    
     % Computes refinement window points, weights of the window points, and 
     % the corners of the window points in pixel coordinates.
     %
@@ -6,6 +6,8 @@ function [win_points_p, win_point_weights, win_point_corners_p] = refine_window_
     %   point_p - array; 1x2 point in pixel coordinates
     %   homography - array; 3x3 homography matrix. This is used to compute
     %       the window around each point.
+    %   homography_inv - array; 3x3 inverse homography matrix. This is
+    %       passed for speed, instead of recomputing inverse.
     %   width - scalar; width of the calibration board image
     %   height - scalar; height of the calibration board image
     %   calib_config - struct; this is the struct returned by
@@ -21,7 +23,7 @@ function [win_points_p, win_point_weights, win_point_corners_p] = refine_window_
     %       due to being outside the image.
             
     % Get point in world coordinates
-    point_w = alg.apply_homography(homography^-1,point_p);
+    point_w = alg.apply_homography(homography_inv,point_p);
 
     % Get window_factor
     wf = window_factor(point_w,...
@@ -201,9 +203,8 @@ function weights = window_point_weights(hw)
        
     % TODO: possibly add sigma parameter to cb config file
     
-    % Get gaussian kernel
-    weights = fspecial('Gaussian',[2*hw+1 2*hw+1],hw);
-              
-    % Scale so max intensity is 1
-    weights = reshape(weights./max(weights(:)),[],1);
+    % Get gaussian kernel, scale weights between 0 and 1 and return a vector
+    weights = fspecial('Gaussian',[2*hw+1 2*hw+1],hw/2);
+    weights = (weights-min(weights(:)))./(max(weights(:))-min(weights(:)));
+    weights = reshape(weights,[],1);
 end

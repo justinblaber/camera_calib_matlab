@@ -14,7 +14,7 @@ function gui_stereo_calib(calib,R_s,t_s,f)
     num_boards = length(calib.L.extrin);                               
     alphas = 0.1*ones(1,num_boards);
     alphas(idx_board) = 1;             
-    colors = util.distinguishable_colors(num_boards,{'w','r','k'});
+    colors = external.distinguishable_colors(num_boards,{'w','r','k'});
     
     % Set axes parameters
     padding_height = 0.1;

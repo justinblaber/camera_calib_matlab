@@ -14,10 +14,22 @@ function blobs = blob_detect(array,calib_config)
     %       .y - scalar; y location of blob
     %       .r - scalar; radius of blob in pixels
     
+    % TODO: for the defaults, you can, instead of setting them here, set 
+    % them in a wrapper function to make this function more general...
+    
+    % Set num_cutoff
+    if calib_config.blob_detect_num_cutoff == realmax % This is the flag to set default
+        % 4 markers + ~number of squares + 500 blob cushion
+        num_cutoff = 4 + calib_config.num_squares_height*calib_config.num_squares_width + 500;            
+    else
+        num_cutoff = calib_config.blob_detect_num_cutoff;
+    end
+    
     % Set radius range
     r1 = calib_config.blob_detect_r1;    
     if calib_config.blob_detect_r2 == realmax % This is the flag to set default
-        r2 = min(size(array))/60 + r1;
+        % Markers should be relatively small
+        r2 = min(size(array))/40 + r1;
     else
         r2 = calib_config.blob_detect_r2;
     end  
@@ -57,9 +69,11 @@ function blobs = blob_detect(array,calib_config)
     maxima_idx = find(maxima);
     [maxima_y_init,maxima_x_init,maxima_r_idx_init] = ind2sub(size(maxima),maxima_idx);
     
-    % Get most powerful blob responses specified by blob_detect_num_cutoff
-    [~,maxima_sorted_idx] = sort(stack_LoG(maxima_idx),'descend');
-    maxima_sorted_idx = maxima_sorted_idx(1:min(calib_config.blob_detect_num_cutoff,end));
+    % Get most powerful blob responses specified by num_cutoff
+    maxima_vals = stack_LoG(maxima_idx);
+    [~,maxima_sorted_idx] = sort(maxima_vals,'descend');
+    maxima_sorted_idx = maxima_sorted_idx(1:min(num_cutoff,end));
+    maxima_sorted_idx = maxima_sorted_idx(maxima_vals(maxima_sorted_idx) > 0); % Make sure values are positive
     maxima_x_init = maxima_x_init(maxima_sorted_idx);
     maxima_y_init = maxima_y_init(maxima_sorted_idx);
     maxima_r_idx_init = maxima_r_idx_init(maxima_sorted_idx);
@@ -69,9 +83,11 @@ function blobs = blob_detect(array,calib_config)
     maxima_y = maxima_y_init;
     maxima_r_idx = maxima_r_idx_init;
     % Initialize "box" to interpolate in order to compute finite difference
-    % approximations to gradient and hessian
+    % approximations to gradient/hessian and also get interpolator
     [y_box,x_box,r_idx_box] = ndgrid(-1:1:1,-1:1:1,-1:1:1);
-    for i = 1:length(maxima_sorted_idx)
+    I_stack_LoG = griddedInterpolant({1:size(stack_LoG,1),1:size(stack_LoG,2),1:size(stack_LoG,3)}, ...
+                                      stack_LoG,'cubic','none');
+    for i = 1:length(maxima_x)
         % Perform gauss newton iterations until convergence; during 
         % iterations, set invalid points to NaNs
         for it = 1:calib_config.blob_detect_it_cutoff
@@ -91,7 +107,7 @@ function blobs = blob_detect(array,calib_config)
             end
             
             % Interpolate
-            LoG_fd = reshape(alg.vol_interp(stack_LoG,[x_fd(:) y_fd(:) r_idx_fd(:)]),3,3,3);
+            LoG_fd = reshape(I_stack_LoG(y_fd(:),x_fd(:),r_idx_fd(:)),3,3,3);
             
             % Get gradient: [d_log/d_x d_log/d_y d_log/d_r_idx]
             dl_dp(1) = (LoG_fd(2,3,2)-LoG_fd(2,1,2))/2;
@@ -115,16 +131,17 @@ function blobs = blob_detect(array,calib_config)
             ddl_ddp(3,2) = ddl_ddp(2,3);  
 
             % Find incremental parameters
-            delta_p = -pinv(ddl_ddp)*dl_dp';
-            
-            % Make sure none are too large
-            if any(abs(delta_p) >= 1)
+            try
+                opts.POSDEF = true; 
+                opts.SYM = true; 
+                delta_p = linsolve(-ddl_ddp,dl_dp',opts);
+            catch
                 maxima_x(i) = NaN;
                 maxima_y(i) = NaN;
                 maxima_r_idx(i) = NaN;
                 break
             end
-
+            
             % Get optimized locations
             maxima_x(i) = maxima_x(i)+delta_p(1);
             maxima_y(i) = maxima_y(i)+delta_p(2);
@@ -145,18 +162,28 @@ function blobs = blob_detect(array,calib_config)
         end
     end
         
-    % Remove any NaNs and any big changes in movement from the initial
-    % position
+    % Remove any NaNs and out of range idx
     idx_bad = isnan(maxima_x) | isnan(maxima_y) | isnan(maxima_r_idx) | ...
-              abs(maxima_x-maxima_x_init) >= 1 | ...
-              abs(maxima_y-maxima_y_init) >= 1 | ...
-              abs(maxima_r_idx-maxima_r_idx_init) >= 1;
+              maxima_r_idx < 1 | maxima_r_idx > num_scales | ...
+              maxima_x < 1 | maxima_x > size(array,2) | ...
+              maxima_y < 1 | maxima_y > size(array,1);
     maxima_x(idx_bad) = [];
     maxima_y(idx_bad) = [];
     maxima_r_idx(idx_bad) = [];
     
-    % Assign outputs
-    blobs = struct('x',num2cell(maxima_x), ...
-                   'y',num2cell(maxima_y), ...
-                   'r',num2cell((r2-r1)/(num_scales-1)*(maxima_r_idx-1)+r1));
+    % Store outputs
+    blobs = struct('x',{},'y',{},'r',{});
+    for i = 1:length(maxima_x)
+        % Before storing blob, make sure there isn't another blob near
+        % this one. This is ad-hoc clustering and typically "good enough"
+        dist_d = sqrt(([blobs.x]-maxima_x(i)).^2 + ...
+                      ([blobs.y]-maxima_y(i)).^2);
+        dist_r = abs([blobs.r]-((r2-r1)/(num_scales-1)*(maxima_r_idx(i)-1)+r1));        
+        if all(dist_d > calib_config.blob_detect_d_cluster | ...
+               dist_r > calib_config.blob_detect_r_cluster)
+            blobs(end+1).x = maxima_x(i); %#ok<AGROW>
+            blobs(end).y = maxima_y(i);
+            blobs(end).r = (r2-r1)/(num_scales-1)*(maxima_r_idx(i)-1)+r1;
+        end
+    end
 end

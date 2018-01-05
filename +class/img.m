@@ -110,9 +110,9 @@ classdef img < handle
             img_info = obj.get_imfinfo();            
             switch img_info.ColorType
                 case 'grayscale'
-                    img_gs = double(img_buf);
+                    img_gs = im2double(img_buf);
                 case 'truecolor'
-                    img_gs = rgb2gray(double(img_buf));
+                    img_gs = rgb2gray(im2double(img_buf));
             end
         end
         

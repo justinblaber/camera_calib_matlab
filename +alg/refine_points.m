@@ -29,6 +29,16 @@ function points_p = refine_points(points_p,cb_img,homography,calib_config)
     if calib_config.verbose > 1
         disp(['Refining points for: ' cb_img.get_path() '...']);
     end
+    % Cache image dimensions for speed
+    img_width = cb_img.get_width();
+    img_height = cb_img.get_height();
+    % Get interpolators for gradient images    
+    I_cb_gs_dx = griddedInterpolant({1:size(cb_gs_dx,1),1:size(cb_gs_dx,2)}, ...
+                                     cb_gs_dx,'cubic','none');
+    I_cb_gs_dy = griddedInterpolant({1:size(cb_gs_dy,1),1:size(cb_gs_dy,2)}, ...
+                                     cb_gs_dy,'cubic','none');
+    % Cache inverse homography for speed
+    homography_inv = homography^-1;
     for i = 1:size(points_p,1)           
         for it = 1:calib_config.refine_corner_it_cutoff
             % Keep copy of point before updating it        
@@ -37,15 +47,25 @@ function points_p = refine_points(points_p,cb_img,homography,calib_config)
             % Get window points in pixel coordinates
             [win_points_p,win_point_weights] = alg.refine_window_p(points_p(i,:), ...
                                                                    homography, ...
-                                                                   cb_img.get_width(), ...
-                                                                   cb_img.get_height(), ...
+                                                                   homography_inv, ...
+                                                                   img_width, ...
+                                                                   img_height, ...
                                                                    calib_config);
                 
             % Refine point
-            points_p(i,:) = refine_point_it(cb_gs_dx, ...
-                                            cb_gs_dy, ...
-                                            win_points_p, ...                                          
-                                            win_point_weights);  
+            point_p = refine_point_it(I_cb_gs_dx, ...
+                                      I_cb_gs_dy, ...
+                                      win_points_p, ...                                          
+                                      win_point_weights);  
+                                  
+            % Make sure point is in bounds
+            if point_p(:,1) < 1 || point_p(:,1) > img_width || ...
+               point_p(:,2) < 1 || point_p(:,2) > img_height
+                break
+            end
+                        
+            % Store
+            points_p(i,:) = point_p;
                                                   
             % Exit if change in distance is small
             diff_norm = norm(point_prev-points_p(i,:));
@@ -64,10 +84,10 @@ function points_p = refine_points(points_p,cb_img,homography,calib_config)
     end  
 end
 
-function point_p = refine_point_it(cb_gs_dx,cb_gs_dy,win_points_p,win_point_weights)
+function point_p = refine_point_it(I_cb_gs_dx,I_cb_gs_dy,win_points_p,win_point_weights)
     % Interpolate gradients
-    cb_gs_dx_window = alg.array_interp(cb_gs_dx,win_points_p,'cubic');
-    cb_gs_dy_window = alg.array_interp(cb_gs_dy,win_points_p,'cubic');
+    cb_gs_dx_window = I_cb_gs_dx(win_points_p(:,2),win_points_p(:,1));
+    cb_gs_dy_window = I_cb_gs_dy(win_points_p(:,2),win_points_p(:,1));
     
     % Apply weights
     cb_gs_dx_window = cb_gs_dx_window.*win_point_weights;
@@ -78,5 +98,5 @@ function point_p = refine_point_it(cb_gs_dx,cb_gs_dy,win_points_p,win_point_weig
     b = (cb_gs_dx_window.*win_points_p(:,1) + cb_gs_dy_window.*win_points_p(:,2));
 
     % Solve for updated point
-    point_p = (pinv(A)*b)';  
+    point_p = mldivide(A,b)';  
 end

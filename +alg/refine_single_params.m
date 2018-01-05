@@ -135,7 +135,7 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
         end  
                 
         % Get and store update
-        delta_p = -inv(jacob(:,update_idx)'*jacob(:,update_idx))*jacob(:,update_idx)'*res;
+        delta_p = -mldivide(jacob(:,update_idx),res);
         p(update_idx) = p(update_idx) + delta_p;
         
         % Store norm of residual

@@ -79,7 +79,7 @@ function [calib,R_s,t_s] = stereo_calib_four_points(cb_imgs,four_points_ps,calib
     end
 
     % Get least squares approximation
-    R_s = reshape(pinv(R)*r,3,3);
+    R_s = reshape(mldivide(R,r),3,3);
 
     % R_s is not necessarily orthogonal, so get the best rotational 
     % approximation.
@@ -94,7 +94,7 @@ function [calib,R_s,t_s] = stereo_calib_four_points(cb_imgs,four_points_ps,calib
     end
 
     % Get least squares approximation
-    t_s = pinv(T)*t;
+    t_s = mldivide(T,t);
 
     % Perform nonlinear refinement of all parameters ---------------------%
     disp('---');

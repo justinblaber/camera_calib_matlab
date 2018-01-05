@@ -58,6 +58,15 @@ function calib_config = read_calib_config(calib_config_path)
     %           for refinement of blob location/scale
     %       blob_detect_norm_cutoff - scalar; cutoff for the difference in
     %           norm of location/scale parameters
+    %       blob_detect_d_cluster - scalar; cluster blobs within d distance
+    %           away from each other
+    %       blob_detect_r_cluster - scalar; cluster blobs within r radii
+    %           away from each other
+    %
+    %       ellipse_detect_r1_cutoff - scalar; cutoff for major axis
+    %       ellipse_detect_r2_cutoff - scalar; cutoff for minor axis
+    %       ellipse_detect_num_cutoff - int; only processes this number of 
+    %           the strongest ellipse responses
     %
     %       marker_config_path - string; path to marker configuration
     %       marker_templates_path - string; path to marker_templates
@@ -89,36 +98,41 @@ function calib_config = read_calib_config(calib_config_path)
     
     % Perform validations on input fields    
     % Calibration board info
-    field_info        = struct('field','num_squares_height'                 ,'required',true ,'default',''     ,'validation_fun',@validate_pos_odd_int);
-    field_info(end+1) = struct('field','num_squares_width'                  ,'required',true ,'default',''     ,'validation_fun',@validate_pos_odd_int);
-    field_info(end+1) = struct('field','square_size'                        ,'required',true ,'default',''     ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','units'                              ,'required',true ,'default',''     ,'validation_fun',@validate_string);
-    field_info(end+1) = struct('field','calibration'                        ,'required',true ,'default',''     ,'validation_fun',@validate_calibration);
-    field_info(end+1) = struct('field','four_point_height'                  ,'required',true ,'default',''     ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','four_point_width'                   ,'required',true ,'default',''     ,'validation_fun',@validate_pos_num);
+    field_info        = struct('field','num_squares_height'                 ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_odd_int);
+    field_info(end+1) = struct('field','num_squares_width'                  ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_odd_int);
+    field_info(end+1) = struct('field','square_size'                        ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','units'                              ,'required',true ,'default',''                             ,'validation_fun',@validate_string);
+    field_info(end+1) = struct('field','calibration'                        ,'required',true ,'default',''                             ,'validation_fun',@validate_calibration);
+    field_info(end+1) = struct('field','four_point_height'                  ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','four_point_width'                   ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
     % Algorithmic info
-    field_info(end+1) = struct('field','verbose'                            ,'required',false,'default',1      ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','homography_it_cutoff'               ,'required',false,'default',10     ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','homography_norm_cutoff'             ,'required',false,'default',1e-6   ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','refine_corner_it_cutoff'            ,'required',false,'default',10     ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','refine_corner_norm_cutoff'          ,'required',false,'default',0.05   ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','refine_corner_default_window_factor','required',false,'default',2/3    ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','refine_corner_window_min_size'      ,'required',false,'default',10     ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','refine_param_it_cutoff'             ,'required',false,'default',20     ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','refine_param_norm_cutoff'           ,'required',false,'default',1e-6   ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','blob_detect_r1'                     ,'required',false,'default',2      ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','blob_detect_r2'                     ,'required',false,'default',realmax,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','blob_detect_step'                   ,'required',false,'default',0.5    ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','blob_detect_num_cutoff'             ,'required',false,'default',50     ,'validation_fun',@validate_pos_int);   
-    field_info(end+1) = struct('field','blob_detect_it_cutoff'              ,'required',false,'default',5      ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','blob_detect_norm_cutoff'            ,'required',false,'default',1e-2   ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','marker_config_path'                 ,'required',false,'default',''     ,'validation_fun',@validate_file_path);
-    field_info(end+1) = struct('field','marker_templates_path'              ,'required',false,'default',''     ,'validation_fun',@validate_file_path);   
-    field_info(end+1) = struct('field','marker_padding'                     ,'required',false,'default',5      ,'validation_fun',@validate_pos_int);     
-    field_info(end+1) = struct('field','marker_it_cutoff'                   ,'required',false,'default',50     ,'validation_fun',@validate_pos_int);   
-    field_info(end+1) = struct('field','marker_norm_cutoff'                 ,'required',false,'default',1e-6   ,'validation_fun',@validate_pos_num);          
+    field_info(end+1) = struct('field','verbose'                            ,'required',false,'default',1                              ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','homography_it_cutoff'               ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','homography_norm_cutoff'             ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','refine_corner_it_cutoff'            ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','refine_corner_norm_cutoff'          ,'required',false,'default',0.05                           ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','refine_corner_default_window_factor','required',false,'default',2/3                            ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','refine_corner_window_min_size'      ,'required',false,'default',10                             ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','refine_param_it_cutoff'             ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','refine_param_norm_cutoff'           ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_r1'                     ,'required',false,'default',0.5                            ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','blob_detect_r2'                     ,'required',false,'default',realmax                        ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','blob_detect_step'                   ,'required',false,'default',0.5                            ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','blob_detect_num_cutoff'             ,'required',false,'default',realmax                        ,'validation_fun',@validate_pos_int);   
+    field_info(end+1) = struct('field','blob_detect_it_cutoff'              ,'required',false,'default',20                              ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','blob_detect_norm_cutoff'            ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_d_cluster'              ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_r_cluster'              ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','ellipse_detect_r1_cutoff'           ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);   
+    field_info(end+1) = struct('field','ellipse_detect_r2_cutoff'           ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);   
+    field_info(end+1) = struct('field','ellipse_detect_num_cutoff'          ,'required',false,'default',50                             ,'validation_fun',@validate_pos_int);   
+    field_info(end+1) = struct('field','marker_config_path'                 ,'required',false,'default','+markers/marker.conf'         ,'validation_fun',@validate_file_path);
+    field_info(end+1) = struct('field','marker_templates_path'              ,'required',false,'default','+markers/marker_templates.txt','validation_fun',@validate_file_path);   
+    field_info(end+1) = struct('field','marker_padding'                     ,'required',false,'default',5                              ,'validation_fun',@validate_pos_int);     
+    field_info(end+1) = struct('field','marker_it_cutoff'                   ,'required',false,'default',50                             ,'validation_fun',@validate_pos_int);   
+    field_info(end+1) = struct('field','marker_norm_cutoff'                 ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);          
     % Plotting info
-    field_info(end+1) = struct('field','camera_size'                        ,'required',false,'default',eps    ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','camera_size'                        ,'required',false,'default',eps                            ,'validation_fun',@validate_pos_num);
     
     % Check to see if any unrecognized fields exist
     calib_config_fields = fields(calib_config);

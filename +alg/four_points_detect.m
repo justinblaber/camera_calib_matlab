@@ -22,10 +22,7 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
     %           detected patch, circularly shifted to match the template. 
     %           The second column is the template with radius shift 
     %           applied.
-            
-    % Normalize array so gradients for gradient ascent aren't ginormous
-    array = (array-min(array(:)))./(max(array(:))-min(array(:)));
-    
+       
     % Read marker config and marker templates
     marker_config = util.read_data(calib_config.marker_config_path);
     marker_templates = util.read_data(calib_config.marker_templates_path);
@@ -34,15 +31,7 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
     if ~isfield(marker_templates,'polar_patches') || length(marker_templates.polar_patches) ~= 4
         error('There must be four templates in the marker templates file!');
     end
-                   
-    % Normalize template patches - note that due to padding, the template
-    % polar patches won't be normalized exactly correctly, but it shouldn't
-    % be too big of a deal.
-    for i = 1:4
-        marker_templates.polar_patches{i} = marker_templates.polar_patches{i} - mean(marker_templates.polar_patches{i}(:));
-        marker_templates.polar_patches{i} = marker_templates.polar_patches{i}./norm(marker_templates.polar_patches{i}(:));
-    end
-    
+          
     % Get normalized radius and theta samples used for sampling polar patch
     r_samples = linspace(marker_config.radius_norm_range(1), ...
                          marker_config.radius_norm_range(2), ...
@@ -59,107 +48,135 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
     end    
     r_samples = r_samples(calib_config.marker_padding+1: ...
                           end-calib_config.marker_padding);
-           
+    
     % Get blobs which should detect center of fiducial marker
     blobs = alg.blob_detect(array,calib_config);
-    
+        
     % Get ellipses
-    ellipses = struct('x',cell(1,length(blobs)), ...
-                      'y',cell(1,length(blobs)), ...
-                      'r1',cell(1,length(blobs)), ...
-                      'r2',cell(1,length(blobs)), ...
-                      'rot',cell(1,length(blobs)));
-    array_grad_x = alg.array_grad(array,'x');
-    array_grad_y = alg.array_grad(array,'y');
+    ellipses = struct('x',{},'y',{},'r1',{},'r2',{},'rot',{});
+    % Also store "cost" of ellipse which should indicate which blobs are 
+    % more ellipse-like
+    ellipse_costs = [];
     for i = 1:length(blobs)
-        % Get initial guess of ellipse by using second moment matrix
-        window = 2*ceil(2*blobs(i).r)+1; % Dimensions must be odd 
-        kernel_gauss = fspecial('gaussian',[window window],blobs(i).r);
-
-        % Coordinates
-        [y_window,x_window] = ndgrid(blobs(i).y-(window-1)/2:blobs(i).y+(window-1)/2, ...
-                                     blobs(i).x-(window-1)/2:blobs(i).x+(window-1)/2);
-
-        % Interpolate gradients
-        blob_grad_x = reshape(alg.array_interp(array_grad_x,[x_window(:) y_window(:)],'bicubic'),window,window);
-        blob_grad_y = reshape(alg.array_interp(array_grad_y,[x_window(:) y_window(:)],'bicubic'),window,window);
-          
-        % Compute second moment matrix
-        M(1,1) = sum(kernel_gauss(:).*blob_grad_x(:).^2);
-        M(1,2) = sum(kernel_gauss(:).*blob_grad_x(:).*blob_grad_y(:));
-        M(2,2) = sum(kernel_gauss(:).*blob_grad_y(:).^2);
-        M(2,1) = M(1,2);
+        % First, get sub array containing blob
+        half_window = ceil(4*blobs(i).r);
+        sub_array_l = round(blobs(i).x)-half_window;
+        sub_array_r = round(blobs(i).x)+half_window;   
+        sub_array_t = round(blobs(i).y)-half_window;
+        sub_array_b = round(blobs(i).y)+half_window;     
+        if sub_array_l < 1 || sub_array_r > size(array,2) || ...
+           sub_array_t < 1 || sub_array_b > size(array,1)
+            continue
+        end    
+        sub_array = array(sub_array_t:sub_array_b,sub_array_l:sub_array_r);        
+        
+        % Refine center position of blob
+        x_refined = blobs(i).x;
+        y_refined = blobs(i).y;
+        % Coordinates of points in sub_array
+        [y_sub_array,x_sub_array] = ndgrid(sub_array_t:sub_array_b, ...
+                                           sub_array_l:sub_array_r);
+        % Get "centroid array" which is negative of sub array, scaled
+        % between 0 and 1
+        centroid_sub_array = -sub_array;
+        min_centroid_sub_array = min(centroid_sub_array(:));
+        max_centroid_sub_array = max(centroid_sub_array(:));
+        centroid_sub_array = (centroid_sub_array-min_centroid_sub_array)./(max_centroid_sub_array-min_centroid_sub_array);
                 
-        % Get eigenvalue decomposition of M
+        for j = 1:10
+            % Store previous
+            x_refined_prev = x_refined;
+            y_refined_prev = y_refined;
+        
+            % Get gaussian kernel
+            kernel_gauss_blob = mvnpdf([x_sub_array(:) y_sub_array(:)],[x_refined y_refined],[(blobs(i).r)^2 0; 0 (blobs(i).r)^2]);
+            kernel_gauss_blob = reshape(kernel_gauss_blob,size(sub_array));
+
+            % Get refined x and y position
+            centroid_sub_array_weighted = centroid_sub_array .* kernel_gauss_blob;
+            centroid_sub_array_weighted_sum = sum(centroid_sub_array_weighted(:));
+
+            x_refined = sum(sum(centroid_sub_array_weighted.*x_sub_array))/centroid_sub_array_weighted_sum;
+            y_refined = sum(sum(centroid_sub_array_weighted.*y_sub_array))/centroid_sub_array_weighted_sum;
+
+            % sqrt((x_refined_prev-x_refined)^2 + (y_refined_prev-y_refined)^2)
+        end
+                
+        % Get initial guess of ellipse by using second moment matrix
+        sub_array_x = alg.array_grad(sub_array,'x');
+        sub_array_y = alg.array_grad(sub_array,'y');
+        kernel_gauss_blob = mvnpdf([x_sub_array(:) y_sub_array(:)],[x_refined y_refined],[(blobs(i).r)^2 0; 0 (blobs(i).r)^2]);
+        kernel_gauss_blob = reshape(kernel_gauss_blob,size(sub_array));
+        M(1,1) = sum(kernel_gauss_blob(:).*sub_array_x(:).^2);
+        M(1,2) = sum(kernel_gauss_blob(:).*sub_array_x(:).*sub_array_y(:));
+        M(2,2) = sum(kernel_gauss_blob(:).*sub_array_y(:).^2);
+        M(2,1) = M(1,2);        
+        if rank(M) < 2
+            continue
+        end
+                
+        % Get major/minor axis and rotation of ellipse
         [V,D] = eig(M);
         [D,idx_sorted] = sort(diag(D));
-        V = V(:, idx_sorted);
-        
+        V = V(:,idx_sorted);        
         % Ellipse sides are proportional to sqrt of eigenvalues
-        scale_factor = 2*blobs(i).r/(sqrt(D(1))+sqrt(D(2))); % have minor and major axis sum to diameter of blob
-        r1 = sqrt(D(2))*scale_factor; % major axis radius
-        r2 = sqrt(D(1))*scale_factor; % minor axis radius
-        
+        ellise_scale_factor = 2*blobs(i).r/(sqrt(D(1))+sqrt(D(2))); % have minor and major axis sum to diameter of blob
+        r1 = sqrt(D(2))*ellise_scale_factor; % major axis radius
+        r2 = sqrt(D(1))*ellise_scale_factor; % minor axis radius        
         % Rotation of major axis
         rot = -atan2(V(1,2),V(2,2));     
         
         % Now, do nonlinear refinement using initial guess
-        % First, get sub array around blob
-        width_ellipse = sqrt(r1^2*cos(rot)^2 + r2^2*sin(rot)^2);
-        height_ellipse = sqrt(r1^2*sin(rot)^2 + r2^2*cos(rot)^2); 
-        % bounding box
-        scale_factor = 4;
-        bb_l = floor(blobs(i).x - scale_factor*width_ellipse);
-        bb_r = ceil(blobs(i).x + scale_factor*width_ellipse);
-        bb_t = floor(blobs(i).y - scale_factor*height_ellipse);
-        bb_b = ceil(blobs(i).y + scale_factor*height_ellipse);        
-        if (bb_l < 1 || bb_r > size(array,2) || ...
-            bb_t < 1 || bb_b > size(array,1))
-            continue
-        end        
-        sub_array = array(bb_t:bb_b,bb_l:bb_r);
-                
-        % Get "cost" array - has high values along edge of ellipse
-        cost_sub_array = alg.array_grad(alg.array_gauss(sub_array,r2/2),'x').^2 + ...
-                         alg.array_grad(alg.array_gauss(sub_array,r2/2),'y').^2;
-        
-        % precompute gradients
-        cost_sub_array_grad_x = alg.array_grad(cost_sub_array,'x');
-        cost_sub_array_grad_y = alg.array_grad(cost_sub_array,'y');
-                
+               
+        % Get "cost" array - has high values along edge of ellipse. Use
+        % smoothed, upsampled sub array to compute gradients in order
+        % to improve convergence.
+        cost_scale_factor = 2;
+        sub_array_up = imresize(alg.array_gauss(sub_array,r2/2),cost_scale_factor);
+        cost_sub_array = sqrt(alg.array_grad(sub_array_up,'x').^2 + ...
+                              alg.array_grad(sub_array_up,'y').^2);
+        cost_sub_array_x = alg.array_grad(cost_sub_array,'x');
+        cost_sub_array_y = alg.array_grad(cost_sub_array,'y');
+        I_cost_sub_array = griddedInterpolant({1:size(cost_sub_array,1),1:size(cost_sub_array,2)}, ...
+                                              cost_sub_array, 'linear','none');
+        I_cost_sub_array_x = griddedInterpolant({1:size(cost_sub_array_x,1),1:size(cost_sub_array_x,2)}, ...
+                                                cost_sub_array_x, 'linear','none');
+        I_cost_sub_array_y = griddedInterpolant({1:size(cost_sub_array_y,1),1:size(cost_sub_array_y,2)}, ...
+                                                cost_sub_array_y, 'linear','none');
+                   
         % Perform gradient ascent with backtracking
-        p = [blobs(i).x blobs(i).y r1 r2 rot]'; % initialize parameter vector with current ellipse
+        p = [x_refined y_refined r1 r2 rot]'; % initialize parameter vector with current ellipse
         for it = 1:calib_config.marker_it_cutoff
             % Set p_init to p from previous iteration
             p_init = p;
-            
+
             % Get ellipse points at p_init
-            x_init = p_init(3)*cos(p_init(5))*cos(theta_samples) - p_init(4)*sin(p_init(5))*sin(theta_samples) + (p_init(1)-bb_l+1);
-            y_init = p_init(3)*sin(p_init(5))*cos(theta_samples) + p_init(4)*cos(p_init(5))*sin(theta_samples) + (p_init(2)-bb_t+1);
-            
+            x_init = cost_scale_factor*(p_init(3)*cos(p_init(5))*cos(theta_samples) - p_init(4)*sin(p_init(5))*sin(theta_samples) + (p_init(1)-sub_array_l+1) - 1/2*(1-1/cost_scale_factor));
+            y_init = cost_scale_factor*(p_init(3)*sin(p_init(5))*cos(theta_samples) + p_init(4)*cos(p_init(5))*sin(theta_samples) + (p_init(2)-sub_array_t+1) - 1/2*(1-1/cost_scale_factor));
+
             % Compute gradient at p_init
-            dc_dx = alg.array_interp(cost_sub_array_grad_x,[x_init' y_init'],'bicubic');
-            dc_dy = alg.array_interp(cost_sub_array_grad_y,[x_init' y_init'],'bicubic');
+            dc_dx = I_cost_sub_array_x(y_init',x_init');
+            dc_dy = I_cost_sub_array_y(y_init',x_init');
             dx_dp = [ones(length(theta_samples),1)  zeros(length(theta_samples),1) cos(p_init(5))*cos(theta_samples') -sin(p_init(5))*sin(theta_samples') -p_init(3)*sin(p_init(5))*cos(theta_samples')-p_init(4)*cos(p_init(5))*sin(theta_samples')];
             dy_dp = [zeros(length(theta_samples),1) ones(length(theta_samples),1)  sin(p_init(5))*cos(theta_samples')  cos(p_init(5))*sin(theta_samples')  p_init(3)*cos(p_init(5))*cos(theta_samples')-p_init(4)*sin(p_init(5))*sin(theta_samples')];
             grad = sum(dc_dx.*dx_dp + dc_dy.*dy_dp)';
-            
+
             % Get initial cost; this is used in backtracking
-            cost_init = sum(alg.array_interp(cost_sub_array,[x_init' y_init'],'bicubic'));
-                        
+            cost_init = sum(I_cost_sub_array(y_init,x_init));
+
             % Perform backtracking 
             n = 1;
             p = p_init + n*grad;
-            x = p(3)*cos(p(5))*cos(theta_samples) - p(4)*sin(p(5))*sin(theta_samples) + (p(1)-bb_l+1);
-            y = p(3)*sin(p(5))*cos(theta_samples) + p(4)*cos(p(5))*sin(theta_samples) + (p(2)-bb_t+1);
+            x = cost_scale_factor*(p(3)*cos(p(5))*cos(theta_samples) - p(4)*sin(p(5))*sin(theta_samples) + (p(1)-sub_array_l+1) - 1/2*(1-1/cost_scale_factor));
+            y = cost_scale_factor*(p(3)*sin(p(5))*cos(theta_samples) + p(4)*cos(p(5))*sin(theta_samples) + (p(2)-sub_array_t+1) - 1/2*(1-1/cost_scale_factor));
             while all(x >= 1 & x <= size(cost_sub_array,2) & ...
                       y >= 1 & y <= size(cost_sub_array,1)) && ...
-                  sum(alg.array_interp(cost_sub_array,[x' y'],'bicubic')) < cost_init+(1/2)*n*dot(grad,grad) % Backtracking guaranteed to exit this condition eventually
+                  sum(I_cost_sub_array(y',x')) < cost_init+(1/2)*n*dot(grad,grad) % Backtracking guaranteed to exit this condition eventually
                 % Half step size
                 n = (1/2)*n;
                 p = p_init + n*grad;
-                x = p(3)*cos(p(5))*cos(theta_samples) - p(4)*sin(p(5))*sin(theta_samples) + (p(1)-bb_l+1);
-                y = p(3)*sin(p(5))*cos(theta_samples) + p(4)*cos(p(5))*sin(theta_samples) + (p(2)-bb_t+1);
+                x = cost_scale_factor*(p(3)*cos(p(5))*cos(theta_samples) - p(4)*sin(p(5))*sin(theta_samples) + (p(1)-sub_array_l+1) - 1/2*(1-1/cost_scale_factor));
+                y = cost_scale_factor*(p(3)*sin(p(5))*cos(theta_samples) + p(4)*cos(p(5))*sin(theta_samples) + (p(2)-sub_array_t+1) - 1/2*(1-1/cost_scale_factor));
             end
                
             % Exit if the ellipse went out of the bounding box
@@ -168,7 +185,21 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
                 p(:) = NaN;
                 break
             end
-            
+               
+            %{
+            % Get ellipse points at p_init
+            figure(1);
+            x_plot = cost_scale_factor*(p(3)*cos(p(5))*cos(theta_samples) - p(4)*sin(p(5))*sin(theta_samples) + (p(1)-sub_array_l+1) - 1/2*(1-1/cost_scale_factor));
+            y_plot = cost_scale_factor*(p(3)*sin(p(5))*cos(theta_samples) + p(4)*cos(p(5))*sin(theta_samples) + (p(2)-sub_array_t+1) - 1/2*(1-1/cost_scale_factor));
+            subplot(1,2,2);
+            imshow(cost_sub_array,[]);
+            hold on;
+            plot(x_plot,y_plot,'-r');
+            plot(x,y,'-g');
+            norm(p-p_init)
+            drawnow 
+            %}
+
             % Exit if change in distance is small
             diff_norm = norm(p-p_init);            
             if calib_config.verbose > 2
@@ -183,29 +214,66 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
             warning('Marker iterations hit cutoff before converging!!!');
         end
                 
-        % Check if any params are NaNs which means sampling went out of
-        % bounds
-        if any(isnan(p))
-            continue
-        end
-
-        % Store refined outputs
-        ellipses(i).x = p(1);
-        ellipses(i).y = p(2);
-        ellipses(i).r1 = p(3);
-        ellipses(i).r2 = p(4);
-        ellipses(i).rot = p(5);
-    end
-
-    % Get polar patches based on ellipses
-    polar_patches = cell(1,length(ellipses));
-    for i = 1:length(ellipses)   
-        if isempty(ellipses(i).x) || isempty(ellipses(i).y) || ...
-           isempty(ellipses(i).r1) || isempty(ellipses(i).r2) || ...
-           isempty(ellipses(i).rot)
+        % Check if any params are NaNs or if minor/major axes is very small
+        if any(isnan(p)) || ...
+           p(3) <= calib_config.ellipse_detect_r1_cutoff || ...
+           p(4) <= calib_config.ellipse_detect_r2_cutoff
             continue
         end
         
+        
+        % Before storing ellipse, make sure there isn't another ellipse near
+        % this one. This is ad-hoc clustering and typically "good enough"
+        dist_d = sqrt(([ellipses.x]-p(1)).^2 + ...
+                      ([ellipses.y]-p(2)).^2);
+        dist_r1 = abs([ellipses.r1]-p(3));        
+        dist_r2 = abs([ellipses.r2]-p(4));        
+        dist_rot = abs([ellipses.rot]-p(5));        
+        if all(dist_d > 1 | ...
+               dist_r1 > 1 | ...
+               dist_r2 > 1 | ...
+               dist_rot > 2*pi/36)        
+            % Compute "cost" of each ellipse
+
+            % Get gaussian kernel in the shape of the ellipse
+            rotation = [cos(p(5)) -sin(p(5));  ...
+                        sin(p(5))  cos(p(5))];
+            variance = [p(3)^2 0; ...
+                        0      p(4)^2];
+            covariance = rotation*variance*rotation';              
+            if rank(covariance) < 2
+                continue
+            end        
+            [y_window_up,x_window_up] = ndgrid(1:size(sub_array_up,1),1:size(sub_array_up,2));
+            x_window_up = (x_window_up./cost_scale_factor + 1/2*(1-1/cost_scale_factor)) -1 + sub_array_l;
+            y_window_up = (y_window_up./cost_scale_factor + 1/2*(1-1/cost_scale_factor)) -1 + sub_array_t;
+
+            kernel_gauss_ellipse = mvnpdf([x_window_up(:) y_window_up(:)],[p(1) p(2)],covariance);
+            kernel_gauss_ellipse = reshape(kernel_gauss_ellipse,size(sub_array_up));
+
+            % Compute and store ellipse cost       
+            cost_sub_array_ellipse = cost_sub_array .* kernel_gauss_ellipse;          
+            cost_sub_array_ellipse = (cost_sub_array_ellipse - min(cost_sub_array_ellipse(:)))./(max(cost_sub_array_ellipse(:)) - min(cost_sub_array_ellipse(:)));
+            x = cost_scale_factor*(p(3)*cos(p(5))*cos(theta_samples) - p(4)*sin(p(5))*sin(theta_samples) + (p(1)-sub_array_l+1) - 1/2*(1-1/cost_scale_factor));
+            y = cost_scale_factor*(p(3)*sin(p(5))*cos(theta_samples) + p(4)*cos(p(5))*sin(theta_samples) + (p(2)-sub_array_t+1) - 1/2*(1-1/cost_scale_factor));
+            ellipse_costs(end+1) = min(alg.array_interp(cost_sub_array_ellipse,[x' y'],'linear')); %#ok<AGROW>
+
+            % Store refined outputs
+            ellipses(end+1).x = p(1); %#ok<AGROW>
+            ellipses(end).y = p(2);
+            ellipses(end).r1 = p(3);
+            ellipses(end).r2 = p(4);
+            ellipses(end).rot = p(5);
+        end
+    end 
+    
+    % Threshold number of ellipses
+    [~,idx_ellipse] = sort(ellipse_costs,'descend');
+    ellipses = ellipses(idx_ellipse(1:min(calib_config.ellipse_detect_num_cutoff,end)));
+    
+    % Get polar patches based on ellipses
+    polar_patches = cell(1,length(ellipses));
+    for i = 1:length(ellipses)          
         % Make xform to apply to coordinates of circle: rotation * scaling
         rotation = [cos(ellipses(i).rot) -sin(ellipses(i).rot);  ...
                     sin(ellipses(i).rot)  cos(ellipses(i).rot)];
@@ -229,7 +297,7 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
         end
             
         % Resample
-        polar_patch = alg.array_interp(array, p_affine', 'bicubic');
+        polar_patch = alg.array_interp(array, p_affine', 'linear');
         polar_patches{i} = reshape(polar_patch,marker_config.theta_num_samples,[]);    
     end
     

@@ -221,7 +221,7 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
         end  
                 
         % Get and store update
-        delta_p = -inv(jacob(:,update_idx)'*jacob(:,update_idx))*jacob(:,update_idx)'*res;
+        delta_p = -mldivide(jacob(:,update_idx),res);
         p(update_idx) = p(update_idx) + delta_p;
         
         % Store norm of residual

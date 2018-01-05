@@ -36,8 +36,10 @@ function fig_four_points_detect(four_points_ps,debug,cb_img,f)
     axes(axes_cal_board);
     hold(axes_cal_board,'on');
     for i = 1:length(debug.blobs)
-        util.ellipse(debug.blobs(i).r,debug.blobs(i).r,0,debug.blobs(i).x,debug.blobs(i).y,'r');  
-        util.ellipse(debug.ellipses(i).r1,debug.ellipses(i).r2,debug.ellipses(i).rot, ...
+        external.ellipse(debug.blobs(i).r,debug.blobs(i).r,0,debug.blobs(i).x,debug.blobs(i).y,'r');  
+    end
+    for i = 1:length(debug.ellipses)
+        external.ellipse(debug.ellipses(i).r1,debug.ellipses(i).r2,debug.ellipses(i).rot, ...
                      debug.ellipses(i).x,debug.ellipses(i).y,'g');  
     end
     plot(four_points_ps(:,1),four_points_ps(:,2),'-mo','MarkerSize',8, ...

@@ -46,27 +46,47 @@ function calib_config = read_calib_config(calib_config_path)
     %       refine_param_norm_cutoff - scalar; cutoff for the difference in
     %           norm of calibration parameters
     %
-    %       blob_detect_r1 - scalar; lower bound of blob radius search;
-    %           this is non-inclusive.
-    %       blob_detect_r2 - scalar; upper bound of blob radius search;
-    %           this is non-inclusive.
+    %       blob_detect_r_range1 - scalar; lower bound of blob radius 
+    %           search; this is non-inclusive.
+    %       blob_detect_r_range2 - scalar; upper bound of blob radius 
+    %           search; this is non-inclusive.
     %       blob_detect_step - scalar; pixels between samplings of scale
     %           space
     %       blob_detect_num_cutoff - int; only processes this number of the
     %           strongest blob responses
+    %       blob_detect_LoG_cutoff - scalar; only processes blobs with a
+    %           LoG response higher than this value
     %       blob_detect_it_cutoff - int; number of iterations performed 
     %           for refinement of blob location/scale
     %       blob_detect_norm_cutoff - scalar; cutoff for the difference in
     %           norm of location/scale parameters
+    %       blob_detect_eig_ratio_cutoff - scalar; cutoff for the ratio of 
+    %           eigenvalues for the second moment matrix
+    %       blob_detect_centroid_it_cutoff - int; number of iterations 
+    %           performed for the centroid refinement
+    %       blob_detect_centroid_norm_cutoff - scalar; cutoff for the 
+    %           distance between centroid updates 
+    %       blob_detect_M_it_cutoff - int; number of iterations performed 
+    %           for the second moment matrix refinement
     %       blob_detect_d_cluster - scalar; cluster blobs within d distance
     %           away from each other
     %       blob_detect_r_cluster - scalar; cluster blobs within r radii
     %           away from each other
     %
+    %       ellipse_detect_theta_num_samples - int; number of evenly 
+    %           divided samples to use around ellipse.
     %       ellipse_detect_r1_cutoff - scalar; cutoff for major axis
     %       ellipse_detect_r2_cutoff - scalar; cutoff for minor axis
     %       ellipse_detect_num_cutoff - int; only processes this number of 
     %           the strongest ellipse responses
+    %       ellipse_detect_d_cluster - scalar; cluster ellipses within d 
+    %           distance away from each other
+    %       ellipse_detect_r1_cluster - scalar; cluster ellipses within 
+    %           r1 major axes away from each other
+    %       ellipse_detect_r2_cluster - scalar; cluster ellipses within 
+    %           r2 minor axes away from each other
+    %       ellipse_detect_rot_cluster - scalar; cluster ellipses within 
+    %           rot angle of each other
     %
     %       marker_config_path - string; path to marker configuration
     %       marker_templates_path - string; path to marker_templates
@@ -115,17 +135,27 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','refine_corner_window_min_size'      ,'required',false,'default',10                             ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','refine_param_it_cutoff'             ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);
     field_info(end+1) = struct('field','refine_param_norm_cutoff'           ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','blob_detect_r1'                     ,'required',false,'default',0.5                            ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','blob_detect_r2'                     ,'required',false,'default',realmax                        ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','blob_detect_r_range1'               ,'required',false,'default',0.5                            ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','blob_detect_r_range2'               ,'required',false,'default',realmax                        ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','blob_detect_step'                   ,'required',false,'default',0.5                            ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','blob_detect_num_cutoff'             ,'required',false,'default',realmax                        ,'validation_fun',@validate_pos_int);   
-    field_info(end+1) = struct('field','blob_detect_it_cutoff'              ,'required',false,'default',20                              ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','blob_detect_LoG_cutoff'             ,'required',false,'default',0.05                           ,'validation_fun',@validate_pos_num);   
+    field_info(end+1) = struct('field','blob_detect_it_cutoff'              ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);
     field_info(end+1) = struct('field','blob_detect_norm_cutoff'            ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_eig_ratio_cutoff'       ,'required',false,'default',25                             ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_centroid_it_cutoff'     ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);    
+    field_info(end+1) = struct('field','blob_detect_centroid_norm_cutoff'   ,'required',false,'default',0.1                            ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_M_it_cutoff'            ,'required',false,'default',5                              ,'validation_fun',@validate_pos_int);    
     field_info(end+1) = struct('field','blob_detect_d_cluster'              ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
     field_info(end+1) = struct('field','blob_detect_r_cluster'              ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','ellipse_detect_theta_num_samples'   ,'required',false,'default',100                            ,'validation_fun',@validate_pos_int);   
     field_info(end+1) = struct('field','ellipse_detect_r1_cutoff'           ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);   
     field_info(end+1) = struct('field','ellipse_detect_r2_cutoff'           ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);   
-    field_info(end+1) = struct('field','ellipse_detect_num_cutoff'          ,'required',false,'default',50                             ,'validation_fun',@validate_pos_int);   
+    field_info(end+1) = struct('field','ellipse_detect_num_cutoff'          ,'required',false,'default',50                             ,'validation_fun',@validate_pos_int);    
+    field_info(end+1) = struct('field','ellipse_detect_d_cluster'           ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);   
+    field_info(end+1) = struct('field','ellipse_detect_r1_cluster'          ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);   
+    field_info(end+1) = struct('field','ellipse_detect_r2_cluster'          ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);   
+    field_info(end+1) = struct('field','ellipse_detect_rot_cluster'         ,'required',false,'default',2*pi/36                        ,'validation_fun',@validate_pos_num);   
     field_info(end+1) = struct('field','marker_config_path'                 ,'required',false,'default','+markers/marker.conf'         ,'validation_fun',@validate_file_path);
     field_info(end+1) = struct('field','marker_templates_path'              ,'required',false,'default','+markers/marker_templates.txt','validation_fun',@validate_file_path);   
     field_info(end+1) = struct('field','marker_padding'                     ,'required',false,'default',5                              ,'validation_fun',@validate_pos_int);     

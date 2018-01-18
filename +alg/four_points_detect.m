@@ -18,10 +18,12 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
     %           .r1 - scalar; major axis in pixels
     %           .r2 - scalar; minor axis in pixels
     %           .rot - scalar; rotation of major axis in radians
-    %       .patch_matches - cell; 4x2 cell of patches. First column is 
-    %           detected patch, circularly shifted to match the template. 
-    %           The second column is the template with radius shift 
-    %           applied.
+    %       .patch_matches - struct;
+    %           .patch - array; detected patch, circularly shifted to match
+    %               the template.
+    %           .template - array; template with radius shift applied.
+    %           .ellipse - struct; ellipse corresponding to detected patch
+    %           .cc_val - scalar; cross correlation coefficient
        
     % Read marker config and marker templates
     marker_config = util.read_data(calib_config.marker_config_path);
@@ -30,6 +32,14 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
     % Make sure there are four marker templates
     if ~isfield(marker_templates,'polar_patches') || length(marker_templates.polar_patches) ~= 4
         error('There must be four templates in the marker templates file!');
+    end
+    
+    % Rescale array
+    if calib_config.four_point_detect_scaled_array_min_size == realmax
+        scale_factor = 1;
+    else
+        scale_factor = calib_config.four_point_detect_scaled_array_min_size/min(size(array));
+        array = imresize(array,scale_factor);
     end
          
     % Get blobs which should detect center of fiducial marker
@@ -280,7 +290,10 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
     end   
         
     % Get best matches
-    patch_matches = cell(4,2);
+    patch_matches = struct('patch',cell(4,1), ...
+                           'template',cell(4,1), ...
+                           'ellipse',cell(4,1));
+    cell(4,2);
     four_points_p = zeros(4,2);
     for i = 1:4
         % TODO: possibly use max difference between best and 2nd best match
@@ -291,18 +304,34 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
                      
         % Set coordinates
         four_points_p(j_max,:) = [ellipses(i_max).x ellipses(i_max).y];
-                                       
+                       
+        % Store best patch matches
+        patch_matches(j_max).patch = circshift(polar_patches{i_max},-(i_idx_mat(i_max,j_max)-1));
+        patch_matches(j_max).template = marker_templates.polar_patches{j_max}(:,j_idx_mat(i_max,j_max):j_idx_mat(i_max,j_max)+length(polarpatch_r_samples)-1);
+        patch_matches(j_max).ellipse = ellipses(i_max);
+        patch_matches(j_max).cc_val = cc_mat(i_max,j_max);
+                
         % "disable" this patch and template
         cc_mat(i_max,:) = -Inf; % patch
         cc_mat(:,j_max) = -Inf; % template
-        
-        % Store best patch matches
-        patch_matches{j_max,1} = circshift(polar_patches{i_max},-(i_idx_mat(i_max,j_max)-1));
-        patch_matches{j_max,2} = marker_templates.polar_patches{j_max}(:,j_idx_mat(i_max,j_max):j_idx_mat(i_max,j_max)+length(polarpatch_r_samples)-1);
     end     
     
     % Set debugging output
     four_points_debug.blobs = blobs;
     four_points_debug.ellipses = ellipses;
     four_points_debug.patch_matches = patch_matches;
+    
+    % Rescale based on scale_factor
+    four_points_p = four_points_p/scale_factor + 1/2*(1-1/scale_factor);
+    for i = 1:length(four_points_debug.blobs)
+        four_points_debug.blobs(i).x = four_points_debug.blobs(i).x/scale_factor + 1/2*(1-1/scale_factor);
+        four_points_debug.blobs(i).y = four_points_debug.blobs(i).y/scale_factor + 1/2*(1-1/scale_factor);
+        four_points_debug.blobs(i).r = four_points_debug.blobs(i).r/scale_factor;
+    end    
+    for i = 1:length(four_points_debug.ellipses)
+        four_points_debug.ellipses(i).x = four_points_debug.ellipses(i).x/scale_factor + 1/2*(1-1/scale_factor);
+        four_points_debug.ellipses(i).y = four_points_debug.ellipses(i).y/scale_factor + 1/2*(1-1/scale_factor);
+        four_points_debug.ellipses(i).r1 = four_points_debug.ellipses(i).r1/scale_factor;
+        four_points_debug.ellipses(i).r2 = four_points_debug.ellipses(i).r2/scale_factor;
+    end
 end

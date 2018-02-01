@@ -54,5 +54,4 @@ clear;
 calib = util.read_single_calib('calibrations/single2.txt');
 
 %% Debug with gui
-f = figure(1);
-debug.gui_single_calib(calib, f);
+debug.gui_single_calib(calib);

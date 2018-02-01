@@ -35,7 +35,7 @@ function write_single_calib(calib,file_path,suffix,append_calib)
         % This will clear the file
         f = fopen(file_path,'w');
         fclose(f);
-                
+
         % Write calib_config
         util.write_comment('calib_config',file_path);
         calib_config_fields = fields(calib.config);

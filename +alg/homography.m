@@ -83,7 +83,7 @@ function homography_1_2 = homography(points_1,points_2,calib_config)
         % Store residual
         res(1:num_points) = u_prime./w_prime - points_2(:,1);
         res(num_points+1:2*num_points,1) = v_prime./w_prime - points_2(:,2);
-        
+
         % Get and store update
         delta_h = -mldivide(jacob,res);
         h = h + delta_h;

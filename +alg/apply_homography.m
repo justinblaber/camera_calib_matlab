@@ -9,7 +9,7 @@ function points_2 = apply_homography(homography_1_2,points_1)
     % Outputs:
     %   points_2 - array; Nx2 array of points
     
-    % Augment and transpose -> Apply homography -> normalize by 3rd
+    % Augment and transpose -> apply homography -> normalize by 3rd
     % coordinate -> untranspose
     points_2 = homography_1_2 * [points_1 ones(size(points_1,1),1)]';
     points_2 = (points_2(1:2,:)./points_2(3,:))';

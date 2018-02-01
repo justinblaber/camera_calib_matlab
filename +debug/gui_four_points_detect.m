@@ -1,4 +1,4 @@
-function gui_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,f)
+function gui_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,calib_config,f)
     % GUI for debugging four point detection
             
     if ~exist('f','var')
@@ -124,13 +124,26 @@ function gui_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,f)
                 end
             end
 
-            % Plot
-            imshow(cb_imgs(idx_board).get_gs(),[],'Parent',axes_cal_board)
+            % Plot            
+            % scale array based on min size
+            array = cb_imgs(idx_board).get_gs();
+            if calib_config.four_point_detect_scaled_array_min_size == realmax
+                scale_factor = 1;
+            else
+                scale_factor = calib_config.four_point_detect_scaled_array_min_size/min(size(array));
+                array = imresize(array,scale_factor);
+            end
+            imshow(array,[],'Parent',axes_cal_board)
             title(axes_cal_board,'Blobs, ellipses, and four points','FontSize',10); 
             xlabel(axes_cal_board,['Path: ' cb_imgs(idx_board).get_path()], ...
                    'FontSize',8,'Interpreter','none'); 
             axes(axes_cal_board);
             hold(axes_cal_board,'on');
+            % Must rescale four_points_ps
+            plot(scale_factor*(four_points_ps{idx_board}(:,1)-1/2*(1-1/scale_factor)), ...
+                 scale_factor*(four_points_ps{idx_board}(:,2)-1/2*(1-1/scale_factor)),'-mo','MarkerSize',8, ...
+                 'parent',axes_cal_board);
+            % Debugging stuff does not need to be rescaled
             for i = 1:length(four_points_debugs(idx_board).blobs)
                 external.ellipse(four_points_debugs(idx_board).blobs(i).r, ...
                                  four_points_debugs(idx_board).blobs(i).r, ...
@@ -147,8 +160,6 @@ function gui_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,f)
                                  four_points_debugs(idx_board).ellipses(i).y, ...
                                  'g');  
             end
-            plot(four_points_ps{idx_board}(:,1),four_points_ps{idx_board}(:,2),'-mo','MarkerSize',8, ...
-                 'parent',axes_cal_board);
             hold(axes_cal_board,'off');
 
             for i = 1:4
@@ -158,55 +169,25 @@ function gui_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,f)
                 title(axes_patches(i,2),['Patch ' num2str(i) ' template'],'FontSize',7);
             end
             
-            scale_factor = 10;
+            % Set bounding box
             switch mode
                 case 'whole'
                     l = 0.5;
-                    r = cb_imgs(1).get_width()+0.5;
+                    r = size(array,2)+0.5;
                     t = 0.5;
-                    b = cb_imgs(1).get_height()+0.5;
+                    b = size(array,1)+0.5;
                 case '1' 
-                    ellipse = four_points_debugs(idx_board).patch_matches(1).ellipse;
-                    width_ellipse = sqrt(ellipse.r1^2*cos(ellipse.rot)^2 + ellipse.r2^2*sin(ellipse.rot)^2);
-                    height_ellipse = sqrt(ellipse.r1^2*sin(ellipse.rot)^2 + ellipse.r2^2*cos(ellipse.rot)^2); 
-                    l = ellipse.x-scale_factor*width_ellipse;
-                    r = ellipse.x+scale_factor*width_ellipse;
-                    t = ellipse.y-scale_factor*height_ellipse;
-                    b = ellipse.y+scale_factor*height_ellipse;
+                    [l, r, t, b] = ellipse_bb(four_points_debugs(idx_board).patch_matches(1).ellipse);
                 case '2'
-                    ellipse = four_points_debugs(idx_board).patch_matches(2).ellipse;
-                    width_ellipse = sqrt(ellipse.r1^2*cos(ellipse.rot)^2 + ellipse.r2^2*sin(ellipse.rot)^2);
-                    height_ellipse = sqrt(ellipse.r1^2*sin(ellipse.rot)^2 + ellipse.r2^2*cos(ellipse.rot)^2); 
-                    l = ellipse.x-scale_factor*width_ellipse;
-                    r = ellipse.x+scale_factor*width_ellipse;
-                    t = ellipse.y-scale_factor*height_ellipse;
-                    b = ellipse.y+scale_factor*height_ellipse;
+                    [l, r, t, b] = ellipse_bb(four_points_debugs(idx_board).patch_matches(2).ellipse);
                 case '3'
-                    ellipse = four_points_debugs(idx_board).patch_matches(3).ellipse;
-                    width_ellipse = sqrt(ellipse.r1^2*cos(ellipse.rot)^2 + ellipse.r2^2*sin(ellipse.rot)^2);
-                    height_ellipse = sqrt(ellipse.r1^2*sin(ellipse.rot)^2 + ellipse.r2^2*cos(ellipse.rot)^2); 
-                    l = ellipse.x-scale_factor*width_ellipse;
-                    r = ellipse.x+scale_factor*width_ellipse;
-                    t = ellipse.y-scale_factor*height_ellipse;
-                    b = ellipse.y+scale_factor*height_ellipse;
+                    [l, r, t, b] = ellipse_bb(four_points_debugs(idx_board).patch_matches(3).ellipse);
                 case '4'
-                    ellipse = four_points_debugs(idx_board).patch_matches(4).ellipse;
-                    width_ellipse = sqrt(ellipse.r1^2*cos(ellipse.rot)^2 + ellipse.r2^2*sin(ellipse.rot)^2);
-                    height_ellipse = sqrt(ellipse.r1^2*sin(ellipse.rot)^2 + ellipse.r2^2*cos(ellipse.rot)^2); 
-                    l = ellipse.x-scale_factor*width_ellipse;
-                    r = ellipse.x+scale_factor*width_ellipse;
-                    t = ellipse.y-scale_factor*height_ellipse;
-                    b = ellipse.y+scale_factor*height_ellipse;
+                    [l, r, t, b] = ellipse_bb(four_points_debugs(idx_board).patch_matches(4).ellipse);
                 case 'worst'
                     % Get the worst patch
                     [~,idx] = min([four_points_debugs(idx_board).patch_matches.cc_val]);
-                    ellipse = four_points_debugs(idx_board).patch_matches(idx).ellipse;
-                    width_ellipse = sqrt(ellipse.r1^2*cos(ellipse.rot)^2 + ellipse.r2^2*sin(ellipse.rot)^2);
-                    height_ellipse = sqrt(ellipse.r1^2*sin(ellipse.rot)^2 + ellipse.r2^2*cos(ellipse.rot)^2); 
-                    l = ellipse.x-scale_factor*width_ellipse;
-                    r = ellipse.x+scale_factor*width_ellipse;
-                    t = ellipse.y-scale_factor*height_ellipse;
-                    b = ellipse.y+scale_factor*height_ellipse;
+                    [l, r, t, b] = ellipse_bb(four_points_debugs(idx_board).patch_matches(idx).ellipse);
             end
             set(axes_cal_board, ...
                 'Xlim',[l r], ...
@@ -217,4 +198,15 @@ function gui_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,f)
             end
         end
     end
+end
+
+function [l, r, t, b] = ellipse_bb(ellipse)
+    zoom_factor = 10;
+    width_ellipse = sqrt(ellipse.r1^2*cos(ellipse.rot)^2 + ellipse.r2^2*sin(ellipse.rot)^2);
+    height_ellipse = sqrt(ellipse.r1^2*sin(ellipse.rot)^2 + ellipse.r2^2*cos(ellipse.rot)^2); 
+    max_size = max(width_ellipse,height_ellipse);
+    l = ellipse.x-zoom_factor*max_size;
+    r = ellipse.x+zoom_factor*max_size;
+    t = ellipse.y-zoom_factor*max_size;
+    b = ellipse.y+zoom_factor*max_size;
 end

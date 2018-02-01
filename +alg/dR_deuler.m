@@ -30,7 +30,7 @@ function jacob = dR_deuler(euler)
     
     s_x = sin(euler(1));
     s_y = sin(euler(2));
-    s_z = sin(euler(3));    
+    s_z = sin(euler(3));
     
     jacob = [0                      -s_y*c_z        -c_y*s_z;
              0                      -s_y*s_z         c_y*c_z;

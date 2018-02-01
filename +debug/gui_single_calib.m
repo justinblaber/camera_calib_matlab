@@ -10,6 +10,7 @@ function gui_single_calib(calib,f)
     set(f,'KeyPressFcn',@(~,~)drawnow);
                  
     % Initialize parameters
+    mode = 'whole';
     idx_board = 1;
     num_boards = length(calib.extrin);                               
     alphas = 0.1*ones(1,num_boards);
@@ -52,6 +53,14 @@ function gui_single_calib(calib,f)
                         set(f,'KeyPressFcn',@KeyPressFcn);  
                         return
                     end
+                case 'escape'
+                    mode = 'whole';
+                case 'w'
+                    if strcmp(mode,'worst')
+                        mode = 'whole';
+                    else
+                        mode = 'worst';
+                    end
                 otherwise
                     % Set KeyPressFcn callback
                     set(f,'KeyPressFcn',@KeyPressFcn);  
@@ -80,8 +89,9 @@ function gui_single_calib(calib,f)
             clf(f);
 
             % Set name
-            set(f,'Name',['Board: ' num2str(idx_board) ' of ' num2str(num_boards) ' (NOTE: press left and right key arrows to toggle)']);
+            set(f,'Name',['Board: ' num2str(idx_board) ' of ' num2str(num_boards) '; mode: ' mode '; (NOTE: press left, right, "w", and "esc" key arrows to toggle)']);
 
+            
             % Set axes  
             pos_extrinsics = [padding_width 1-padding_height-extrinsics_height extrinsics_width extrinsics_height];
             axes_extrinsics = axes('Position',pos_extrinsics,'Parent',f);
@@ -130,6 +140,27 @@ function gui_single_calib(calib,f)
                   'FontSize',10,'Interpreter','none'); 
             xlabel(axes_board,['Path: ' calib.extrin(idx_board).cb_img.get_path()], ...
                    'FontSize',8,'Interpreter','none'); 
+               
+            % Set bounding box
+            array = calib.extrin(idx_board).cb_img.get_gs();
+            switch mode
+                case 'whole'
+                    l = 0.5;
+                    r = size(array,2)+0.5;
+                    t = 0.5;
+                    b = size(array,1)+0.5;
+                case 'worst'
+                    zoom_factor = 4;
+                    [~,max_idx] = max(sum(res{idx_board}.^2,2));
+                    x_max_res = calib.extrin(idx_board).board_points_p(max_idx,1);
+                    y_max_res = calib.extrin(idx_board).board_points_p(max_idx,2);
+                    max_res = max(abs(res{idx_board}(max_idx,:)));
+                    l = x_max_res - max_res*zoom_factor;
+                    r = x_max_res + max_res*zoom_factor;
+                    t = y_max_res - max_res*zoom_factor;
+                    b = y_max_res + max_res*zoom_factor;
+            end
+            set(axes_board,'Xlim',[l r],'Ylim',[t b]);
         catch e      
             if ishandle(f)
                 rethrow(e);

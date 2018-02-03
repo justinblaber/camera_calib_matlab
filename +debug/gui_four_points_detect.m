@@ -13,6 +13,8 @@ function gui_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,calib_
     mode = 'whole';
     idx_board = 1;
     num_boards = length(cb_imgs); 
+    axes_cal_board = matlab.graphics.axis.Axes.empty();
+    array = [];
     
     % Set axes parameters
     padding_height = 0.1;
@@ -31,10 +33,12 @@ function gui_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,calib_
             set(f,'KeyPressFcn',@(~,~)drawnow);
             
             % Set idx_board
+            replot = false;
             switch eventData.Key
                 case 'rightarrow'
                     if idx_board < num_boards
                         idx_board = idx_board+1;
+                        replot = true;
                     else
                         % Set KeyPressFcn callback
                         set(f,'KeyPressFcn',@KeyPressFcn);  
@@ -43,6 +47,7 @@ function gui_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,calib_
                 case 'leftarrow'
                     if idx_board > 1
                         idx_board = idx_board-1;
+                        replot = true;
                     else
                         % Set KeyPressFcn callback
                         set(f,'KeyPressFcn',@KeyPressFcn);  
@@ -87,7 +92,12 @@ function gui_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,calib_
             end
             
             % Replot
-            plot_gui();        
+            if replot
+                plot_gui();   
+            end
+            
+            % Set bounds
+            set_bounds();
 
             % Set KeyPressFcn callback
             set(f,'KeyPressFcn',@KeyPressFcn);  
@@ -97,7 +107,6 @@ function gui_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,calib_
             end
         end
     end
-
 
     function plot_gui()  
         try        
@@ -168,7 +177,15 @@ function gui_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,calib_
                 imshow(four_points_debugs(idx_board).patch_matches(i).template,[],'Parent',axes_patches(i,2));
                 title(axes_patches(i,2),['Patch ' num2str(i) ' template'],'FontSize',7);
             end
-            
+        catch e        
+            if ishandle(f)
+                rethrow(e);
+            end
+        end
+    end
+
+    function set_bounds()         
+        try        
             % Set bounding box
             switch mode
                 case 'whole'

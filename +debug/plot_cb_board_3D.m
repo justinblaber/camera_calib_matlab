@@ -13,18 +13,16 @@ function plot_cb_board_3D(calib_config,xform,color,alpha,a)
     end
         
     % Plot board using patches
+    patch_x_color = [];
+    patch_y_color = [];
+    patch_z_color = [];
+    patch_x_white = [];
+    patch_y_white = [];
+    patch_z_white = [];
     height_offset = (calib_config.four_point_height-calib_config.num_squares_height*calib_config.square_size)/2;
     width_offset = (calib_config.four_point_width-calib_config.num_squares_width*calib_config.square_size)/2;
     for j = 1:calib_config.num_squares_width
-        for k = 1:calib_config.num_squares_height
-            % Get checker color; only odd # of checkers are allowed on
-            % each side, so this is ok
-            if ~util.is_even((j-1)*calib_config.num_squares_height+k)
-                patch_color = color;
-            else
-                patch_color = 'white';
-            end            
-            
+        for k = 1:calib_config.num_squares_height            
             % Get checker coords
             x_w_cb = [(j-1)*calib_config.square_size (j-1)*calib_config.square_size ...
                       j*calib_config.square_size j*calib_config.square_size]+width_offset;
@@ -35,9 +33,22 @@ function plot_cb_board_3D(calib_config,xform,color,alpha,a)
             p_s_cb = [xform(:,1:2) xform(:,4)] * vertcat(x_w_cb, y_w_cb, ones(1,4));
             p_s_cb = p_s_cb(1:3,:)';
             
-            % Plot
-            patch(a,p_s_cb(:,3),p_s_cb(:,1),p_s_cb(:,2),patch_color, ...
-                  'FaceAlpha',alpha,'EdgeColor','k','EdgeAlpha',alpha);
+            if ~util.is_even((j-1)*calib_config.num_squares_height+k)
+                patch_x_color = horzcat(patch_x_color,p_s_cb(:,3)); %#ok<AGROW>
+                patch_y_color = horzcat(patch_y_color,p_s_cb(:,1)); %#ok<AGROW>
+                patch_z_color = horzcat(patch_z_color,p_s_cb(:,2)); %#ok<AGROW>
+            else
+                patch_x_white = horzcat(patch_x_white,p_s_cb(:,3)); %#ok<AGROW>
+                patch_y_white = horzcat(patch_y_white,p_s_cb(:,1)); %#ok<AGROW>
+                patch_z_white = horzcat(patch_z_white,p_s_cb(:,2)); %#ok<AGROW>
+            end            
+
         end
     end 
+    
+    % Plot
+    patch(a,patch_x_color,patch_y_color,patch_z_color,color, ...
+          'FaceAlpha',alpha,'EdgeColor','k','EdgeAlpha',alpha);
+    patch(a,patch_x_white,patch_y_white,patch_z_white,'white', ...
+          'FaceAlpha',alpha,'EdgeColor','k','EdgeAlpha',alpha);
 end

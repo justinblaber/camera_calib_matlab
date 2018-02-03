@@ -32,13 +32,13 @@ function points_p = refine_points(points_p,cb_img,homography,calib_config)
     % Cache image dimensions for speed
     img_width = cb_img.get_width();
     img_height = cb_img.get_height();
+    % Cache inverse homography for speed
+    homography_inv = homography^-1;
     % Get interpolators for gradient images    
     I_cb_gs_dx = griddedInterpolant({1:size(cb_gs_dx,1),1:size(cb_gs_dx,2)}, ...
                                      cb_gs_dx,'cubic','none');
     I_cb_gs_dy = griddedInterpolant({1:size(cb_gs_dy,1),1:size(cb_gs_dy,2)}, ...
                                      cb_gs_dy,'cubic','none');
-    % Cache inverse homography for speed
-    homography_inv = homography^-1;
     for i = 1:size(points_p,1)           
         for it = 1:calib_config.refine_corner_it_cutoff
             % Keep copy of point before updating it        

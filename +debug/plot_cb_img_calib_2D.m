@@ -77,14 +77,19 @@ function plot_cb_img_calib_2D(calib,idx_board,a)
          'FontSize',12,'HorizontalAlignment','center','color','r', ...
          'FontWeight','bold','parent',a);
      
-    % Plot refinement windows around points   
+    % Plot refinement windows around points    
+    % Cache image dimensions for speed
+    img_width = calib.extrin(idx_board).cb_img.get_width();
+    img_height = calib.extrin(idx_board).cb_img.get_height();
+    % Cache inverse homography for speed
+    homography_refine_inv = calib.extrin(idx_board).debug.homography_refine^-1;
     for i = 1:size(calib.extrin(idx_board).board_points_p,1)          
         % Get window points in pixel coordinates
         [~,~,win_point_corners_p] = alg.refine_window_p(calib.extrin(idx_board).board_points_p(i,:), ...
                                                         calib.extrin(idx_board).debug.homography_refine, ...
-                                                        calib.extrin(idx_board).debug.homography_refine^-1, ...
-                                                        calib.extrin(idx_board).cb_img.get_width(), ...
-                                                        calib.extrin(idx_board).cb_img.get_height(), ...
+                                                        homography_refine_inv, ...
+                                                        img_width, ...
+                                                        img_height, ...
                                                         calib.config);     
         
         % Plot        
@@ -120,6 +125,5 @@ function plot_cb_img_calib_2D(calib,idx_board,a)
     plot([1 calib.extrin(idx_board).cb_img.get_width()],[(calib.extrin(idx_board).cb_img.get_height()+1)/2 (calib.extrin(idx_board).cb_img.get_height()+1)/2],'--r','parent',a);
     
     % Remove hold
-    drawnow
     hold(a,'off');
 end

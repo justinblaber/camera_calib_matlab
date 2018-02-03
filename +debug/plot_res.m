@@ -31,6 +31,5 @@ function plot_res(res,colors,alphas,a)
     daspect(a,[1 1 1]);
     
     % Remove hold
-    drawnow
     hold(a,'off');
 end

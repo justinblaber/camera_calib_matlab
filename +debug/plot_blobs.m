@@ -23,6 +23,5 @@ function plot_blobs(blobs,array,a)
     end
     
     % Remove hold
-    drawnow
     hold(a,'off');
 end

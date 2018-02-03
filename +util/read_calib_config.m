@@ -68,6 +68,10 @@ function calib_config = read_calib_config(calib_config_path)
     %           for refinement of blob location/scale
     %       blob_detect_norm_cutoff - scalar; cutoff for the difference in
     %           norm of location/scale parameters
+    %       blob_detect_lambda_init - scalar; initial lambda for 
+    %           Levenberg–Marquardt algorithm
+    %       blob_detect_lambda_factor - scalar; multiplicative factor for
+    %           lambda in Levenberg–Marquardt algorithm
     %       blob_detect_eig_ratio_cutoff - scalar; cutoff for the ratio of 
     %           eigenvalues for the second moment matrix
     %       blob_detect_centroid_it_cutoff - int; number of iterations 
@@ -153,6 +157,8 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','blob_detect_LoG_cutoff'                 ,'required',false,'default',0.05                           ,'validation_fun',@validate_pos_num);   
     field_info(end+1) = struct('field','blob_detect_it_cutoff'                  ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);
     field_info(end+1) = struct('field','blob_detect_norm_cutoff'                ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_lambda_init'                ,'required',false,'default',0.01                           ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_lambda_factor'              ,'required',false,'default',10                             ,'validation_fun',@validate_pos_num);    
     field_info(end+1) = struct('field','blob_detect_eig_ratio_cutoff'           ,'required',false,'default',25                             ,'validation_fun',@validate_pos_num);    
     field_info(end+1) = struct('field','blob_detect_centroid_it_cutoff'         ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);    
     field_info(end+1) = struct('field','blob_detect_centroid_norm_cutoff'       ,'required',false,'default',0.1                            ,'validation_fun',@validate_pos_num);    

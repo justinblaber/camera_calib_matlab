@@ -62,6 +62,5 @@ function plot_single_extrinsic(rotations,translations,colors,alphas,calib_config
     axis(a,'tight');
     
     % Remove hold
-    drawnow
     hold(a,'off');
 end

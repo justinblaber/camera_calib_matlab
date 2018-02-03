@@ -92,83 +92,89 @@ function blobs = blob_detect(array,calib_config)
     % Precompute gradients
     array_dx = alg.array_grad(array,'x');  
     array_dy = alg.array_grad(array,'y');     
-    % Initialize "box" to interpolate in order to compute finite difference
-    % approximations to gradient/hessian and also get interpolator
-    [y_box,x_box,r_idx_box] = ndgrid(-1:1:1,-1:1:1,-1:1:1);
     I_stack_LoG = griddedInterpolant({1:size(stack_LoG,1),1:size(stack_LoG,2),1:size(stack_LoG,3)}, ...
                                       stack_LoG,'cubic','none');
+    % Get "box" to interpolate in order to compute finite difference
+    % approximations to gradient/hessian
+    [y_box,x_box,r_idx_box] = ndgrid(-1:1:1,-1:1:1,-1:1:1);
     for i = 1:length(maxima_x_init)
         % Grab initial values
         maxima_x = maxima_x_init(i);
         maxima_y = maxima_y_init(i);
         maxima_r_idx = maxima_r_idx_init(i);
-    
-        % Perform gauss newton iterations until convergence; during 
-        % iterations, set invalid points to NaNs
-        for it = 1:calib_config.blob_detect_it_cutoff
-            % Get finite difference coordinates for interpolation
-            x_fd = x_box + maxima_x;
-            y_fd = y_box + maxima_y;
-            r_idx_fd = r_idx_box + maxima_r_idx;
             
-            % Check to make sure finite difference box is in range
-            if any(x_fd(:) < 1 | x_fd(:) > size(stack_LoG,2) | ...
-                   y_fd(:) < 1 | y_fd(:) > size(stack_LoG,1) | ...
-                   r_idx_fd(:) < 1 | r_idx_fd(:) > size(stack_LoG,3))
-                maxima_x = NaN;
-                maxima_y = NaN;
-                maxima_r_idx = NaN;
+        % Filter out blobs that don't have a negative definite hessian
+        p = [maxima_x; maxima_y; maxima_r_idx];
+        [dl_dp,ddl_ddp] = calc_grad_hess(p,stack_LoG,I_stack_LoG,x_box,y_box,r_idx_box);            
+        [~,chol_param] = chol(-ddl_ddp);
+        if chol_param ~= 0
+            continue
+        end
+        
+        % Perform Levenberg–Marquardt iteration(s)
+        % Initialize lambda
+        lambda = calib_config.blob_detect_lambda_init;
+        % Get initial LoG value
+        LoG = stack_LoG(maxima_y,maxima_x,maxima_r_idx);
+        for it = 1:calib_config.blob_detect_it_cutoff                                
+            % Store previous p and LoG  
+            p_prev = p;
+            LoG_prev = LoG;
+            
+            % Compute delta_p          
+            delta_p = -mldivide(ddl_ddp - lambda*eye(3),dl_dp);
+                  
+            % Update params and LoG
+            p = p_prev + delta_p;
+            LoG = I_stack_LoG(p(2),p(1),p(3));
+            
+            % If LoG increased, decrease lambda and store results; if LoG
+            % decreases, then increase lambda until LoG increases
+            if LoG > LoG_prev
+                % Decrease lambda and continue to next iteration
+                lambda = lambda/calib_config.blob_detect_lambda_factor;            
+            else
+                while LoG <= LoG_prev
+                    % Increase lambda and recompute params
+                    lambda = calib_config.blob_detect_lambda_factor*lambda;      
+
+                    if isinf(lambda)
+                        % This will already be a very, very small step, so 
+                        % just exit
+                        delta_p(:) = 0;
+                        LoG = LoG_prev;
+                        p = p_prev;
+                        break
+                    end
+
+                    % Compute delta_p
+                    [dl_dp,ddl_ddp] = calc_grad_hess(p_prev,stack_LoG,I_stack_LoG,x_box,y_box,r_idx_box);     
+                    delta_p = -mldivide(ddl_ddp - lambda*eye(3),dl_dp);
+                                                   
+                    if any(isnan(delta_p))
+                        p(:) = NaN;
+                        break
+                    end
+                                       
+                    % update params and LoG
+                    p = p_prev + delta_p;
+                    LoG = I_stack_LoG(p(2),p(1),p(3));
+                end            
+            end
+                                                  
+            if any(isnan(p))
                 break
             end
-            
-            % Interpolate
-            LoG_fd = reshape(I_stack_LoG(y_fd(:),x_fd(:),r_idx_fd(:)),3,3,3);
-            
-            % Get gradient: [d_log/d_x d_log/d_y d_log/d_r_idx]
-            dl_dp(1) = (LoG_fd(2,3,2)-LoG_fd(2,1,2))/2;
-            dl_dp(2) = (LoG_fd(3,2,2)-LoG_fd(1,2,2))/2; 
-            dl_dp(3) = (LoG_fd(2,2,3)-LoG_fd(2,2,1))/2; 
 
-            % Get hessian:
-            %   [d^2_log/d_x^2         d^2_log/(d_x*d_y)     d^2_log/(d_x*d_r_idx)
-            %    d^2_log/(d_y*d_x)     d^2_log/d_y^2         d^2_log/(d_y*d_r_idx)
-            %    d^2_log/(d_r_idx*d_x) d^2_log/(d_r_idx*d_y) d^2_log/(d_r_idx^2)]                
-            ddl_ddp(1,1) = LoG_fd(2,3,2) - 2*LoG_fd(2,2,2) + LoG_fd(2,1,2);
-            ddl_ddp(1,2) = ((LoG_fd(3,3,2)-LoG_fd(1,3,2))/2 - (LoG_fd(3,1,2)-LoG_fd(1,1,2))/2)/2;
-            ddl_ddp(1,3) = ((LoG_fd(2,3,3)-LoG_fd(2,3,1))/2 - (LoG_fd(2,1,3)-LoG_fd(2,1,1))/2)/2;      
-            ddl_ddp(2,2) = LoG_fd(3,2,2) - 2*LoG_fd(2,2,2) + LoG_fd(1,2,2);
-            ddl_ddp(2,3) = ((LoG_fd(3,2,3)-LoG_fd(3,2,1))/2 - (LoG_fd(1,2,3)-LoG_fd(1,2,1))/2)/2;
-            ddl_ddp(3,3) = LoG_fd(2,2,3) - 2*LoG_fd(2,2,2) + LoG_fd(2,2,1);
-
-            % Fill lower half of hessian
-            ddl_ddp(2,1) = ddl_ddp(1,2);
-            ddl_ddp(3,1) = ddl_ddp(1,3);
-            ddl_ddp(3,2) = ddl_ddp(2,3);  
-
-            % Find incremental parameters
-            try
-                opts.POSDEF = true; 
-                opts.SYM = true; 
-                delta_p = linsolve(-ddl_ddp,dl_dp',opts);
-            catch
-                maxima_x = NaN;
-                maxima_y = NaN;
-                maxima_r_idx = NaN;
-                break
-            end
-            
-            % Get optimized locations
-            maxima_x = maxima_x+delta_p(1);
-            maxima_y = maxima_y+delta_p(2);
-            maxima_r_idx = maxima_r_idx+delta_p(3);
-            
             % Exit if change in distance is small
-            diff_norm = norm(delta_p);            
+            norm_delta_p = norm(delta_p);                 
             if calib_config.verbose > 2
-                disp(['Blob detect iteration #: ' num2str(it)]);
-                disp(['Difference norm for nonlinear parameter refinement: ' num2str(diff_norm)]);
+                disp(['Iteration #: ' sprintf('%3u',it) '; ' ...
+                      'LoG: ' sprintf('%12.10f',LoG) '; ' ...
+                      'Norm of delta_p: ' sprintf('%12.10f',norm_delta_p) '; ' ...
+                      'lambda: ' sprintf('%12.10f',lambda)]);
             end
-            if diff_norm < calib_config.blob_detect_norm_cutoff
+            if norm(delta_p) < calib_config.blob_detect_norm_cutoff
                 break
             end
         end
@@ -176,9 +182,14 @@ function blobs = blob_detect(array,calib_config)
             warning('Blob detect iterations hit cutoff before converging!!!');
         end
         
-        if isnan(maxima_x) || isnan(maxima_y) || isnan(maxima_r_idx)
+        if any(isnan(p))
             continue
         end
+        
+        % Get outputs from p
+        maxima_x = p(1);
+        maxima_y = p(2);
+        maxima_r_idx = p(3);
         
         % Set maxima_r
         maxima_r = (r_range2-r_range1)/(num_scales-1)*(maxima_r_idx-1)+r_range1;
@@ -339,4 +350,46 @@ function [eig_ratio,r1,r2,rot,M] = second_moment_params(array_dx,array_dy,x_arra
     r2 = sqrt(D(1))*ellipse_scale_factor; % minor axis radius        
     % rotation of major axis
     rot = -atan2(V(1,2),V(2,2));  
+end
+
+function [dl_dp,ddl_ddp] = calc_grad_hess(p,stack_LoG,I_stack_LoG,x_box,y_box,r_idx_box)
+    % Initialize 
+    dl_dp = nan(3,1);
+    ddl_ddp = nan(3,3);
+
+    % Get finite difference coordinates for interpolation
+    x_fd = x_box + p(1);
+    y_fd = y_box + p(2);
+    r_idx_fd = r_idx_box + p(3);
+
+    % Check to make sure finite difference box is in range
+    if any(x_fd(:) < 1 | x_fd(:) > size(stack_LoG,2) | ...
+           y_fd(:) < 1 | y_fd(:) > size(stack_LoG,1) | ...
+           r_idx_fd(:) < 1 | r_idx_fd(:) > size(stack_LoG,3))
+        return
+    end
+
+    % Interpolate
+    LoG_fd = reshape(I_stack_LoG(y_fd(:),x_fd(:),r_idx_fd(:)),3,3,3);
+
+    % Get gradient: [d_log/d_x d_log/d_y d_log/d_r_idx]
+    dl_dp(1,1) = (LoG_fd(2,3,2)-LoG_fd(2,1,2))/2;
+    dl_dp(2,1) = (LoG_fd(3,2,2)-LoG_fd(1,2,2))/2; 
+    dl_dp(3,1) = (LoG_fd(2,2,3)-LoG_fd(2,2,1))/2; 
+
+    % Get hessian:
+    %   [d^2_log/d_x^2         d^2_log/(d_x*d_y)     d^2_log/(d_x*d_r_idx)
+    %    d^2_log/(d_y*d_x)     d^2_log/d_y^2         d^2_log/(d_y*d_r_idx)
+    %    d^2_log/(d_r_idx*d_x) d^2_log/(d_r_idx*d_y) d^2_log/(d_r_idx^2)]                
+    ddl_ddp(1,1) = LoG_fd(2,3,2) - 2*LoG_fd(2,2,2) + LoG_fd(2,1,2);
+    ddl_ddp(1,2) = ((LoG_fd(3,3,2)-LoG_fd(1,3,2))/2 - (LoG_fd(3,1,2)-LoG_fd(1,1,2))/2)/2;
+    ddl_ddp(1,3) = ((LoG_fd(2,3,3)-LoG_fd(2,3,1))/2 - (LoG_fd(2,1,3)-LoG_fd(2,1,1))/2)/2;      
+    ddl_ddp(2,2) = LoG_fd(3,2,2) - 2*LoG_fd(2,2,2) + LoG_fd(1,2,2);
+    ddl_ddp(2,3) = ((LoG_fd(3,2,3)-LoG_fd(3,2,1))/2 - (LoG_fd(1,2,3)-LoG_fd(1,2,1))/2)/2;
+    ddl_ddp(3,3) = LoG_fd(2,2,3) - 2*LoG_fd(2,2,2) + LoG_fd(2,2,1);
+
+    % Fill lower half of hessian
+    ddl_ddp(2,1) = ddl_ddp(1,2);
+    ddl_ddp(3,1) = ddl_ddp(1,3);
+    ddl_ddp(3,2) = ddl_ddp(2,3);  
 end

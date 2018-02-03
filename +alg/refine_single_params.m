@@ -107,7 +107,7 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
         p(update_idx) = p_prev(update_idx) + delta_p;
         mse = mean(calc_res(p,board_points_w,board_points_ps).^2)*2;
         
-        % If mse decreases, decrease mse and store results; if mse
+        % If mse decreases, decrease lambda and store results; if mse
         % increases, then increase lambda until mse descreases
         if mse < mse_prev
             % Decrease lambda and continue to next iteration
@@ -147,7 +147,7 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
                   'Norm of delta_p: ' sprintf('%12.10f',norm_delta_p) '; ' ...
                   'lambda: ' sprintf('%12.10f',lambda)]);
         end        
-        if norm(delta_p) < calib_config.refine_param_norm_cutoff
+        if norm_delta_p < calib_config.refine_param_norm_cutoff
             break
         end
     end    
@@ -220,5 +220,5 @@ function delta_p = calc_delta_p(p,board_points_w,board_points_ps,update_idx,lamb
     end  
 
     % Get change in params using Levenberg–Marquardt update     
-    delta_p = -inv(jacob(:,update_idx)'*jacob(:,update_idx)+lambda*eye(sum(update_idx)))*jacob(:,update_idx)'*calc_res(p,board_points_w,board_points_ps);        
+    delta_p = -mldivide(jacob(:,update_idx)'*jacob(:,update_idx)+lambda*eye(sum(update_idx)),jacob(:,update_idx)'*calc_res(p,board_points_w,board_points_ps));        
 end

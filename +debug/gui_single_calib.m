@@ -16,6 +16,9 @@ function gui_single_calib(calib,f)
     alphas = 0.1*ones(1,num_boards);
     alphas(idx_board) = 1;             
     colors = external.distinguishable_colors(num_boards,{'w','r','k'});
+    axes_board = matlab.graphics.axis.Axes.empty();
+    array = [];
+    res = {};
     
     % Set axes parameters
     padding_height = 0.1;
@@ -36,10 +39,12 @@ function gui_single_calib(calib,f)
             set(f,'KeyPressFcn',@(~,~)drawnow);
             
             % Set idx_board
+            replot = false;
             switch eventData.Key
                 case 'rightarrow'
                     if idx_board < num_boards
                         idx_board = idx_board+1;
+                        replot = true;
                     else
                         % Set KeyPressFcn callback
                         set(f,'KeyPressFcn',@KeyPressFcn);  
@@ -48,6 +53,7 @@ function gui_single_calib(calib,f)
                 case 'leftarrow'
                     if idx_board > 1
                         idx_board = idx_board-1;
+                        replot = true;
                     else
                         % Set KeyPressFcn callback
                         set(f,'KeyPressFcn',@KeyPressFcn);  
@@ -72,7 +78,12 @@ function gui_single_calib(calib,f)
             alphas(idx_board) = 1;             
 
             % Replot
-            plot_gui();        
+            if replot
+                plot_gui();   
+            end
+            
+            % Set bounds
+            set_bounds();
 
             % Set KeyPressFcn callback
             set(f,'KeyPressFcn',@KeyPressFcn);  
@@ -113,7 +124,7 @@ function gui_single_calib(calib,f)
                                          calib.extrin(i).rotation, ...
                                          calib.extrin(i).translation, ...
                                          alg.cb_points(calib.config));
-                res{i} = board_points_m-calib.extrin(i).board_points_p;  %#ok<AGROW>
+                res{i} = board_points_m-calib.extrin(i).board_points_p;
             end 
 
             % Plot
@@ -124,14 +135,17 @@ function gui_single_calib(calib,f)
                                         calib.config, ...
                                         axes_extrinsics);  
             title(axes_extrinsics,'Extrinsics','FontSize',10); 
+            drawnow
 
             debug.plot_cb_board_info_2D(calib.config,axes_cal_board);
             title(axes_cal_board,'Calibration board','FontSize',10);
+            drawnow
 
             debug.plot_res(res,colors,alphas,axes_res); 
             title(axes_res,'Residuals','FontSize',10); 
             xlabel(axes_res,{['mean: [' num2str(mean(res{idx_board})) ']'],[' stddev: [' num2str(std(res{idx_board})) ']']}, ...
                    'FontSize',8);
+            drawnow
                
             debug.plot_cb_img_calib_2D(calib, ...
                                        idx_board, ...
@@ -140,9 +154,20 @@ function gui_single_calib(calib,f)
                   'FontSize',10,'Interpreter','none'); 
             xlabel(axes_board,['Path: ' calib.extrin(idx_board).cb_img.get_path()], ...
                    'FontSize',8,'Interpreter','none'); 
+            drawnow
                
+            % Set array
+            array = calib.extrin(idx_board).cb_img.get_gs();            
+        catch e      
+            if ishandle(f)
+                rethrow(e);
+            end
+        end
+    end
+
+    function set_bounds()         
+        try      
             % Set bounding box
-            array = calib.extrin(idx_board).cb_img.get_gs();
             switch mode
                 case 'whole'
                     l = 0.5;
@@ -150,7 +175,7 @@ function gui_single_calib(calib,f)
                     t = 0.5;
                     b = size(array,1)+0.5;
                 case 'worst'
-                    zoom_factor = 4;
+                    zoom_factor = 20;
                     [~,max_idx] = max(sum(res{idx_board}.^2,2));
                     x_max_res = calib.extrin(idx_board).board_points_p(max_idx,1);
                     y_max_res = calib.extrin(idx_board).board_points_p(max_idx,2);

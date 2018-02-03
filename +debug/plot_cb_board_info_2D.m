@@ -76,6 +76,5 @@ function plot_cb_board_info_2D(calib_config,a)
          'FontSize',8,'HorizontalAlignment','center','parent',a); %#ok<NBRAK>    
      
     % Remove hold
-    drawnow
     hold(a,'off');
 end

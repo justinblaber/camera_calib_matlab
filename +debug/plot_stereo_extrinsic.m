@@ -76,6 +76,5 @@ function plot_stereo_extrinsic(rotations,translations,R_s,t_s,colors,alphas,cali
     axis(a,'tight');
     
     % Remove hold
-    drawnow
     hold(a,'off');
 end

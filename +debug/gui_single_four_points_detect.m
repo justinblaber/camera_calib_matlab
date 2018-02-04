@@ -1,4 +1,4 @@
-function gui_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,calib_config,f)
+function gui_single_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,calib_config,f)
     % GUI for debugging four point detection
             
     if ~exist('f','var')
@@ -14,15 +14,17 @@ function gui_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,calib_
     idx_board = 1;
     num_boards = length(cb_imgs); 
     axes_cal_board = matlab.graphics.axis.Axes.empty();
-    array = [];
     
     % Set axes parameters
     padding_height = 0.1;
     padding_width = 0.05;
-    patches_width = 0.3;
+    cal_board_width = 0.6;
     
     % Initialize plot
     plot_gui();
+    
+    % Set bounds
+    set_bounds();
     
     % Set KeyPressFcn callback
     set(f,'KeyPressFcn',@KeyPressFcn);
@@ -112,20 +114,18 @@ function gui_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,calib_
         try        
             % Clear figure and replot everything for simplicity
             clf(f);
-
-            % Set name
-            set(f,'Name',['Board: ' num2str(idx_board) ' of ' num2str(num_boards) '; mode: ' mode '; (NOTE: press left, right, "1", "2", "3", "4", "w", and "esc" key arrows to toggle)']);
-
+            
             % Set axes  
-            pos_cal_board = [padding_width padding_height 1-patches_width-3*padding_width 1-2*padding_height];
+            single_patch_height = (1-5*padding_height)/4;
+            single_patch_width = (1-cal_board_width-4*padding_width)/2;
+            
+            pos_cal_board = [1-cal_board_width-padding_width padding_height cal_board_width 1-2*padding_height];
             axes_cal_board = axes('Position',pos_cal_board,'Parent',f);  
 
             axes_patches = matlab.graphics.axis.Axes.empty();
-            single_patch_height = (1-5*padding_height)/4;
-            single_patch_width = (patches_width-padding_width)/2;
             for i = 1:4
                 for j = 1:2
-                    pos_patch = [pos_cal_board(1)+pos_cal_board(3)+padding_width+(j-1)*(single_patch_width+padding_width) ...
+                    pos_patch = [padding_width+(j-1)*(single_patch_width+padding_width) ...
                                  padding_height+(4-i)*(single_patch_height+padding_height)  ...
                                  single_patch_width ...
                                  single_patch_height];
@@ -133,50 +133,24 @@ function gui_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,calib_
                 end
             end
 
-            % Plot            
-            % scale array based on min size
-            array = cb_imgs(idx_board).get_gs();
-            if calib_config.four_point_detect_scaled_array_min_size == realmax
-                scale_factor = 1;
-            else
-                scale_factor = calib_config.four_point_detect_scaled_array_min_size/min(size(array));
-                array = imresize(array,scale_factor);
-            end
-            imshow(array,[],'Parent',axes_cal_board)
-            title(axes_cal_board,'Blobs, ellipses, and four points','FontSize',10); 
-            xlabel(axes_cal_board,['Path: ' cb_imgs(idx_board).get_path()], ...
-                   'FontSize',8,'Interpreter','none'); 
-            axes(axes_cal_board);
-            hold(axes_cal_board,'on');
-            % Must rescale four_points_ps
-            plot(scale_factor*(four_points_ps{idx_board}(:,1)-1/2*(1-1/scale_factor)), ...
-                 scale_factor*(four_points_ps{idx_board}(:,2)-1/2*(1-1/scale_factor)),'-mo','MarkerSize',8, ...
-                 'parent',axes_cal_board);
-            % Debugging stuff does not need to be rescaled
-            for i = 1:length(four_points_debugs(idx_board).blobs)
-                external.ellipse(four_points_debugs(idx_board).blobs(i).r, ...
-                                 four_points_debugs(idx_board).blobs(i).r, ...
-                                 0, ...
-                                 four_points_debugs(idx_board).blobs(i).x, ...
-                                 four_points_debugs(idx_board).blobs(i).y, ...
-                                 'r');  
-            end
-            for i = 1:length(four_points_debugs(idx_board).ellipses)
-                external.ellipse(four_points_debugs(idx_board).ellipses(i).r1, ...
-                                 four_points_debugs(idx_board).ellipses(i).r2, ...
-                                 four_points_debugs(idx_board).ellipses(i).rot, ...
-                                 four_points_debugs(idx_board).ellipses(i).x, ...
-                                 four_points_debugs(idx_board).ellipses(i).y, ...
-                                 'g');  
-            end
-            hold(axes_cal_board,'off');
-
+            % Plot patches
             for i = 1:4
                 imshow(four_points_debugs(idx_board).patch_matches(i).patch,[],'Parent',axes_patches(i,1));
                 title(axes_patches(i,1),['Patch ' num2str(i) ' sampled'],'FontSize',7);
                 imshow(four_points_debugs(idx_board).patch_matches(i).template,[],'Parent',axes_patches(i,2));
                 title(axes_patches(i,2),['Patch ' num2str(i) ' template'],'FontSize',7);
             end
+            
+            % Plot debugging info
+            debug.plot_four_point_debug(four_points_ps{idx_board}, ...
+                                        four_points_debugs(idx_board), ...
+                                        cb_imgs(idx_board), ...
+                                        calib_config, ...
+                                        axes_cal_board);  
+    
+            title(axes_cal_board,'Blobs, ellipses, and four points','FontSize',10); 
+            xlabel(axes_cal_board,['Path: ' cb_imgs(idx_board).get_path()], ...
+                   'FontSize',8,'Interpreter','none');   
         catch e        
             if ishandle(f)
                 rethrow(e);
@@ -185,14 +159,14 @@ function gui_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,calib_
     end
 
     function set_bounds()         
-        try        
+        try   
+            % Set name
+            set(f,'Name',['Board: ' num2str(idx_board) ' of ' num2str(num_boards) '; mode: ' mode '; (NOTE: press left, right, "1", "2", "3", "4", "w", and "esc" key arrows to toggle)']);
+     
             % Set bounding box
             switch mode
-                case 'whole'
-                    l = 0.5;
-                    r = size(array,2)+0.5;
-                    t = 0.5;
-                    b = size(array,1)+0.5;
+                case 'whole'            
+                    [l, r, t, b] = img_bb(cb_imgs(idx_board),calib_config);
                 case '1' 
                     [l, r, t, b] = ellipse_bb(four_points_debugs(idx_board).patch_matches(1).ellipse);
                 case '2'
@@ -215,6 +189,20 @@ function gui_four_points_detect(four_points_ps,four_points_debugs,cb_imgs,calib_
             end
         end
     end
+end
+
+function [l, r, t, b] = img_bb(cb_img,calib_config)
+    img_height = cb_img.get_height();
+    img_width = cb_img.get_width();
+    if calib_config.four_point_detect_scaled_array_min_size == realmax
+        scale_factor = 1;
+    else
+        scale_factor = calib_config.four_point_detect_scaled_array_min_size/min([img_height img_width]);
+    end
+    l = 0.5;
+    r = img_width*scale_factor+0.5;
+    t = 0.5;
+    b = img_height*scale_factor+0.5;
 end
 
 function [l, r, t, b] = ellipse_bb(ellipse)

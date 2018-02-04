@@ -10,11 +10,16 @@ function gui_stereo_calib(calib,R_s,t_s,f)
     set(f,'KeyPressFcn',@(~,~)drawnow);
                  
     % Initialize parameters
+    mode = 'whole';
     idx_board = 1;
     num_boards = length(calib.L.extrin);                               
     alphas = 0.1*ones(1,num_boards);
     alphas(idx_board) = 1;             
     colors = external.distinguishable_colors(num_boards,{'w','r','k'});
+    axes_board_L = matlab.graphics.axis.Axes.empty();
+    axes_board_R = matlab.graphics.axis.Axes.empty();
+    res_L = {};
+    res_R = {};
     
     % Set axes parameters
     padding_height = 0.1;
@@ -25,6 +30,7 @@ function gui_stereo_calib(calib,R_s,t_s,f)
     
     % Initialize plot
     plot_gui();
+    set_bounds()
     
     % Set KeyPressFcn callback
     set(f,'KeyPressFcn',@KeyPressFcn);
@@ -35,10 +41,12 @@ function gui_stereo_calib(calib,R_s,t_s,f)
             set(f,'KeyPressFcn',@(~,~)drawnow);
             
             % Set idx_board
+            replot = false;
             switch eventData.Key
                 case 'rightarrow'
                     if idx_board < num_boards
                         idx_board = idx_board+1;
+                        replot = true;
                     else
                         % Set KeyPressFcn callback
                         set(f,'KeyPressFcn',@KeyPressFcn);  
@@ -47,10 +55,19 @@ function gui_stereo_calib(calib,R_s,t_s,f)
                 case 'leftarrow'
                     if idx_board > 1
                         idx_board = idx_board-1;
+                        replot = true;
                     else
                         % Set KeyPressFcn callback
                         set(f,'KeyPressFcn',@KeyPressFcn);  
                         return
+                    end
+                case 'escape'
+                    mode = 'whole';
+                case 'w'
+                    if strcmp(mode,'worst')
+                        mode = 'whole';
+                    else
+                        mode = 'worst';
                     end
                 otherwise
                     % Set KeyPressFcn callback
@@ -63,8 +80,13 @@ function gui_stereo_calib(calib,R_s,t_s,f)
             alphas(idx_board) = 1;             
 
             % Replot
-            plot_gui();        
+            if replot
+                plot_gui();   
+            end      
 
+            % Set bounds
+            set_bounds()
+            
             % Set KeyPressFcn callback
             set(f,'KeyPressFcn',@KeyPressFcn);  
         catch e           
@@ -78,9 +100,6 @@ function gui_stereo_calib(calib,R_s,t_s,f)
         try        
             % Clear figure and replot everything for simplicity
             clf(f);
-
-            % Set name
-            set(f,'Name',['Board: ' num2str(idx_board) ' of ' num2str(num_boards) ' (NOTE: press left and right key arrows to toggle)']);
 
             % Set axes  
             pos_extrinsics = [padding_width 1-padding_height-extrinsics_height extrinsics_width extrinsics_height];
@@ -102,8 +121,8 @@ function gui_stereo_calib(calib,R_s,t_s,f)
             axes_board_R = axes('Position',pos_board_R,'Parent',f);
 
             % Compute residuals for plots
-            res.L = {};
-            res.R = {};
+            res_L = {};
+            res_R = {};
             for i = 1:num_boards
                 % Left
                 board_points_m_L = alg.p_m(calib.L.intrin.A, ...
@@ -111,7 +130,7 @@ function gui_stereo_calib(calib,R_s,t_s,f)
                                            calib.L.extrin(i).rotation, ...
                                            calib.L.extrin(i).translation, ...
                                            alg.cb_points(calib.L.config));
-                res.L{i} = board_points_m_L-calib.L.extrin(i).board_points_p;   
+                res_L{i} = board_points_m_L-calib.L.extrin(i).board_points_p;   
 
                 % Right
                 board_points_m_R = alg.p_m(calib.R.intrin.A, ...
@@ -119,7 +138,7 @@ function gui_stereo_calib(calib,R_s,t_s,f)
                                            R_s*calib.L.extrin(i).rotation, ...
                                            R_s*calib.L.extrin(i).translation+t_s, ...
                                            alg.cb_points(calib.L.config));
-                res.R{i} = board_points_m_R-calib.R.extrin(i).board_points_p;  
+                res_R{i} = board_points_m_R-calib.R.extrin(i).board_points_p;  
             end 
 
             % Plot
@@ -136,20 +155,27 @@ function gui_stereo_calib(calib,R_s,t_s,f)
                                         calib.L.config, ...
                                         axes_extrinsics);  
             title(axes_extrinsics,'Extrinsics','FontSize',10); 
-
+            drawnow
+            
             debug.plot_cb_board_info_2D(calib.L.config,axes_cal_board);
             title(axes_cal_board,'Calibration board','FontSize',10);
-
-            debug.plot_res(res.L,colors,alphas,axes_res_L); 
+            drawnow
+            
+            max_res = max([max(cellfun(@(x)max(abs(x(:))),res_L)) ...
+                           max(cellfun(@(x)max(abs(x(:))),res_R))]);
+            
+            debug.plot_res(res_L,colors,alphas,max_res,axes_res_L); 
             title(axes_res_L,'Residuals (left)','FontSize',10); 
-            xlabel(axes_res_L,{['mean: [' num2str(mean(res.L{idx_board})) ']'],[' stddev: [' num2str(std(res.L{idx_board})) ']']}, ...
+            xlabel(axes_res_L,{['mean: [' num2str(mean(res_L{idx_board})) ']'],[' stddev: [' num2str(std(res_L{idx_board})) ']']}, ...
                    'FontSize',8);
-
-            debug.plot_res(res.R,colors,alphas,axes_res_R);
+            drawnow
+            
+            debug.plot_res(res_R,colors,alphas,max_res,axes_res_R);
             title(axes_res_R,'Residuals (right)','FontSize',10); 
-            xlabel(axes_res_R,{['mean: [' num2str(mean(res.R{idx_board})) ']'],[' stddev: [' num2str(std(res.R{idx_board})) ']']}, ...
+            xlabel(axes_res_R,{['mean: [' num2str(mean(res_R{idx_board})) ']'],[' stddev: [' num2str(std(res_R{idx_board})) ']']}, ...
                    'FontSize',8);    
-
+            drawnow
+            
             debug.plot_cb_img_calib_2D(calib.L, ...
                                        idx_board, ...
                                        axes_board_L);
@@ -157,7 +183,8 @@ function gui_stereo_calib(calib,R_s,t_s,f)
                   'FontSize',10,'Interpreter','none'); 
             xlabel(axes_board_L,['Path: ' calib.L.extrin(idx_board).cb_img.get_path()], ...
                    'FontSize',8,'Interpreter','none');    
-
+            drawnow
+               
             debug.plot_cb_img_calib_2D(calib.R, ...
                                        idx_board, ...
                                        axes_board_R);
@@ -165,10 +192,57 @@ function gui_stereo_calib(calib,R_s,t_s,f)
                   'FontSize',10,'Interpreter','none'); 
             xlabel(axes_board_R,['Path: ' calib.R.extrin(idx_board).cb_img.get_path()], ...
                    'FontSize',8,'Interpreter','none');    
+            drawnow
         catch e      
             if ishandle(f)
                 rethrow(e);
             end
         end
     end
+
+    function set_bounds()         
+        try      
+            % Set name
+            set(f,'Name',['Board: ' num2str(idx_board) ' of ' num2str(num_boards) '; mode: ' mode '; (NOTE: press left, right, "w", and "esc" key arrows to toggle)']);
+
+            % Set bounding box
+            switch mode
+                case 'whole'
+                    [l_L, r_L, t_L, b_L] = img_bb(calib.L.extrin(idx_board).cb_img);
+                    [l_R, r_R, t_R, b_R] = img_bb(calib.R.extrin(idx_board).cb_img);
+                case 'worst'
+                    [l_L, r_L, t_L, b_L] = worst_bb(res_L{idx_board},calib.L.extrin(idx_board).board_points_p);
+                    [l_R, r_R, t_R, b_R] = worst_bb(res_R{idx_board},calib.R.extrin(idx_board).board_points_p);
+            end
+            set(axes_board_L,'Xlim',[l_L r_L], ...
+                             'Ylim',[t_L b_L]);
+            set(axes_board_R,'Xlim',[l_R r_R], ...
+                             'Ylim',[t_R b_R]);
+        catch e      
+            if ishandle(f)
+                rethrow(e);
+            end
+        end
+    end
+end
+
+function [l, r, t, b] = img_bb(cb_img)
+    img_height = cb_img.get_height();
+    img_width = cb_img.get_width();
+    l = 0.5;
+    r = img_width+0.5;
+    t = 0.5;
+    b = img_height+0.5;
+end
+
+function [l, r, t, b] = worst_bb(res,board_points_p)
+    zoom_factor = 2;
+    [~,max_idx] = max(sum(res.^2,2));
+    x_max_res = board_points_p(max_idx,1);
+    y_max_res = board_points_p(max_idx,2);
+    max_res = max(abs(res(max_idx,:)));
+    l = x_max_res - max_res*zoom_factor;
+    r = x_max_res + max_res*zoom_factor;
+    t = y_max_res - max_res*zoom_factor;
+    b = y_max_res + max_res*zoom_factor;
 end

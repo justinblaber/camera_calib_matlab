@@ -1,4 +1,4 @@
-function plot_res(res,colors,alphas,a)
+function plot_res(res,colors,alphas,lim,a)
     % This plots residuals
         
     if ~exist('a','var')
@@ -18,16 +18,13 @@ function plot_res(res,colors,alphas,a)
                 'MarkerFaceColor',colors(idx,:),'MarkerFaceAlpha',alphas(idx), ...
                 'MarkerEdgeAlpha',0,'parent',a);   
     end
-    
-    % Get infinity norm of res for plot
-    max_res = max(cellfun(@(x)max(abs(x(:))),res));
-    
+        
     % Plot dashed line to indicate zero
-    plot([0 0],[-max_res max_res],'--r','parent',a);
-    plot([-max_res max_res],[0 0],'--r','parent',a);
+    plot([0 0],[-lim lim],'--r','parent',a);
+    plot([-lim lim],[0 0],'--r','parent',a);
         
     % Format plot
-    set(a,'xlim',[-max_res max_res],'ylim',[-max_res max_res]);
+    set(a,'xlim',[-lim lim],'ylim',[-lim lim]);
     daspect(a,[1 1 1]);
     
     % Remove hold

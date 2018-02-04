@@ -101,24 +101,24 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
         % Perform gradient ascent with backtracking
         p = [blobs(i).x blobs(i).y r1 r2 rot]'; % initialize parameter vector with current ellipse
         for it = 1:calib_config.marker_it_cutoff
-            % Set p_init to p from previous iteration
-            p_init = p;
+            % Store previous p
+            p_prev = p;
 
-            % Get ellipse points at p_init
-            x_init = cost_scale_factor*(p_init(3)*cos(p_init(5))*cos(ellipse_theta_samples) - p_init(4)*sin(p_init(5))*sin(ellipse_theta_samples) + (p_init(1)-sub_array_l+1) - 1/2*(1-1/cost_scale_factor));
-            y_init = cost_scale_factor*(p_init(3)*sin(p_init(5))*cos(ellipse_theta_samples) + p_init(4)*cos(p_init(5))*sin(ellipse_theta_samples) + (p_init(2)-sub_array_t+1) - 1/2*(1-1/cost_scale_factor));
+            % Get ellipse points at p_prev
+            x_prev = cost_scale_factor*(p_prev(3)*cos(p_prev(5))*cos(ellipse_theta_samples) - p_prev(4)*sin(p_prev(5))*sin(ellipse_theta_samples) + (p_prev(1)-sub_array_l+1) - 1/2*(1-1/cost_scale_factor));
+            y_prev = cost_scale_factor*(p_prev(3)*sin(p_prev(5))*cos(ellipse_theta_samples) + p_prev(4)*cos(p_prev(5))*sin(ellipse_theta_samples) + (p_prev(2)-sub_array_t+1) - 1/2*(1-1/cost_scale_factor));
 
-            % Compute gradient at p_init
-            dc_dx = I_cost_sub_array_dx(y_init',x_init');
-            dc_dy = I_cost_sub_array_dy(y_init',x_init');
-            dx_dp = [ones(length(ellipse_theta_samples),1)  zeros(length(ellipse_theta_samples),1) cos(p_init(5))*cos(ellipse_theta_samples') -sin(p_init(5))*sin(ellipse_theta_samples') -p_init(3)*sin(p_init(5))*cos(ellipse_theta_samples')-p_init(4)*cos(p_init(5))*sin(ellipse_theta_samples')];
-            dy_dp = [zeros(length(ellipse_theta_samples),1) ones(length(ellipse_theta_samples),1)  sin(p_init(5))*cos(ellipse_theta_samples')  cos(p_init(5))*sin(ellipse_theta_samples')  p_init(3)*cos(p_init(5))*cos(ellipse_theta_samples')-p_init(4)*sin(p_init(5))*sin(ellipse_theta_samples')];
+            % Compute gradient at p_prev
+            dc_dx = I_cost_sub_array_dx(y_prev',x_prev');
+            dc_dy = I_cost_sub_array_dy(y_prev',x_prev');
+            dx_dp = [ones(length(ellipse_theta_samples),1)  zeros(length(ellipse_theta_samples),1) cos(p_prev(5))*cos(ellipse_theta_samples') -sin(p_prev(5))*sin(ellipse_theta_samples') -p_prev(3)*sin(p_prev(5))*cos(ellipse_theta_samples')-p_prev(4)*cos(p_prev(5))*sin(ellipse_theta_samples')];
+            dy_dp = [zeros(length(ellipse_theta_samples),1) ones(length(ellipse_theta_samples),1)  sin(p_prev(5))*cos(ellipse_theta_samples')  cos(p_prev(5))*sin(ellipse_theta_samples')  p_prev(3)*cos(p_prev(5))*cos(ellipse_theta_samples')-p_prev(4)*sin(p_prev(5))*sin(ellipse_theta_samples')];
             grad = sum(dc_dx.*dx_dp + dc_dy.*dy_dp)';
 
             % Perform backtracking 
-            cost_init = sum(I_cost_sub_array(y_init,x_init));
+            cost_init = sum(I_cost_sub_array(y_prev,x_prev));
             n = 1;
-            p = p_init + n*grad;
+            p = p_prev + n*grad;
             x = cost_scale_factor*(p(3)*cos(p(5))*cos(ellipse_theta_samples) - p(4)*sin(p(5))*sin(ellipse_theta_samples) + (p(1)-sub_array_l+1) - 1/2*(1-1/cost_scale_factor));
             y = cost_scale_factor*(p(3)*sin(p(5))*cos(ellipse_theta_samples) + p(4)*cos(p(5))*sin(ellipse_theta_samples) + (p(2)-sub_array_t+1) - 1/2*(1-1/cost_scale_factor));
             while all(x >= 1 & x <= size(cost_sub_array,2) & ...
@@ -126,7 +126,7 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
                   sum(I_cost_sub_array(y',x')) < cost_init+(1/2)*n*dot(grad,grad) % Backtracking guaranteed to exit this condition eventually
                 % Half step size
                 n = (1/2)*n;
-                p = p_init + n*grad;
+                p = p_prev + n*grad;
                 x = cost_scale_factor*(p(3)*cos(p(5))*cos(ellipse_theta_samples) - p(4)*sin(p(5))*sin(ellipse_theta_samples) + (p(1)-sub_array_l+1) - 1/2*(1-1/cost_scale_factor));
                 y = cost_scale_factor*(p(3)*sin(p(5))*cos(ellipse_theta_samples) + p(4)*cos(p(5))*sin(ellipse_theta_samples) + (p(2)-sub_array_t+1) - 1/2*(1-1/cost_scale_factor));
             end
@@ -139,7 +139,7 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
             end
                
             % Exit if change in distance is small
-            diff_norm = norm(p-p_init);            
+            diff_norm = norm(p-p_prev);            
             if calib_config.verbose > 2
                 disp(['Marker detect iteration #: ' num2str(it)]);
                 disp(['Difference norm for nonlinear parameter refinement: ' num2str(diff_norm)]);

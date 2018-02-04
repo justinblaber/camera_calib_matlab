@@ -161,12 +161,12 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
         end
                 
         % Exit if change in distance is small
-        norm_delta_p = norm(delta_p);   
+        diff_norm = norm(delta_p);   
         disp(['Iteration #: ' sprintf('%3u',it) '; ' ...
               'MSE: ' sprintf('%12.10f',mse) '; ' ...
-              'Norm of delta_p: ' sprintf('%12.10f',norm_delta_p) '; ' ...
+              'Norm of delta_p: ' sprintf('%12.10f',diff_norm) '; ' ...
               'lambda: ' sprintf('%12.10f',lambda)]);
-        if norm_delta_p < calib_config.refine_param_norm_cutoff
+        if diff_norm < calib_config.refine_param_norm_cutoff
             break
         end
     end    

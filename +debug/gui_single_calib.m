@@ -17,7 +17,6 @@ function gui_single_calib(calib,f)
     alphas(idx_board) = 1;             
     colors = external.distinguishable_colors(num_boards,{'w','r','k'});
     axes_board = matlab.graphics.axis.Axes.empty();
-    array = [];
     res = {};
     
     % Set axes parameters
@@ -29,6 +28,7 @@ function gui_single_calib(calib,f)
     
     % Initialize plot
     plot_gui();
+    set_bounds()
     
     % Set KeyPressFcn callback
     set(f,'KeyPressFcn',@KeyPressFcn);
@@ -99,10 +99,6 @@ function gui_single_calib(calib,f)
             % Clear figure and replot everything for simplicity
             clf(f);
 
-            % Set name
-            set(f,'Name',['Board: ' num2str(idx_board) ' of ' num2str(num_boards) '; mode: ' mode '; (NOTE: press left, right, "w", and "esc" key arrows to toggle)']);
-
-            
             % Set axes  
             pos_extrinsics = [padding_width 1-padding_height-extrinsics_height extrinsics_width extrinsics_height];
             axes_extrinsics = axes('Position',pos_extrinsics,'Parent',f);
@@ -140,8 +136,9 @@ function gui_single_calib(calib,f)
             debug.plot_cb_board_info_2D(calib.config,axes_cal_board);
             title(axes_cal_board,'Calibration board','FontSize',10);
             drawnow
-
-            debug.plot_res(res,colors,alphas,axes_res); 
+            
+            max_res = max(cellfun(@(x)max(abs(x(:))),res));
+            debug.plot_res(res,colors,alphas,max_res,axes_res); 
             title(axes_res,'Residuals','FontSize',10); 
             xlabel(axes_res,{['mean: [' num2str(mean(res{idx_board})) ']'],[' stddev: [' num2str(std(res{idx_board})) ']']}, ...
                    'FontSize',8);
@@ -154,10 +151,7 @@ function gui_single_calib(calib,f)
                   'FontSize',10,'Interpreter','none'); 
             xlabel(axes_board,['Path: ' calib.extrin(idx_board).cb_img.get_path()], ...
                    'FontSize',8,'Interpreter','none'); 
-            drawnow
-               
-            % Set array
-            array = calib.extrin(idx_board).cb_img.get_gs();            
+            drawnow        
         catch e      
             if ishandle(f)
                 rethrow(e);
@@ -167,29 +161,43 @@ function gui_single_calib(calib,f)
 
     function set_bounds()         
         try      
+            % Set name
+            set(f,'Name',['Board: ' num2str(idx_board) ' of ' num2str(num_boards) '; mode: ' mode '; (NOTE: press left, right, "w", and "esc" key arrows to toggle)']);
+            
             % Set bounding box
             switch mode
                 case 'whole'
-                    l = 0.5;
-                    r = size(array,2)+0.5;
-                    t = 0.5;
-                    b = size(array,1)+0.5;
+                    [l, r, t, b] = img_bb(calib.extrin(idx_board).cb_img);
                 case 'worst'
-                    zoom_factor = 20;
-                    [~,max_idx] = max(sum(res{idx_board}.^2,2));
-                    x_max_res = calib.extrin(idx_board).board_points_p(max_idx,1);
-                    y_max_res = calib.extrin(idx_board).board_points_p(max_idx,2);
-                    max_res = max(abs(res{idx_board}(max_idx,:)));
-                    l = x_max_res - max_res*zoom_factor;
-                    r = x_max_res + max_res*zoom_factor;
-                    t = y_max_res - max_res*zoom_factor;
-                    b = y_max_res + max_res*zoom_factor;
+                    [l, r, t, b] = worst_bb(res{idx_board},calib.extrin(idx_board).board_points_p);
             end
-            set(axes_board,'Xlim',[l r],'Ylim',[t b]);
+            set(axes_board,'Xlim',[l r], ...
+                           'Ylim',[t b]);
         catch e      
             if ishandle(f)
                 rethrow(e);
             end
         end
     end
+end
+
+function [l, r, t, b] = img_bb(cb_img)
+    img_height = cb_img.get_height();
+    img_width = cb_img.get_width();
+    l = 0.5;
+    r = img_width+0.5;
+    t = 0.5;
+    b = img_height+0.5;
+end
+
+function [l, r, t, b] = worst_bb(res,board_points_p)
+    zoom_factor = 20;
+    [~,max_idx] = max(sum(res.^2,2));
+    x_max_res = board_points_p(max_idx,1);
+    y_max_res = board_points_p(max_idx,2);
+    max_res = max(abs(res(max_idx,:)));
+    l = x_max_res - max_res*zoom_factor;
+    r = x_max_res + max_res*zoom_factor;
+    t = y_max_res - max_res*zoom_factor;
+    b = y_max_res + max_res*zoom_factor;
 end

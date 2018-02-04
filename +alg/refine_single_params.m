@@ -140,14 +140,14 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
         end
                        
         % Exit if change in distance is small
-        norm_delta_p = norm(delta_p);         
+        diff_norm = norm(delta_p);         
         if calib_config.verbose > 1 || strcmp(type,'full')
             disp(['Iteration #: ' sprintf('%3u',it) '; ' ...
                   'MSE: ' sprintf('%12.10f',mse) '; ' ...
-                  'Norm of delta_p: ' sprintf('%12.10f',norm_delta_p) '; ' ...
+                  'Norm of delta_p: ' sprintf('%12.10f',diff_norm) '; ' ...
                   'lambda: ' sprintf('%12.10f',lambda)]);
         end        
-        if norm_delta_p < calib_config.refine_param_norm_cutoff
+        if diff_norm < calib_config.refine_param_norm_cutoff
             break
         end
     end    

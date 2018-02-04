@@ -70,8 +70,8 @@ end
 
 function l_p = window_lengths_p(point_w,homography,wf,calib_config)
     % Computes a window, in pixel coordinates, using input point in world
-    % coordinates, homography, window_factor and calib_config, then calculates
-    % the lengths of each side of the window.
+    % coordinates, homography, window_factor and calib_config, then 
+    % calculates the lengths of each side of the window.
     %
     %   Points and lengths are:
     %       p1 - l2 - p3

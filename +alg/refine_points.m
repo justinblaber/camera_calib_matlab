@@ -26,9 +26,6 @@ function points_p = refine_points(points_p,cb_img,homography,calib_config)
     cb_gs_dy = alg.array_grad(cb_gs,'y');
                                    
     % Perform iterations until convergence
-    if calib_config.verbose > 1
-        disp(['Refining points for: ' cb_img.get_path() '...']);
-    end
     % Cache image dimensions for speed
     img_width = cb_img.get_width();
     img_height = cb_img.get_height();

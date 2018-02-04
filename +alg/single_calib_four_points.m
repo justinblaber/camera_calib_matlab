@@ -50,8 +50,10 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config)
                                                   board_points_w); %#ok<AGROW>
     end
 
-    % Refine points
+    % Refine points    
+    disp('---');
     for i = 1:length(cb_imgs)    
+        disp(['Refining points for: ' cb_imgs(i).get_path() '...']);
         board_points_ps{i} = alg.refine_points(board_points_ps{i}, ...
                                                cb_imgs(i), ...
                                                homographies{i}, ...

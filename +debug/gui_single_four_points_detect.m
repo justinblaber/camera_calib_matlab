@@ -133,24 +133,23 @@ function gui_single_four_points_detect(four_points_ps,four_points_debugs,cb_imgs
                 end
             end
 
+            % Plot debugging info
+            debug.plot_four_point_debug(four_points_ps{idx_board}, ...
+                                        four_points_debugs(idx_board), ...
+                                        cb_imgs(idx_board), ...
+                                        calib_config, ...
+                                        axes_cal_board);      
+            title(axes_cal_board,'Blobs, ellipses, and four points','FontSize',10); 
+            xlabel(axes_cal_board,['Path: ' cb_imgs(idx_board).get_path()], ...
+                   'FontSize',8,'Interpreter','none');   
+               
             % Plot patches
             for i = 1:4
                 imshow(four_points_debugs(idx_board).patch_matches(i).patch,[],'Parent',axes_patches(i,1));
                 title(axes_patches(i,1),['Patch ' num2str(i) ' sampled'],'FontSize',7);
                 imshow(four_points_debugs(idx_board).patch_matches(i).template,[],'Parent',axes_patches(i,2));
                 title(axes_patches(i,2),['Patch ' num2str(i) ' template'],'FontSize',7);
-            end
-            
-            % Plot debugging info
-            debug.plot_four_point_debug(four_points_ps{idx_board}, ...
-                                        four_points_debugs(idx_board), ...
-                                        cb_imgs(idx_board), ...
-                                        calib_config, ...
-                                        axes_cal_board);  
-    
-            title(axes_cal_board,'Blobs, ellipses, and four points','FontSize',10); 
-            xlabel(axes_cal_board,['Path: ' cb_imgs(idx_board).get_path()], ...
-                   'FontSize',8,'Interpreter','none');   
+            end            
         catch e        
             if ishandle(f)
                 rethrow(e);

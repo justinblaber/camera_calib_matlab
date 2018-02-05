@@ -83,6 +83,10 @@ function calib_config = read_calib_config(calib_config_path)
     %
     %       ellipse_detect_theta_num_samples - int; number of evenly 
     %           divided samples to use around ellipse.
+    %       ellipse_detect_it_cutoff - int; cutoff for the number of 
+    %           gradient ascent iterations
+    %       ellipse_detect_norm_cutoff - scalar; cutoff for the difference
+    %           in norm of ellipse parameters
     %       ellipse_detect_r1_cutoff - scalar; cutoff for major axis
     %       ellipse_detect_r2_cutoff - scalar; cutoff for minor axis
     %       ellipse_detect_num_cutoff - int; only processes this number of 
@@ -100,10 +104,6 @@ function calib_config = read_calib_config(calib_config_path)
     %       marker_templates_path - string; path to marker_templates
     %       marker_padding - int; amount of padding used for radius samples
     %           to allow for "wiggle" room
-    %       marker_it_cutoff - int; cutoff for the number of gradient
-    %           ascent iterations
-    %       marker_norm_cutoff - scalar; cutoff for the difference in
-    %           norm of ellipse parameters
     %
     %       Plotting info:
     %
@@ -160,6 +160,8 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','blob_detect_d_cluster'                  ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
     field_info(end+1) = struct('field','blob_detect_r_cluster'                  ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
     field_info(end+1) = struct('field','ellipse_detect_theta_num_samples'       ,'required',false,'default',100                            ,'validation_fun',@validate_pos_int);   
+    field_info(end+1) = struct('field','ellipse_detect_it_cutoff'               ,'required',false,'default',50                             ,'validation_fun',@validate_pos_int);   
+    field_info(end+1) = struct('field','ellipse_detect_norm_cutoff'             ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);          
     field_info(end+1) = struct('field','ellipse_detect_r1_cutoff'               ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);   
     field_info(end+1) = struct('field','ellipse_detect_r2_cutoff'               ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);   
     field_info(end+1) = struct('field','ellipse_detect_num_cutoff'              ,'required',false,'default',50                             ,'validation_fun',@validate_pos_int);    
@@ -170,8 +172,6 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','marker_config_path'                     ,'required',false,'default','+markers/marker.conf'         ,'validation_fun',@validate_file_path);
     field_info(end+1) = struct('field','marker_templates_path'                  ,'required',false,'default','+markers/marker_templates.txt','validation_fun',@validate_file_path);   
     field_info(end+1) = struct('field','marker_padding'                         ,'required',false,'default',5                              ,'validation_fun',@validate_pos_int);     
-    field_info(end+1) = struct('field','marker_it_cutoff'                       ,'required',false,'default',50                             ,'validation_fun',@validate_pos_int);   
-    field_info(end+1) = struct('field','marker_norm_cutoff'                     ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);          
     % Plotting info
     field_info(end+1) = struct('field','camera_size'                            ,'required',false,'default',eps                            ,'validation_fun',@validate_pos_num);
     
@@ -209,15 +209,11 @@ end
 % the calib_config. This makes things easier.
 
 function calib_config = validate_calibration(calib_config,field)
-    try
-        switch calib_config.(field)
-            case 'four_point_auto'
-            case 'four_point_manual'
-            otherwise
-                error('Calibration type is not supported.');
-        end
-    catch
-        error('Calibration type is not supported.');
+    switch calib_config.(field)
+        case 'four_point_auto'
+        case 'four_point_manual'
+        otherwise
+            error('Calibration type is not supported.');
     end
 end
 
@@ -250,9 +246,7 @@ function calib_config = validate_pos_odd_int(calib_config,field)
 end
 
 function calib_config = validate_file_path(calib_config,field)
-    % This needs to either be empty, or if its not empty, the file needs to
-    % exist
-    if ~isempty(calib_config.(field)) && exist(calib_config.(field),'file') ~= 2
+    if isempty(calib_config.(field)) || exist(calib_config.(field),'file') ~= 2
         error(['Field: ' field ' has a value which is not an existing file.']);
     end
     calib_config.(field) = calib_config.(field);

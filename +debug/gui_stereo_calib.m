@@ -20,6 +20,25 @@ function gui_stereo_calib(calib,R_s,t_s,f)
     axes_board_R = matlab.graphics.axis.Axes.empty();
     res_L = {};
     res_R = {};
+    for i = 1:num_boards
+        % Left
+        board_points_m_L = alg.p_m(calib.L.intrin.A, ...
+                                   calib.L.intrin.distortion, ...
+                                   calib.L.extrin(i).rotation, ...
+                                   calib.L.extrin(i).translation, ...
+                                   alg.cb_points(calib.L.config));
+        res_L{i} = board_points_m_L-calib.L.extrin(i).board_points_p; %#ok<AGROW>
+
+        % Right
+        board_points_m_R = alg.p_m(calib.R.intrin.A, ...
+                                   calib.R.intrin.distortion, ...
+                                   R_s*calib.L.extrin(i).rotation, ...
+                                   R_s*calib.L.extrin(i).translation+t_s, ...
+                                   alg.cb_points(calib.L.config));
+        res_R{i} = board_points_m_R-calib.R.extrin(i).board_points_p; %#ok<AGROW>
+    end 
+    max_res = max([max(cellfun(@(x)max(abs(x(:))),res_L)) ...
+                   max(cellfun(@(x)max(abs(x(:))),res_R))]);
     
     % Set axes parameters
     padding_height = 0.1;
@@ -85,7 +104,7 @@ function gui_stereo_calib(calib,R_s,t_s,f)
             end      
 
             % Set bounds
-            set_bounds()
+            set_bounds();
             
             % Set KeyPressFcn callback
             set(f,'KeyPressFcn',@KeyPressFcn);  
@@ -120,27 +139,6 @@ function gui_stereo_calib(calib,R_s,t_s,f)
             pos_board_R = [pos_res_R(1) pos_cal_board(2) pos_res_R(3) pos_res_R(2)-2*padding_height];
             axes_board_R = axes('Position',pos_board_R,'Parent',f);
 
-            % Compute residuals for plots
-            res_L = {};
-            res_R = {};
-            for i = 1:num_boards
-                % Left
-                board_points_m_L = alg.p_m(calib.L.intrin.A, ...
-                                           calib.L.intrin.distortion, ...
-                                           calib.L.extrin(i).rotation, ...
-                                           calib.L.extrin(i).translation, ...
-                                           alg.cb_points(calib.L.config));
-                res_L{i} = board_points_m_L-calib.L.extrin(i).board_points_p;   
-
-                % Right
-                board_points_m_R = alg.p_m(calib.R.intrin.A, ...
-                                           calib.R.intrin.distortion, ...
-                                           R_s*calib.L.extrin(i).rotation, ...
-                                           R_s*calib.L.extrin(i).translation+t_s, ...
-                                           alg.cb_points(calib.L.config));
-                res_R{i} = board_points_m_R-calib.R.extrin(i).board_points_p;  
-            end 
-
             % Plot
             rotations.L = {calib.L.extrin.rotation};
             rotations.R = {calib.R.extrin.rotation};
@@ -159,10 +157,7 @@ function gui_stereo_calib(calib,R_s,t_s,f)
             
             debug.plot_cb_board_info_2D(calib.L.config,axes_cal_board);
             title(axes_cal_board,'Calibration board','FontSize',10);
-            drawnow
-            
-            max_res = max([max(cellfun(@(x)max(abs(x(:))),res_L)) ...
-                           max(cellfun(@(x)max(abs(x(:))),res_R))]);
+            drawnow            
             
             debug.plot_res(res_L,colors,alphas,max_res,axes_res_L); 
             title(axes_res_L,'Residuals (left)','FontSize',10); 
@@ -241,8 +236,14 @@ function [l, r, t, b] = worst_bb(res,board_points_p)
     x_max_res = board_points_p(max_idx,1);
     y_max_res = board_points_p(max_idx,2);
     max_res = max(abs(res(max_idx,:)));
-    l = x_max_res - max_res*zoom_factor;
-    r = x_max_res + max_res*zoom_factor;
-    t = y_max_res - max_res*zoom_factor;
-    b = y_max_res + max_res*zoom_factor;
+    window = max_res*zoom_factor;
+    
+    if window < 10
+        window = 10;
+    end
+    
+    l = x_max_res - window;
+    r = x_max_res + window;
+    t = y_max_res - window;
+    b = y_max_res + window;
 end

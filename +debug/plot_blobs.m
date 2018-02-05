@@ -12,6 +12,7 @@ function plot_blobs(blobs,array,a)
     hold(a,'on');
     
     % Plot blobs    
+    axes(a);
     for i = 1:length(blobs)                
         % ellipse does not have an input argument for axes unfortunately
         external.ellipse(blobs(i).r, ...

@@ -102,17 +102,17 @@ classdef img < handle
             obj.validate_exist();
             obj.validate_imfinfo();
             obj.validate_colortype();
-            
+             
             % Read file
-            img_buf = imread(obj.get_path());  
+            img_gs = imread(obj.get_path());  
 
             % Convert to double precision gray scale
             img_info = obj.get_imfinfo();            
             switch img_info.ColorType
                 case 'grayscale'
-                    img_gs = im2double(img_buf);
+                    img_gs = im2double(img_gs);
                 case 'truecolor'
-                    img_gs = rgb2gray(im2double(img_buf));
+                    img_gs = rgb2gray(im2double(img_gs));
             end
         end
         

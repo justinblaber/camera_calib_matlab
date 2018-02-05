@@ -33,24 +33,22 @@ function write_single_calib(calib,file_path,suffix,append_calib)
     
     if ~exist('append_calib','var') || ~append_calib
         % This will clear the file
-        f = fopen(file_path,'w');
-        fclose(f);
+        fclose(fopen(file_path,'w'));
 
         % Write calib_config
         util.write_comment('calib_config',file_path);
         calib_config_fields = fields(calib.config);
         for i = 1:length(calib_config_fields)
             param = calib.config.(calib_config_fields{i});
-            if ischar(param)
+            if ischar(param) % TODO: this could cause problems if the string is a number...
                 % Must be string
                 util.write_string(param,calib_config_fields{i},file_path);
-            elseif isnumeric(param) && isscalar(param)
+            elseif util.is_num(param)
                 % Must be number
                 util.write_num(param,calib_config_fields{i},file_path);
             else
                 error(['A param was found in calib.config that was not ' ...
-                       'a string or a number, please update ' ...
-                       'write_single_calib()']);
+                       'a string or a supported number']);
             end
         end
         util.write_newline(file_path);

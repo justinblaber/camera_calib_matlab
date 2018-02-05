@@ -17,7 +17,7 @@ function plot_four_point_debug(four_points_p,four_points_debug,cb_img,calib_conf
     end
     imshow(array,[],'Parent',a)
     hold(a,'on');
-       
+    
     % Must rescale four_points_ps
     plot(scale_factor*(four_points_p(:,1)-1/2*(1-1/scale_factor)), ...
          scale_factor*(four_points_p(:,2)-1/2*(1-1/scale_factor)),'-mo','MarkerSize',8, ...

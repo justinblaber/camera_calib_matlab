@@ -32,6 +32,8 @@ blob_detect_M_it_cutoff = 5
 blob_detect_d_cluster = 1
 blob_detect_r_cluster = 1
 ellipse_detect_theta_num_samples = 100
+ellipse_detect_it_cutoff = 50
+ellipse_detect_norm_cutoff = 1e-06
 ellipse_detect_r1_cutoff = 1
 ellipse_detect_r2_cutoff = 1
 ellipse_detect_num_cutoff = 50
@@ -42,8 +44,6 @@ ellipse_detect_rot_cluster = 0.1745329251994329
 marker_config_path = +markers/marker.conf
 marker_templates_path = +markers/marker_templates.txt
 marker_padding = 5
-marker_it_cutoff = 50
-marker_norm_cutoff = 1e-06
 camera_size = 2.220446049250313e-16
 
 A_L = 

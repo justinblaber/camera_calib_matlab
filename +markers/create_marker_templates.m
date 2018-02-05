@@ -28,7 +28,7 @@ for i = 1:length(marker_config.marker_paths)
     y = bsxfun(@times,sin(theta_samples)',r_samples) + (size(marker,1)+1)/2; 
     
     % Get polar patch
-    polar_patch = alg.array_interp(marker,[x(:) y(:)],'bicubic'); 
+    polar_patch = alg.array_interp(marker,[x(:) y(:)],'cubic'); 
     polar_patch = reshape(polar_patch,length(theta_samples),[]); 
     
     % Plot sampling points

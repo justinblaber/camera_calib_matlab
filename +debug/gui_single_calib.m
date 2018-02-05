@@ -18,6 +18,15 @@ function gui_single_calib(calib,f)
     colors = external.distinguishable_colors(num_boards,{'w','r','k'});
     axes_board = matlab.graphics.axis.Axes.empty();
     res = {};
+    for i = 1:num_boards
+        board_points_m = alg.p_m(calib.intrin.A, ...
+                                 calib.intrin.distortion, ...
+                                 calib.extrin(i).rotation, ...
+                                 calib.extrin(i).translation, ...
+                                 alg.cb_points(calib.config));
+        res{i} = board_points_m-calib.extrin(i).board_points_p; %#ok<AGROW>
+    end 
+    max_res = max(cellfun(@(x)max(abs(x(:))),res));
     
     % Set axes parameters
     padding_height = 0.1;
@@ -112,17 +121,6 @@ function gui_single_calib(calib,f)
             pos_board = [pos_res(1) pos_cal_board(2) pos_res(3) pos_res(2)-2*padding_height];
             axes_board = axes('Position',pos_board,'Parent',f);
 
-            % Compute residuals for plots
-            res = {};
-            for i = 1:num_boards
-                board_points_m = alg.p_m(calib.intrin.A, ...
-                                         calib.intrin.distortion, ...
-                                         calib.extrin(i).rotation, ...
-                                         calib.extrin(i).translation, ...
-                                         alg.cb_points(calib.config));
-                res{i} = board_points_m-calib.extrin(i).board_points_p;
-            end 
-
             % Plot
             debug.plot_single_extrinsic({calib.extrin.rotation}, ...
                                         {calib.extrin.translation}, ...
@@ -137,7 +135,6 @@ function gui_single_calib(calib,f)
             title(axes_cal_board,'Calibration board','FontSize',10);
             drawnow
             
-            max_res = max(cellfun(@(x)max(abs(x(:))),res));
             debug.plot_res(res,colors,alphas,max_res,axes_res); 
             title(axes_res,'Residuals','FontSize',10); 
             xlabel(axes_res,{['mean: [' num2str(mean(res{idx_board})) ']'],[' stddev: [' num2str(std(res{idx_board})) ']']}, ...
@@ -191,13 +188,19 @@ function [l, r, t, b] = img_bb(cb_img)
 end
 
 function [l, r, t, b] = worst_bb(res,board_points_p)
-    zoom_factor = 20;
+    zoom_factor = 2;
     [~,max_idx] = max(sum(res.^2,2));
     x_max_res = board_points_p(max_idx,1);
     y_max_res = board_points_p(max_idx,2);
     max_res = max(abs(res(max_idx,:)));
-    l = x_max_res - max_res*zoom_factor;
-    r = x_max_res + max_res*zoom_factor;
-    t = y_max_res - max_res*zoom_factor;
-    b = y_max_res + max_res*zoom_factor;
+    window = max_res*zoom_factor;
+    
+    if window < 10
+        window = 10;
+    end
+    
+    l = x_max_res - window;
+    r = x_max_res + window;
+    t = y_max_res - window;
+    b = y_max_res + window;
 end

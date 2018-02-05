@@ -100,7 +100,7 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
                                                  cost_sub_array_dy,'cubic','none');                   
         % Perform gradient ascent with backtracking
         p = [blobs(i).x blobs(i).y r1 r2 rot]'; % initialize parameter vector with current ellipse
-        for it = 1:calib_config.marker_it_cutoff
+        for it = 1:calib_config.ellipse_detect_it_cutoff
             % Store previous p
             p_prev = p;
 
@@ -144,11 +144,11 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
                 disp(['Marker detect iteration #: ' num2str(it)]);
                 disp(['Difference norm for nonlinear parameter refinement: ' num2str(diff_norm)]);
             end
-            if diff_norm < calib_config.marker_norm_cutoff
+            if diff_norm < calib_config.ellipse_detect_norm_cutoff
                 break
             end
         end
-        if calib_config.verbose > 2 && it == calib_config.marker_it_cutoff
+        if calib_config.verbose > 2 && it == calib_config.ellipse_detect_it_cutoff
             warning('Marker iterations hit cutoff before converging!!!');
         end
                 
@@ -177,10 +177,10 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
                         sin(p(5))  cos(p(5))];
             variance = [p(3)^2 0; ...
                         0      p(4)^2];
-            covariance = rotation*variance*rotation';              
+            covariance = rotation*variance*rotation';
             if rank(covariance) < 2
                 continue
-            end        
+            end
             [y_window_up,x_window_up] = ndgrid(1:size(sub_array_up,1),1:size(sub_array_up,2));
             x_window_up = (x_window_up./cost_scale_factor + 1/2*(1-1/cost_scale_factor)) -1 + sub_array_l;
             y_window_up = (y_window_up./cost_scale_factor + 1/2*(1-1/cost_scale_factor)) -1 + sub_array_t;

@@ -203,11 +203,11 @@ function blobs = blob_detect(array,calib_config)
         sub_array = array(sub_array_t:sub_array_b,sub_array_l:sub_array_r);  
         sub_array_dx = array_dx(sub_array_t:sub_array_b,sub_array_l:sub_array_r);  
         sub_array_dy = array_dy(sub_array_t:sub_array_b,sub_array_l:sub_array_r);         
-                    
+        
         % Get sub_array coordinates        
         [y_sub_array,x_sub_array] = ndgrid(sub_array_t:sub_array_b, ...
                                            sub_array_l:sub_array_r);
-                                       
+        
         % Compute second moment matrix to threshold edge response
         eig_ratio = second_moment_params(sub_array_dx, ...
                                          sub_array_dy, ...
@@ -289,7 +289,7 @@ function blobs = blob_detect(array,calib_config)
         if maxima_r_idx < 1 || maxima_r_idx > num_scales || ...
            maxima_x < 1 || maxima_x > size(array,2) || ...
            maxima_y < 1 || maxima_y > size(array,1)
-            continue;
+            continue
         end
         
         % Before storing blob, make sure there isn't another blob near

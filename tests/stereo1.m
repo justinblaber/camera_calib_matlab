@@ -83,5 +83,4 @@ clear;
 [calib,R_s,t_s] = util.read_stereo_calib('calibrations/stereo1.txt');
 
 %% Debug with stereo gui
-f = figure(2);
-debug.gui_stereo_calib(calib,R_s,t_s,f);
+debug.gui_stereo_calib(calib,R_s,t_s);

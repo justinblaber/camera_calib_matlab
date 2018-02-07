@@ -53,11 +53,14 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config)
     % Refine points    
     disp('---');
     for i = 1:length(cb_imgs)    
-        disp(['Refining points for: ' cb_imgs(i).get_path() '...']);
+        t = tic;
+        fprintf('Refining points for: %s. ',cb_imgs(i).get_path());
         board_points_ps{i} = alg.refine_points(board_points_ps{i}, ...
                                                cb_imgs(i), ...
                                                homographies{i}, ...
                                                calib_config); %#ok<AGROW>
+        time = toc(t);
+        fprintf('Time ellapsed: %f seconds.\n',time);
     end
     % Store for debugging purposes
     homographies_refine = homographies;

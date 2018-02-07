@@ -16,9 +16,9 @@ function gui_single_four_points_detect(four_points_ps,four_points_debugs,cb_imgs
     axes_cal_board = matlab.graphics.axis.Axes.empty();
     
     % Set axes parameters
-    padding_height = 0.1;
-    padding_width = 0.05;
-    cal_board_width = 0.6;
+    padding_height = 0.075;
+    padding_width = 0.025;
+    cal_board_width = 0.7;
     
     % Initialize plot
     plot_gui();
@@ -117,20 +117,18 @@ function gui_single_four_points_detect(four_points_ps,four_points_debugs,cb_imgs
             
             % Set axes  
             single_patch_height = (1-5*padding_height)/4;
-            single_patch_width = (1-cal_board_width-4*padding_width)/2;
+            single_patch_width = 1-cal_board_width-3*padding_width;
             
             pos_cal_board = [1-cal_board_width-padding_width padding_height cal_board_width 1-2*padding_height];
             axes_cal_board = axes('Position',pos_cal_board,'Parent',f);  
 
             axes_patches = matlab.graphics.axis.Axes.empty();
             for i = 1:4
-                for j = 1:2
-                    pos_patch = [padding_width+(j-1)*(single_patch_width+padding_width) ...
-                                 padding_height+(4-i)*(single_patch_height+padding_height)  ...
-                                 single_patch_width ...
-                                 single_patch_height];
-                    axes_patches(i,j) = axes('Position',pos_patch,'Parent',f);
-                end
+                pos_patch = [padding_width ...
+                             padding_height+(4-i)*(single_patch_height+padding_height)  ...
+                             single_patch_width ...
+                             single_patch_height];
+                axes_patches(i) = axes('Position',pos_patch,'Parent',f);
             end
 
             % Plot debugging info
@@ -145,10 +143,11 @@ function gui_single_four_points_detect(four_points_ps,four_points_debugs,cb_imgs
                
             % Plot patches
             for i = 1:4
-                imshow(four_points_debugs(idx_board).patch_matches(i).patch,[],'Parent',axes_patches(i,1));
-                title(axes_patches(i,1),['Patch ' num2str(i) ' sampled'],'FontSize',7);
-                imshow(four_points_debugs(idx_board).patch_matches(i).template,[],'Parent',axes_patches(i,2));
-                title(axes_patches(i,2),['Patch ' num2str(i) ' template'],'FontSize',7);
+                debug.plot_patch(four_points_debugs(idx_board).patch_matches(i).patch, ...
+                                 four_points_debugs(idx_board).patch_matches(i).template, ...
+                                 i, ...
+                                 four_points_debugs(idx_board).patch_matches(i).cc_val, ...
+                                 axes_patches(i));
             end            
         catch e        
             if ishandle(f)

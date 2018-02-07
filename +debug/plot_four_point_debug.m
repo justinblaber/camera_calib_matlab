@@ -1,5 +1,5 @@
 function plot_four_point_debug(four_points_p,four_points_debug,cb_img,calib_config,a)
-    % This plots residuals
+    % This plots debugging info for the four point detector
         
     if ~exist('a','var')
         f = figure(); 
@@ -7,7 +7,7 @@ function plot_four_point_debug(four_points_p,four_points_debug,cb_img,calib_conf
     end
     cla(a);
     
-    % Show image    
+    % Show calibration board (must rescale)
     array = cb_img.get_gs();
     if calib_config.four_point_detect_scaled_array_min_size == realmax
         scale_factor = 1;
@@ -18,12 +18,18 @@ function plot_four_point_debug(four_points_p,four_points_debug,cb_img,calib_conf
     imshow(array,[],'Parent',a)
     hold(a,'on');
     
-    % Must rescale four_points_ps
-    plot(scale_factor*(four_points_p(:,1)-1/2*(1-1/scale_factor)), ...
-         scale_factor*(four_points_p(:,2)-1/2*(1-1/scale_factor)),'-mo','MarkerSize',8, ...
-         'parent',a);
+    % Plot four points (must rescale)
+    plot(scale_factor*(four_points_p(1:2,1)-1/2*(1-1/scale_factor)), ...
+         scale_factor*(four_points_p(1:2,2)-1/2*(1-1/scale_factor)),'-o', ...
+         'Color',[0.0000 0.0000 1.0000],'MarkerSize',8,'LineWidth',2,'parent',a);
+    plot(scale_factor*(four_points_p(2:3,1)-1/2*(1-1/scale_factor)), ...
+         scale_factor*(four_points_p(2:3,2)-1/2*(1-1/scale_factor)),'-o', ...
+         'Color',[1.0000 0.1034 0.7241],'MarkerSize',8,'LineWidth',2,'parent',a);
+    plot(scale_factor*(four_points_p(3:4,1)-1/2*(1-1/scale_factor)), ...
+         scale_factor*(four_points_p(3:4,2)-1/2*(1-1/scale_factor)),'-o', ...
+         'Color',[1.0000 0.8276 0.0000],'MarkerSize',8,'LineWidth',2,'parent',a);
      
-    % Debugging stuff does not need to be rescaled
+    % Plot blobs and ellipses (does not need to be rescaled)
     axes(a);
     for i = 1:length(four_points_debug.blobs)
         external.ellipse(four_points_debug.blobs(i).r, ...

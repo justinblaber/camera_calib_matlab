@@ -1,6 +1,6 @@
 function grad = array_grad(array,direc)
     % Computes gradient of input array along the direction specified by 
-    % direc
+    % direc.
     %
     % Inputs:
     %   array - array; MxN array
@@ -16,6 +16,6 @@ function grad = array_grad(array,direc)
             grad = imfilter(array,-fspecial('sobel')/8,'same','replicate');
         otherwise 
             error(['Direction of gradient calculation can either be: x or y' ...
-                   ', but : ' direc ' was input']);
+                   ', but: "' direc '" was input']);
     end
 end

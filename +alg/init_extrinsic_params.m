@@ -5,8 +5,8 @@ function [R,t] = init_extrinsic_params(homography,A,board_points_p,calib_config)
     %
     % Inputs:
     %   homography - array; 3x3 homography array. Note that homography(3,3)
-    %   should be positive (if computed through alg.linear_homography(), it
-    %   will be 1), which guarantees t(3) (translation in the z direction)
+    %   should be positive (if computed through alg.homography(), it will 
+    %   be 1), which guarantees t(3) (translation in the z direction)
     %   is positive.
     %   A - array; 3x3 array containing:
     %       [alpha_x    0       x_o;

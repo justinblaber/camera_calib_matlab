@@ -1,5 +1,5 @@
 function jacob = dR_deuler(euler)
-    % Returns jacobian of rotation wrt euler angles. Assumes Z-Y-X rotation 
+    % Returns jacobian of rotation wrt euler angles. Assumes X-Y-Z rotation 
     % sequence.
     %
     % Inputs:

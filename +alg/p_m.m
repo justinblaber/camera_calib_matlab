@@ -1,7 +1,7 @@
 function points_m = p_m(A,distortion,R,t,points_w)
     % This will apply the full camera model (same model used in Bouguet's 
     % camera calibration toolbox) to input points in world coordinates. The 
-    % output coordinates are in pixel coordinates.
+    % output coordinates are pixels.
     %
     % Inputs:
     %   A - array; 3x3 array containing:
@@ -15,7 +15,7 @@ function points_m = p_m(A,distortion,R,t,points_w)
     %   points_w - array; Nx2 array of points in world coordinates
     %
     % Outputs:
-    %   points_m - array; Nx2 array of points in pixel coordinates.
+    %   points_m - array; Nx2 array of points in pixel coordinates
     
     % Get normalized coordinates
     [p_n, r_n] = alg.p_n(R,t,points_w);

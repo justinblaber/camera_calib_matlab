@@ -1,5 +1,5 @@
 function R = euler2rot(euler)
-    % Converts euler angles to rotation matrix. Assumes Z-Y-X rotation 
+    % Converts euler angles to rotation matrix. Assumes X-Y-Z rotation 
     % sequence.
     %
     % Inputs:

@@ -19,10 +19,10 @@ function [board_points_w, four_points_w] = cb_points(calib_config)
                      calib_config.four_point_width   calib_config.four_point_height];
     
     % Get board points next
-    board_height = calib_config.num_squares_height * calib_config.square_size;
-    board_width = calib_config.num_squares_width * calib_config.square_size;           
-    [board_y, board_x] = ndgrid(0:calib_config.square_size:board_height, ...
-                                0:calib_config.square_size:board_width);
+    board_height = calib_config.num_targets_height * calib_config.target_spacing;
+    board_width = calib_config.num_targets_width * calib_config.target_spacing;           
+    [board_y, board_x] = ndgrid(0:calib_config.target_spacing:board_height, ...
+                                0:calib_config.target_spacing:board_width);
     
     % Assume board is centered between four points 
     board_points_w = [board_x(:)-board_width/2+calib_config.four_point_width/2 ...

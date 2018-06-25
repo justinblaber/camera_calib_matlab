@@ -1,4 +1,4 @@
-function [win_points_p, win_point_weights, win_point_corners_p] = refine_window_p(point_p,homography,homography_inv,width,height,calib_config)    
+function [win_points_p, win_point_weights, win_point_corners_p] = refine_checker_window(point_p,homography,homography_inv,width,height,calib_config)    
     % Computes refinement window points, weights of the window points, and 
     % the corners of the window points in pixel coordinates.
     %
@@ -81,14 +81,14 @@ function l_p = window_lengths_p(point_w,homography,wf,calib_config)
     %       p2 - l3 - p4
     
     % Get points in world coordinates
-    p1_w = [point_w(1)-(calib_config.square_size/2)*wf, ...
-            point_w(2)-(calib_config.square_size/2)*wf];
-    p2_w = [point_w(1)-(calib_config.square_size/2)*wf, ...
-            point_w(2)+(calib_config.square_size/2)*wf];
-    p3_w = [point_w(1)+(calib_config.square_size/2)*wf, ...
-            point_w(2)-(calib_config.square_size/2)*wf];
-    p4_w = [point_w(1)+(calib_config.square_size/2)*wf, ...
-            point_w(2)+(calib_config.square_size/2)*wf];
+    p1_w = [point_w(1)-(calib_config.target_spacing/2)*wf, ...
+            point_w(2)-(calib_config.target_spacing/2)*wf];
+    p2_w = [point_w(1)-(calib_config.target_spacing/2)*wf, ...
+            point_w(2)+(calib_config.target_spacing/2)*wf];
+    p3_w = [point_w(1)+(calib_config.target_spacing/2)*wf, ...
+            point_w(2)-(calib_config.target_spacing/2)*wf];
+    p4_w = [point_w(1)+(calib_config.target_spacing/2)*wf, ...
+            point_w(2)+(calib_config.target_spacing/2)*wf];
         
     % Apply homography
     p_win_p = alg.apply_homography(homography,vertcat(p1_w,p2_w,p3_w,p4_w));
@@ -102,18 +102,18 @@ end
 
 function wf = window_factor(point_w,homography,calib_config)
     % Computes the window factor, which is a proportion of the checkerboard
-    % square used to compute the refinement window. This will either:
+    % target used to compute the refinement window. This will either:
     %   Return the default window factor if it meets the minimum length
     %       requirement and is less than 4/3
     %   Return a newly computed window factor which ensures the minimum
     %       length of the refinement window is 
-    %       refine_corner_window_min_size if the default refinement window 
+    %       refine_checker_window_min_size if the default refinement window 
     %       doesnt meet this criteria
     %   Return 4/3, which is the upper bound I set to ensure the refinement
     %       window does not overlap with neighboring corners
     
     % Initialize window factor
-    wf = calib_config.refine_corner_default_window_factor;
+    wf = calib_config.refine_checker_default_window_factor;
         
     % Get window lengths in pixel coordinates
     l_p = window_lengths_p(point_w, ...
@@ -123,7 +123,7 @@ function wf = window_factor(point_w,homography,calib_config)
         
     % Recompute window_factor if any of the distances are below the minimum
     % window size
-    if any(l_p < calib_config.refine_corner_window_min_size)
+    if any(l_p < calib_config.refine_checker_window_min_size)
         if calib_config.verbose > 2
             warning('min window constraint met; recomputing window factor for this corner.');
         end
@@ -155,15 +155,15 @@ function wf = window_factor(point_w,homography,calib_config)
         j = homography(1,1)*point_w(1)+homography(1,2)*point_w(2)+homography(1,3);
         k = homography(2,1)*point_w(1)+homography(2,2)*point_w(2)+homography(2,3);
         l = homography(3,1)*point_w(1)+homography(3,2)*point_w(2)+homography(3,3);
-        r = roots([calib_config.refine_corner_window_min_size^2*f^2*e^2-(a*f-e*b)^2-(c*f-e*d)^2 ...
-                   2*calib_config.refine_corner_window_min_size^2*f*e*(l*f+l*e)-2*(a*f-e*b)*(f*j+l*a-e*j-l*b)-2*(c*f-e*d)*(f*k+l*c-e*k-l*d) ...
-                   2*calib_config.refine_corner_window_min_size^2*l^2*f*e+calib_config.refine_corner_window_min_size^2*(l*f+l*e)^2-(f*j+l*a-e*j-l*b)^2-(f*k+l*c-e*k-l*d)^2 ...
-                   2*calib_config.refine_corner_window_min_size^2*l^2*(l*f+l*e) ...
-                   calib_config.refine_corner_window_min_size^2*l^4]);
+        r = roots([calib_config.refine_checker_window_min_size^2*f^2*e^2-(a*f-e*b)^2-(c*f-e*d)^2 ...
+                   2*calib_config.refine_checker_window_min_size^2*f*e*(l*f+l*e)-2*(a*f-e*b)*(f*j+l*a-e*j-l*b)-2*(c*f-e*d)*(f*k+l*c-e*k-l*d) ...
+                   2*calib_config.refine_checker_window_min_size^2*l^2*f*e+calib_config.refine_checker_window_min_size^2*(l*f+l*e)^2-(f*j+l*a-e*j-l*b)^2-(f*k+l*c-e*k-l*d)^2 ...
+                   2*calib_config.refine_checker_window_min_size^2*l^2*(l*f+l*e) ...
+                   calib_config.refine_checker_window_min_size^2*l^4]);
 
         % Get smallest, real, and positive root to get window_factor.
         wf = min(r(arrayfun(@(x)isreal(x(1)),r) & r > 0));
-        wf = 2*wf/calib_config.square_size;
+        wf = 2*wf/calib_config.target_spacing;
     end
     
     % Threshold window_factor to 4/3 to prevent overlap
@@ -185,11 +185,11 @@ function win_points_p = window_points_p(point_w,homography,wf,hw,calib_config)
     % Computes window points in pixel coordinates
     
     % Get grid of points in world coordinates
-    [win_points_y, win_points_x] = ndgrid(linspace(point_w(2)-(calib_config.square_size/2)*wf, ...
-                                                   point_w(2)+(calib_config.square_size/2)*wf, ...
+    [win_points_y, win_points_x] = ndgrid(linspace(point_w(2)-(calib_config.target_spacing/2)*wf, ...
+                                                   point_w(2)+(calib_config.target_spacing/2)*wf, ...
                                                    2*hw+1), ...
-                                          linspace(point_w(1)-(calib_config.square_size/2)*wf, ...
-                                                   point_w(1)+(calib_config.square_size/2)*wf, ...
+                                          linspace(point_w(1)-(calib_config.target_spacing/2)*wf, ...
+                                                   point_w(1)+(calib_config.target_spacing/2)*wf, ...
                                                    2*hw+1));        
     win_points_w = [win_points_x(:) win_points_y(:)];        
     

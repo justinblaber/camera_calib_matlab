@@ -10,14 +10,15 @@ function calib_config = read_calib_config(calib_config_path)
     %
     %       Calibration board info:    
     %
-    %       num_squares_height - int; number of squares in the "height" 
+    %       num_targets_height - int; number of targets in the "height" 
     %           dimension
-    %       num_squares_width - int; number of squares in the "width"
+    %       num_targets_width - int; number of targets in the "width"
     %           dimension
-    %       square_size - scalar; length of the side of the square
-    %       units - string; units of square size
+    %       target_spacing - scalar; space between targets
+    %       units - string; units of target dimensions
     %
-    %       calibration - string; type of calibration
+    %       calibration_type - string; type of calibration
+    %       calibration_pattern - string; type of calibration pattern
     %       four_point_height - scalar; height of the "four point" box
     %       four_point_width - scalar; width of the "four point" box
     %
@@ -30,14 +31,14 @@ function calib_config = read_calib_config(calib_config_path)
     %       homography_norm_cutoff - scalar; cutoff for norm of difference
     %           of parameter vector for nonlinear homography refinement
     %
-    %       refine_corner_it_cutoff - int; number of iterations performed 
-    %           for refinement of corner point
-    %       refine_corner_norm_cutoff - scalar; cutoff for the difference 
-    %           in corner point position for corner point refinement
-    %       refine_corner_default_window_factor - scalar; default relative
-    %           size of corner refinement window compared to size of the 
-    %           calibration board squares.
-    %       refine_corner_window_min_size - scalar; minimum length of 
+    %       refine_checker_it_cutoff - int; number of iterations performed 
+    %           for refinement of checker target
+    %       refine_checker_norm_cutoff - scalar; cutoff for the difference 
+    %           in checker position for checker refinement
+    %       refine_checker_default_window_factor - scalar; default relative
+    %           size of checker refinement window compared to size of the 
+    %           calibration board target spacing.
+    %       refine_checker_window_min_size - scalar; minimum length of 
     %           refinement window. This will recompute the window_factor to
     %           meet the minimum specified length.
     %
@@ -50,9 +51,9 @@ function calib_config = read_calib_config(calib_config_path)
     %       refine_param_lambda_factor - scalar; multiplicative factor for
     %           lambda in Levenberg–Marquardt algorithm
     %
-    %       four_point_detect_scaled_array_min_size; int; rescaled the
-    %           input array such that the minimum size is set to this
-    %           value.
+    %       four_point_detect_scaled_array_min_size; int; rescales input 
+    %           array such that the minimum size is set to this
+    %           value (used to reduce computation time).
     %
     %       blob_detect_r_range1 - scalar; lower bound of blob radius 
     %           search; this is non-inclusive.
@@ -126,21 +127,22 @@ function calib_config = read_calib_config(calib_config_path)
     
     % Perform validations on input fields    
     % Calibration board info
-    field_info        = struct('field','num_squares_height'                     ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_odd_int);
-    field_info(end+1) = struct('field','num_squares_width'                      ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_odd_int);
-    field_info(end+1) = struct('field','square_size'                            ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
+    field_info        = struct('field','num_targets_height'                     ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_odd_int);
+    field_info(end+1) = struct('field','num_targets_width'                      ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_odd_int);
+    field_info(end+1) = struct('field','target_spacing'                         ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','units'                                  ,'required',true ,'default',''                             ,'validation_fun',@validate_string);
-    field_info(end+1) = struct('field','calibration'                            ,'required',true ,'default',''                             ,'validation_fun',@validate_calibration);
+    field_info(end+1) = struct('field','calibration_type'                       ,'required',true ,'default',''                             ,'validation_fun',@validate_calibration_type);
+    field_info(end+1) = struct('field','calibration_pattern'                    ,'required',true ,'default',''                             ,'validation_fun',@validate_calibration_pattern);
     field_info(end+1) = struct('field','four_point_height'                      ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','four_point_width'                       ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
     % Algorithmic info
     field_info(end+1) = struct('field','verbose'                                ,'required',false,'default',1                              ,'validation_fun',@validate_pos_int);
     field_info(end+1) = struct('field','homography_it_cutoff'                   ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);
     field_info(end+1) = struct('field','homography_norm_cutoff'                 ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','refine_corner_it_cutoff'                ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','refine_corner_norm_cutoff'              ,'required',false,'default',0.05                           ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','refine_corner_default_window_factor'    ,'required',false,'default',2/3                            ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','refine_corner_window_min_size'          ,'required',false,'default',10                             ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','refine_checker_it_cutoff'               ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','refine_checker_norm_cutoff'             ,'required',false,'default',0.05                           ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','refine_checker_default_window_factor'   ,'required',false,'default',2/3                            ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','refine_checker_window_min_size'         ,'required',false,'default',10                             ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','refine_param_it_cutoff'                 ,'required',false,'default',200                            ,'validation_fun',@validate_pos_int);
     field_info(end+1) = struct('field','refine_param_norm_cutoff'               ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
     field_info(end+1) = struct('field','refine_param_lambda_init'               ,'required',false,'default',0.01                           ,'validation_fun',@validate_pos_num);    
@@ -208,12 +210,20 @@ end
 % Make all validate_* functions take calib_config and the field, and return
 % the calib_config. This makes things easier.
 
-function calib_config = validate_calibration(calib_config,field)
+function calib_config = validate_calibration_type(calib_config,field)
     switch calib_config.(field)
-        case 'four_point_auto'
         case 'four_point_manual'
+        case 'four_point_auto'
         otherwise
-            error('Calibration type is not supported.');
+            error(['Calibration type: "' calib_config.(field) '" is not supported.']);
+    end
+end
+
+function calib_config = validate_calibration_pattern(calib_config,field)
+    switch calib_config.(field)
+        case 'checker'
+        otherwise
+            error(['Calibration pattern: "' calib_config.(field) '" is not supported.']);
     end
 end
 

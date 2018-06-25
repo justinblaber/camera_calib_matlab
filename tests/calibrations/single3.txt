@@ -1,18 +1,19 @@
 % calib_config
-num_squares_height = 5
-num_squares_width = 7
-square_size = 100
+num_targets_height = 5
+num_targets_width = 7
+target_spacing = 100
 units = mm
-calibration = four_point_manual
+calibration_type = four_point_manual
+calibration_pattern = checker
 four_point_height = 500
 four_point_width = 700
 verbose = 1
 homography_it_cutoff = 20
 homography_norm_cutoff = 1e-06
-refine_corner_it_cutoff = 10
-refine_corner_norm_cutoff = 0.05
-refine_corner_default_window_factor = 0.6666666666666666
-refine_corner_window_min_size = 10
+refine_checker_it_cutoff = 10
+refine_checker_norm_cutoff = 0.05
+refine_checker_default_window_factor = 0.6666666666666666
+refine_checker_window_min_size = 10
 refine_param_it_cutoff = 200
 refine_param_norm_cutoff = 1e-06
 refine_param_lambda_init = 0.01

@@ -13,9 +13,9 @@ function plot_camera_3D(xform,face_color,face_alpha,edge_alpha,axes_color,axes_l
     end
     
     % If camera size is set to default, then set the camera size to the
-    % calibration board square size.
+    % calibration board target size.
     if calib_config.camera_size == eps
-        camera_size = calib_config.square_size;
+        camera_size = calib_config.target_spacing;
     else
         camera_size = calib_config.camera_size;
     end

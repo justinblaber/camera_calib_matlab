@@ -36,8 +36,8 @@ function blobs = blob_detect(array,calib_config)
     
     % Set num_cutoff
     if calib_config.blob_detect_num_cutoff == realmax % This is the flag to set default
-        % 4 markers + ~number of squares + 500 blob cushion
-        num_cutoff = 4 + calib_config.num_squares_height*calib_config.num_squares_width + 500;            
+        % 4 markers + ~number of targets + 500 blob cushion
+        num_cutoff = 4 + calib_config.num_targets_height*calib_config.num_targets_width + 500;            
     else
         num_cutoff = calib_config.blob_detect_num_cutoff;
     end

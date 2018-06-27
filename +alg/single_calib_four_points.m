@@ -54,14 +54,16 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config)
     disp('---');
     for i = 1:length(cb_imgs)    
         t = tic;
-        fprintf('Refining "%s" points for: %s. ',calib_config.calibration_pattern,cb_imgs(i).get_path());
+        fprintf('Refining "%s" points for: %s. ',calib_config.calibration_target,cb_imgs(i).get_path());
         
-        switch calib_config.calibration_pattern
+        switch calib_config.calibration_target
             case 'checker'
                 board_points_ps{i} = alg.refine_checkers(board_points_ps{i}, ...
                                                          cb_imgs(i).get_gs(), ...
                                                          homographies{i}, ...
                                                          calib_config); %#ok<AGROW>
+            otherwise
+                error(['Calibration target: "' calib_config.calibration_target '" is not supported.']);
         end
         
         time = toc(t);
@@ -106,6 +108,8 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config)
                                                                      board_points_ps, ...
                                                                      'full', ...
                                                                      calib_config);   
+                                                                 
+    % TODO: possibly add frontal refinement here
                               
     disp('---');
     disp('Initial intrinsic params: ')

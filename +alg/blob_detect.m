@@ -226,7 +226,7 @@ function blobs = blob_detect(array,calib_config)
         end
                                        
         % Refine center position of blob using centroid analysis
-        % First, get "centroid array" which is negative of sub array, 
+        % First, get "centroid array" which is negative of sub array; 
         % scaled between 0 and 1
         c_sub_array = -sub_array;
         c_sub_array = (c_sub_array-min(c_sub_array(:)))/(max(c_sub_array(:))-min(c_sub_array(:)));         

@@ -181,14 +181,17 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
             if rank(covariance) < 2
                 continue
             end
+            
             [y_window_up,x_window_up] = ndgrid(1:size(sub_array_up,1),1:size(sub_array_up,2));
-            x_window_up = (x_window_up./cost_scale_factor + 1/2*(1-1/cost_scale_factor)) -1 + sub_array_l;
-            y_window_up = (y_window_up./cost_scale_factor + 1/2*(1-1/cost_scale_factor)) -1 + sub_array_t;
+            x_window_up = (x_window_up./cost_scale_factor + 1/2*(1-1/cost_scale_factor)) - 1 + sub_array_l;
+            y_window_up = (y_window_up./cost_scale_factor + 1/2*(1-1/cost_scale_factor)) - 1 + sub_array_t;
             kernel_gauss = mvnpdf([x_window_up(:) y_window_up(:)], ...
                                   [p(1) p(2)], ...
                                   covariance);
             kernel_gauss = reshape(kernel_gauss,size(sub_array_up));
 
+            % TODO: think of better ellipse cost
+            
             % Compute and store ellipse cost. Taking the minimum value
             % seems to be a reasonable choice, as ellipses should not have 
             % "dips" unlike other features.

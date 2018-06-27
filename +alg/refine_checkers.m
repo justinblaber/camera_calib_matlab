@@ -1,11 +1,11 @@
 function points_p = refine_checkers(points_p,array,homography,calib_config)
-    % This will return refined point coordinates lying on the corner(s) of 
-    % checker(s). This uses the technique of getting the dot product, in a 
-    % window, of the displacement vector and gradient, which should be zero
-    % for all points within the window.
+    % This will return refined point coordinates of checker(s). This uses 
+    % the technique of getting the dot product, in a window, of the 
+    % displacement vector and gradient, which should be zero for all points
+    % within the window.
     %
     % Inputs:
-    %   points_p - array; Nx2 array of points in pixel coordinates
+    %   points_p - array; Px2 array of points in pixel coordinates
     %   array - array; MxN array containing checkers
     %   homography - array; 3x3 homography matrix. This is used to compute
     %       the window around each point.
@@ -13,7 +13,7 @@ function points_p = refine_checkers(points_p,array,homography,calib_config)
     %       util.read_calib_config()
     %
     % Outputs:
-    %   points_p - array; Nx2 array of refined points.
+    %   points_p - array; Px2 array of refined points.
         
     if calib_config.verbose > 1
         disp('---');

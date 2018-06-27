@@ -4,7 +4,7 @@ function euler = rot2euler(R)
     %
     % Inputs:
     %   R - array; 3x3 rotation matrix
-    %))];
+    %
     % Outputs:
     %   euler - array; 3x1 euler angles. Stored as: 
     %       [theta_x; theta_y; theta_z]

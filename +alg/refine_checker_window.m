@@ -102,7 +102,8 @@ end
 
 function wf = window_factor(point_w,homography,calib_config)
     % Computes the window factor, which is a proportion of the checkerboard
-    % target used to compute the refinement window. This will either:
+    % target spacing used to compute the refinement window. This will 
+    % either:
     %   Return the default window factor if it meets the minimum length
     %       requirement and is less than 4/3
     %   Return a newly computed window factor which ensures the minimum
@@ -110,7 +111,7 @@ function wf = window_factor(point_w,homography,calib_config)
     %       refine_checker_window_min_size if the default refinement window 
     %       doesnt meet this criteria
     %   Return 4/3, which is the upper bound I set to ensure the refinement
-    %       window does not overlap with neighboring corners
+    %       window does not overlap with neighboring targets
     
     % Initialize window factor
     wf = calib_config.refine_checker_default_window_factor;

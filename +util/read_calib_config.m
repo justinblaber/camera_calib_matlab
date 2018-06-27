@@ -1,12 +1,14 @@
 function calib_config = read_calib_config(calib_config_path)
-    % Reads the calibration config file given in calib_config_path. 
-    % Outputs a struct containing calibration related info.
+    % Reads the calibration config file given in calib_config_path and 
+    % outputs a struct containing calibration related info.
     % 
     % Inputs:
     %   calib_config_path - path to calibration config file.
     %
     % Outputs:
     %   calib_config - struct containing the following fields:
+    %
+    % ------------------------------------------------------------------- %
     %
     %       Calibration board info:    
     %
@@ -15,12 +17,14 @@ function calib_config = read_calib_config(calib_config_path)
     %       num_targets_width - int; number of targets in the "width"
     %           dimension
     %       target_spacing - scalar; space between targets
-    %       units - string; units of target dimensions
+    %       units - string; units of calibration board dimensions
     %
     %       calibration_type - string; type of calibration
-    %       calibration_pattern - string; type of calibration pattern
+    %       calibration_target - string; type of calibration target
     %       four_point_height - scalar; height of the "four point" box
     %       four_point_width - scalar; width of the "four point" box
+    %
+    % ------------------------------------------------------------------- %
     %
     %       Algorithmic info:
     %
@@ -36,8 +40,8 @@ function calib_config = read_calib_config(calib_config_path)
     %       refine_checker_norm_cutoff - scalar; cutoff for the difference 
     %           in checker position for checker refinement
     %       refine_checker_default_window_factor - scalar; default relative
-    %           size of checker refinement window compared to size of the 
-    %           calibration board target spacing.
+    %           size of checker refinement window compared to the size of 
+    %           the calibration board target spacing.
     %       refine_checker_window_min_size - scalar; minimum length of 
     %           refinement window. This will recompute the window_factor to
     %           meet the minimum specified length.
@@ -51,8 +55,8 @@ function calib_config = read_calib_config(calib_config_path)
     %       refine_param_lambda_factor - scalar; multiplicative factor for
     %           lambda in Levenberg–Marquardt algorithm
     %
-    %       four_point_detect_scaled_array_min_size; int; rescales input 
-    %           array such that the minimum size is set to this
+    %       four_point_detect_scaled_array_min_size - int; rescales input 
+    %           array such that the smallest dimension is set to this
     %           value (used to reduce computation time).
     %
     %       blob_detect_r_range1 - scalar; lower bound of blob radius 
@@ -100,20 +104,29 @@ function calib_config = read_calib_config(calib_config_path)
     %           r2 minor axes away from each other
     %       ellipse_detect_rot_cluster - scalar; cluster ellipses within 
     %           rot angle of each other
+    % 
+    %       frontal_refinement_num_targets_padding - int; number of targets
+    %           worth of padding around frontal image.
+    %       frontal_refinement_pix_per_target - int; number of pixel
+    %           samples per target in frontal space.
     %
     %       marker_config_path - string; path to marker configuration
     %       marker_templates_path - string; path to marker_templates
     %       marker_padding - int; amount of padding used for radius samples
     %           to allow for "wiggle" room
     %
+    % ------------------------------------------------------------------- %
+    %
     %       Plotting info:
     %
     %       camera_size - scalar; size of camera in specified units; used
     %           for plotting extrinsic parameters.
+    %    
+    % ------------------------------------------------------------------- %
 
     % Check to make sure config file exists
     if exist(calib_config_path,'file') == 0
-        error(['Config file: ' calib_config_path ' does not exist.']);
+        error(['Config file: "' calib_config_path '" does not exist.']);
     end
     
     % Display contents of config file    
@@ -132,7 +145,7 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','target_spacing'                         ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','units'                                  ,'required',true ,'default',''                             ,'validation_fun',@validate_string);
     field_info(end+1) = struct('field','calibration_type'                       ,'required',true ,'default',''                             ,'validation_fun',@validate_calibration_type);
-    field_info(end+1) = struct('field','calibration_pattern'                    ,'required',true ,'default',''                             ,'validation_fun',@validate_calibration_pattern);
+    field_info(end+1) = struct('field','calibration_target'                     ,'required',true ,'default',''                             ,'validation_fun',@validate_calibration_target);
     field_info(end+1) = struct('field','four_point_height'                      ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','four_point_width'                       ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
     % Algorithmic info
@@ -171,6 +184,8 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','ellipse_detect_r1_cluster'              ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);   
     field_info(end+1) = struct('field','ellipse_detect_r2_cluster'              ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);   
     field_info(end+1) = struct('field','ellipse_detect_rot_cluster'             ,'required',false,'default',2*pi/36                        ,'validation_fun',@validate_pos_num);   
+    field_info(end+1) = struct('field','frontal_refinement_num_targets_padding' ,'required',false,'default',2                              ,'validation_fun',@validate_pos_int);   
+    field_info(end+1) = struct('field','frontal_refinement_pix_per_target'      ,'required',false,'default',50                             ,'validation_fun',@validate_pos_int);   
     field_info(end+1) = struct('field','marker_config_path'                     ,'required',false,'default','+markers/marker.conf'         ,'validation_fun',@validate_file_path);
     field_info(end+1) = struct('field','marker_templates_path'                  ,'required',false,'default','+markers/marker_templates.txt','validation_fun',@validate_file_path);   
     field_info(end+1) = struct('field','marker_padding'                         ,'required',false,'default',5                              ,'validation_fun',@validate_pos_int);     
@@ -219,45 +234,45 @@ function calib_config = validate_calibration_type(calib_config,field)
     end
 end
 
-function calib_config = validate_calibration_pattern(calib_config,field)
+function calib_config = validate_calibration_target(calib_config,field)
     switch calib_config.(field)
         case 'checker'
         otherwise
-            error(['Calibration pattern: "' calib_config.(field) '" is not supported.']);
+            error(['Calibration target: "' calib_config.(field) '" is not supported.']);
     end
 end
 
 function calib_config = validate_string(calib_config,field)
     if ~ischar(calib_config.(field)) 
-        error(['Field: ' field ' has a value which is not a string.']);
+        error(['Field: "' field '" has a value which is not a string.']);
     end
     calib_config.(field) = calib_config.(field);
 end
 
 function calib_config = validate_pos_num(calib_config,field)
     if ~util.is_pos(calib_config.(field)) 
-        error(['Field: ' field ' has a value which is not a positive number.']);
+        error(['Field: "' field '" has a value which is not a positive number.']);
     end
     calib_config.(field) = calib_config.(field);
 end
 
 function calib_config = validate_pos_int(calib_config,field)
     if ~util.is_pos(calib_config.(field)) || ~util.is_int(calib_config.(field))
-        error(['Field: ' field ' has a value which is not a positive integer.']);
+        error(['Field: "' field '" has a value which is not a positive integer.']);
     end
     calib_config.(field) = calib_config.(field);
 end
 
 function calib_config = validate_pos_odd_int(calib_config,field)
     if ~util.is_pos(calib_config.(field)) || ~util.is_int(calib_config.(field)) || util.is_even(calib_config.(field))
-        error(['Field: ' field ' has a value which is not a positive odd integer.']);
+        error(['Field: "' field '" has a value which is not a positive odd integer.']);
     end
     calib_config.(field) = calib_config.(field);
 end
 
 function calib_config = validate_file_path(calib_config,field)
     if isempty(calib_config.(field)) || exist(calib_config.(field),'file') ~= 2
-        error(['Field: ' field ' has a value which is not an existing file.']);
+        error(['Field: "' field '" has a value which is not an existing file.']);
     end
     calib_config.(field) = calib_config.(field);
 end

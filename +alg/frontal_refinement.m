@@ -1,5 +1,28 @@
 function board_points_p_refined = frontal_refinement(array,A,distortion,R,t,calib_config)
-
+    % This will project calibration image into "frontal space" (i.e world
+    % coordinates), detect targets in that space, then project these points
+    % back into distorted pixel coordinates. These points can be used to 
+    % recompute model parameters in an iterative manner. 
+    % 
+    % From: 
+    %     "Accurate Camera Calibration using Iterative Refinement of Control Points"
+    %
+    % Inputs:    
+    %   array - array; calibration board image array
+    %	A - array; camera matrix containing:
+    %           [alpha    0       x_o;
+    %            0        alpha   y_o;
+    %            0        0       1]
+    %   distortion - array; distortions (radial and tangential) stored as: 
+    %       [beta1; beta2; beta3; beta4]  
+    %   R - array; 3x3 rotation matrix
+    %   t - array; 3x1 translation vector
+    %   calib_config - struct; this is the struct returned by
+    %       util.read_calib_config()
+    %
+    % Outputs:
+    %	board_points_p_refined - array; Nx2 array of refined points
+    
     % Set number of targets in frontal array
     num_targets_frontal_width = calib_config.num_targets_width + 2*calib_config.frontal_refinement_num_targets_padding;
     num_targets_frontal_height = calib_config.num_targets_height + 2*calib_config.frontal_refinement_num_targets_padding;
@@ -23,8 +46,8 @@ function board_points_p_refined = frontal_refinement(array,A,distortion,R,t,cali
     [y_frontal_w, x_frontal_w] = ndgrid(linspace(y_frontal_top_left_w,y_frontal_bottom_right_w,array_frontal_height), ...
                                         linspace(x_frontal_top_left_w,x_frontal_bottom_right_w,array_frontal_width));
 
-    % Apply transform to bring frontal image world coordinates into distorted 
-    % pixel space
+    % Apply transform to bring frontal image world coordinates into
+    % distorted pixel space
     p_frontal_m = alg.p_m(A, ...
                           distortion, ...
                           R, ...
@@ -49,12 +72,14 @@ function board_points_p_refined = frontal_refinement(array,A,distortion,R,t,cali
     board_points_y_frontal_p = (board_points_y_w-y_frontal_top_left_w)./array_frontal_height_w*(array_frontal_height-1)+1;
 
     % Refine points in frontal space
-    switch calib_config.calibration_pattern
+    switch calib_config.calibration_target
         case 'checker'
             board_points_frontal_p_refined = alg.refine_checkers([board_points_x_frontal_p, board_points_y_frontal_p], ...
                                                                  array_frontal, ...
                                                                  alg.homography(board_points_w,[board_points_x_frontal_p board_points_y_frontal_p],calib_config), ...
                                                                  calib_config);
+        otherwise
+            error(['Calibration target: "' calib_config.calibration_target '" is not supported.']);
     end
 
     % Convert refined points back to world coordinates
@@ -70,11 +95,4 @@ function board_points_p_refined = frontal_refinement(array,A,distortion,R,t,cali
                                      R, ...
                                      t, ...
                                      [board_points_w_refined_x board_points_w_refined_y]);
-                                 
-                                 
-    subplot(1,2,2);                 
-    imshow(array_frontal,[]) 
-    hold on;
-    plot(board_points_x_frontal_p,board_points_y_frontal_p,'rs')
-    plot(board_points_frontal_p_refined_x,board_points_frontal_p_refined_y,'gs')   
 end

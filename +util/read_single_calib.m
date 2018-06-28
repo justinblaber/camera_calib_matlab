@@ -20,7 +20,7 @@ function calib = read_single_calib(file_path)
     %       .extrin(i).board_points_p - array; ith array of optimized 
     %           subpixel calibration board points in pixel coordinates.
     %       .extrin(i).debug.homography_refine - array; ith homography used
-    %           for subpixel checkerboard corner refinement.
+    %           for subpixel target refinement.
                 
     % TODO: add checks to validate file
     

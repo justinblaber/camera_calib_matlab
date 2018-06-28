@@ -21,7 +21,7 @@ function [calib,R_s,t_s] = read_stereo_calib(file_path)
     %           .extrin(i).board_points_p - array; ith array of optimized 
     %               subpixel calibration board points in pixel coordinates.
     %           .extrin(i).debug.homography_refine - array; ith homography 
-    %               used for subpixel checkerboard corner refinement.
+    %               used for subpixel target refinement.
     %   R_s - array; optimized rotation describing rotation from the left 
     %       camera to the right camera
     %   t_s - array; optimized translation describing translation from the 

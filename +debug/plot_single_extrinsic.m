@@ -16,7 +16,7 @@ function plot_single_extrinsic(rotations,translations,colors,alphas,calib_config
     % Hold
     hold(a,'on');
 
-    % Plot checker boards
+    % Plot calibration boards
     height_offset = (calib_config.four_point_height-calib_config.num_targets_height*calib_config.target_spacing)/2;
     width_offset = (calib_config.four_point_width-calib_config.num_targets_width*calib_config.target_spacing)/2;
     for i = 1:length(rotations)    

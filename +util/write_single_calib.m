@@ -18,7 +18,7 @@ function write_single_calib(calib,file_path,suffix,append_calib)
     %       .extrin(i).board_points_p - array; ith array of optimized 
     %           subpixel calibration board points in pixel coordinates.
     %       .extrin(i).debug.homography_refine - array; ith homography used
-    %           for subpixel checkerboard corner refinement.
+    %           for subpixel target refinement.
     %   file_path - string; path to file to write calibration to
     %   suffix - string; optional suffix to add to names.
     %   append_calib - logical; optional parameter to append another

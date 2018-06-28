@@ -26,7 +26,7 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config)
     %       .extrin(i).board_points_p - array; ith array of optimized 
     %           subpixel calibration board points in pixel coordinates.
     %       .extrin(i).debug.homography_refine - array; ith homography used
-    %           for subpixel checkerboard corner refinement.
+    %           for subpixel target refinement.
                                                              
     disp('---');
     disp('Performing single calibration...');       

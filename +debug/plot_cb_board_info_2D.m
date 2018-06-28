@@ -18,31 +18,36 @@ function plot_cb_board_info_2D(calib_config,a)
         'Xlim',[min(four_points_w(:,1))-padding, max(four_points_w(:,1)) + padding], ...        
         'Ylim',[min(four_points_w(:,2))-padding, max(four_points_w(:,2)) + padding]);  
     hold(a,'on');
-    
-    % Plot patches
-    height_offset = (calib_config.four_point_height-calib_config.num_targets_height*calib_config.target_spacing)/2;
-    width_offset = (calib_config.four_point_width-calib_config.num_targets_width*calib_config.target_spacing)/2;
-    for i = 1:calib_config.num_targets_width
-        for j = 1:calib_config.num_targets_height
-            % Get checker color; only odd # of checkers are allowed on
-            % each side, so this is ok
-            if ~util.is_even((i-1)*calib_config.num_targets_height+j)
-                patch_color = 'k';
-            else
-                patch_color = 'w';
-            end         
-            
-            % Get checker coords
-            x_w = [(i-1)*calib_config.target_spacing (i-1)*calib_config.target_spacing ...
-                   i*calib_config.target_spacing i*calib_config.target_spacing]'+width_offset;
-            y_w = [(j-1)*calib_config.target_spacing j*calib_config.target_spacing ...
-                   j*calib_config.target_spacing (j-1)*calib_config.target_spacing]'+height_offset;
+        
+    switch calib_config.calibration_target
+        case 'checker'
+            % Plot patches
+            height_offset = (calib_config.four_point_height-calib_config.num_targets_height*calib_config.target_spacing)/2;
+            width_offset = (calib_config.four_point_width-calib_config.num_targets_width*calib_config.target_spacing)/2;
+            for i = 1:calib_config.num_targets_width
+                for j = 1:calib_config.num_targets_height
+                    % Get checker color; only odd # of checkers are allowed on
+                    % each side, so this is ok
+                    if ~util.is_even((i-1)*calib_config.num_targets_height+j)
+                        patch_color = 'k';
+                    else
+                        patch_color = 'w';
+                    end         
 
-            % Plot
-            patch(a,x_w,y_w,patch_color);
-        end
-    end        
-    
+                    % Get checker coords
+                    x_w = [(i-1)*calib_config.target_spacing (i-1)*calib_config.target_spacing ...
+                           i*calib_config.target_spacing i*calib_config.target_spacing]'+width_offset;
+                    y_w = [(j-1)*calib_config.target_spacing j*calib_config.target_spacing ...
+                           j*calib_config.target_spacing (j-1)*calib_config.target_spacing]'+height_offset;
+
+                    % Plot
+                    patch(a,x_w,y_w,patch_color);
+                end
+            end        
+        otherwise
+            error(['Calibration target: "' calib_config.calibration_target '" is not supported.']);
+    end
+        
     % Plot axes
     axes_coords_w = [0 0;
                      calib_config.target_spacing 0;

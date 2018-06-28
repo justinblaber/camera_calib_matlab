@@ -22,7 +22,7 @@ function [calib,calib_raw] = parse_single_calib(calib_raw,suffix)
     %       .extrin(i).board_points_p - array; ith array of optimized 
     %           subpixel calibration board points in pixel coordinates.
     %       .extrin(i).debug.homography_refine - array; ith homography used
-    %           for subpixel checkerboard corner refinement.
+    %           for subpixel target refinement.
     %   calib_raw - struct; remainder after parsing out single calibration
                    
     % TODO: add checks for validation

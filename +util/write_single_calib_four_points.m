@@ -1,6 +1,6 @@
-function write_single_calib(calib,file_path,suffix,append_calib)
-    % Writes outputs of single calibration to a file, so it can be read
-    % again later.
+function write_single_calib_four_points(calib,file_path,suffix,append_calib)
+    % Writes outputs of four point single calibration to a file, so it can
+    % be read again later.
     % 
     % Inputs:
     %   calib - struct; contains:

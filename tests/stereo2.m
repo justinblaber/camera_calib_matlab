@@ -28,15 +28,15 @@ four_points_ps.R{1} = [128.7735  111.3728
                                                calib_config);
                 
 %% Save calibration
-util.write_stereo_calib(calib, ...
-                        R_s, ...
-                        t_s, ...
-                        'calibrations/stereo2.txt');
+util.write_stereo_calib_four_points(calib, ...
+                                    R_s, ...
+                                    t_s, ...
+                                    'calibrations/stereo2.txt');
                     
 %% Read calibration
 clear;
 
-[calib,R_s,t_s] = util.read_stereo_calib('calibrations/stereo2.txt');
+[calib,R_s,t_s] = util.read_stereo_calib_four_points('calibrations/stereo2.txt');
 
 %% Debug with stereo gui
-debug.gui_stereo_calib(calib,R_s,t_s);
+debug.gui_stereo_calib_four_points(calib,R_s,t_s);

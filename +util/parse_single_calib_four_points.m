@@ -1,6 +1,6 @@
-function [calib,calib_raw] = parse_single_calib(calib_raw,suffix)
-    % Helper function to parse a single calibration from input raw 
-    % calibration struct. Note that calib.config is not parsed out of
+function [calib,calib_raw] = parse_single_calib_four_points(calib_raw,suffix)
+    % Helper function to parse a four point single calibration from input
+    % raw calibration struct. Note that calib.config is not parsed out of
     % calib_raw. 
     %
     % Inputs:

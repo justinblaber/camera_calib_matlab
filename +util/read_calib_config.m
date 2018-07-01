@@ -12,6 +12,7 @@ function calib_config = read_calib_config(calib_config_path)
     %
     %       Calibration board info:    
     %
+    %       calibration_target - string; type of calibration target
     %       num_targets_height - int; number of targets in the "height" 
     %           dimension
     %       num_targets_width - int; number of targets in the "width"
@@ -19,8 +20,6 @@ function calib_config = read_calib_config(calib_config_path)
     %       target_spacing - scalar; space between targets
     %       units - string; units of calibration board dimensions
     %
-    %       calibration_type - string; type of calibration
-    %       calibration_target - string; type of calibration target
     %       four_point_height - scalar; height of the "four point" box
     %       four_point_width - scalar; width of the "four point" box
     %
@@ -140,12 +139,11 @@ function calib_config = read_calib_config(calib_config_path)
     
     % Perform validations on input fields    
     % Calibration board info
-    field_info        = struct('field','num_targets_height'                     ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_odd_int);
+    field_info        = struct('field','calibration_target'                     ,'required',true ,'default',''                             ,'validation_fun',@validate_calibration_target);
+    field_info(end+1) = struct('field','num_targets_height'                     ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_odd_int);
     field_info(end+1) = struct('field','num_targets_width'                      ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_odd_int);
     field_info(end+1) = struct('field','target_spacing'                         ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','units'                                  ,'required',true ,'default',''                             ,'validation_fun',@validate_string);
-    field_info(end+1) = struct('field','calibration_type'                       ,'required',true ,'default',''                             ,'validation_fun',@validate_calibration_type);
-    field_info(end+1) = struct('field','calibration_target'                     ,'required',true ,'default',''                             ,'validation_fun',@validate_calibration_target);
     field_info(end+1) = struct('field','four_point_height'                      ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','four_point_width'                       ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
     % Algorithmic info
@@ -224,15 +222,6 @@ end
 
 % Make all validate_* functions take calib_config and the field, and return
 % the calib_config. This makes things easier.
-
-function calib_config = validate_calibration_type(calib_config,field)
-    switch calib_config.(field)
-        case 'four_point_manual'
-        case 'four_point_auto'
-        otherwise
-            error(['Calibration type: "' calib_config.(field) '" is not supported.']);
-    end
-end
 
 function calib_config = validate_calibration_target(calib_config,field)
     switch calib_config.(field)

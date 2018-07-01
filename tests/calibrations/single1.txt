@@ -1,10 +1,9 @@
 % calib_config
+calibration_target = checker
 num_targets_height = 11
 num_targets_width = 11
 target_spacing = 100
 units = mm
-calibration_type = four_point_manual
-calibration_target = checker
 four_point_height = 1100
 four_point_width = 1100
 verbose = 1

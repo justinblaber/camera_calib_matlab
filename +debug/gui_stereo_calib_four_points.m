@@ -1,4 +1,4 @@
-function gui_stereo_calib(calib,R_s,t_s,f)
+function gui_stereo_calib_four_points(calib,R_s,t_s,f)
     % GUI for stereo calibration
             
     if ~exist('f','var')

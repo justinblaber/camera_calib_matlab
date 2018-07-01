@@ -1,6 +1,6 @@
-function write_stereo_calib(calib,R_s,t_s,file_path)
-    % Writes outputs of stereo calibration to a file, so it can be read
-    % again later.
+function write_stereo_calib_four_points(calib,R_s,t_s,file_path)
+    % Writes outputs of four point stereo calibration to a file, so it can 
+    % be read again later.
     % 
     % Inputs:
     %   calib - struct; contains:
@@ -27,10 +27,10 @@ function write_stereo_calib(calib,R_s,t_s,file_path)
     %   file_path - string; path to file to write calibration output to
     
     % Write left
-    util.write_single_calib(calib.L,file_path,'_L');
+    util.write_single_calib_four_points(calib.L,file_path,'_L');
                         
     % Write right
-    util.write_single_calib(calib.R,file_path,'_R',true);
+    util.write_single_calib_four_points(calib.R,file_path,'_R',true);
                         
     % Write R_s and t_s    
     util.write_array(R_s,'R_s',file_path);

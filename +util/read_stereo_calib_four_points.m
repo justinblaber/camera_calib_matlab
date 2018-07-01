@@ -1,5 +1,5 @@
-function [calib,R_s,t_s] = read_stereo_calib(file_path)
-    % Reads a stereo calibration file
+function [calib,R_s,t_s] = read_stereo_calib_four_points(file_path)
+    % Reads a four point stereo calibration file
     %
     % Inputs:
     %   file_path - string; path to file to read calibration
@@ -38,10 +38,10 @@ function [calib,R_s,t_s] = read_stereo_calib(file_path)
     calib_raw = util.read_data(file_path);
     
     % Parse out the left calibration
-    [calib.L, calib_raw] = util.parse_single_calib(calib_raw,'_L');
+    [calib.L, calib_raw] = util.parse_single_calib_four_points(calib_raw,'_L');
     
     % Parse out the right calibration
-    [calib.R, calib_raw] = util.parse_single_calib(calib_raw,'_R');
+    [calib.R, calib_raw] = util.parse_single_calib_four_points(calib_raw,'_R');
     
     % Parse R_s and t_s
     [R_s, calib_raw] = read_and_remove(calib_raw,'R_s');

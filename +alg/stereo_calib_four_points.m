@@ -1,4 +1,4 @@
-function [calib,R_s,t_s] = stereo_calib_four_points(cb_imgs,four_points_ps,calib_config)
+function [calib,R_s,t_s] = stereo_calib_four_points(cb_imgs,four_points_ps,calib_config,intrin)
     % Performs stereo calibration (mostly from Zhang's paper, some stuff
     % adapted from Bouguet's toolbox, and some stuff I've added myself) 
     % given calibration board images for the left and right camera, four 
@@ -12,6 +12,10 @@ function [calib,R_s,t_s] = stereo_calib_four_points(cb_imgs,four_points_ps,calib
     %       .L and .R - cell; Mx1 cell array of four points
     %   calib_config - struct; this is the struct returned by
     %       util.read_calib_config()
+    %   intrin - struct; optional input containing intrinsic parameters; if
+    %       this is passed in, then only extrinsic parameters are optimized 
+    %       contains:
+    %           .L and .R - struct containing intrinsic params
     %
     % Outputs:
     %   calib - struct; contains:
@@ -38,22 +42,39 @@ function [calib,R_s,t_s] = stereo_calib_four_points(cb_imgs,four_points_ps,calib
                                                
     disp('--------------------------------------------'); 
     disp('Performing stereo calibration...');     
-    
+        
     % Get number of boards
     num_boards = length(cb_imgs.L);
     
     % Perform single calibration on the left and right camera ------------%                                                                
     disp('---------');
-    disp('Calibrating left camera...');    
-    calib.L = alg.single_calib_four_points(cb_imgs.L, ...
-                                           four_points_ps.L, ...
-                                           calib_config);
+    disp('Calibrating left camera...');   
+    
+    if exist('intrin','var')
+        calib.L = alg.single_calib_four_points(cb_imgs.L, ...
+                                               four_points_ps.L, ...
+                                               calib_config, ...
+                                               intrin.L);
+    else
+        calib.L = alg.single_calib_four_points(cb_imgs.L, ...
+                                               four_points_ps.L, ...
+                                               calib_config);
+    end
+        
                                                                   
     disp('---------');
-    disp('Calibrating right camera...');  
-    calib.R = alg.single_calib_four_points(cb_imgs.R, ...
-                                           four_points_ps.R, ...
-                                           calib_config);
+    disp('Calibrating right camera...'); 
+    
+    if exist('intrin','var')
+        calib.R = alg.single_calib_four_points(cb_imgs.R, ...
+                                               four_points_ps.R, ...
+                                               calib_config, ...
+                                               intrin.R);
+    else
+        calib.R = alg.single_calib_four_points(cb_imgs.R, ...
+                                               four_points_ps.R, ...
+                                               calib_config);
+    end
                            
     % Repackage initial guesses and other parameters ---------------------%
     A.L = calib.L.intrin.A;
@@ -79,11 +100,11 @@ function [calib,R_s,t_s] = stereo_calib_four_points(cb_imgs,four_points_ps,calib
     end
 
     % Get least squares approximation
-    R_s = reshape(mldivide(R,r),3,3);
+    R_s_init = reshape(mldivide(R,r),3,3);
 
     % R_s is not necessarily orthogonal, so get the best rotational 
     % approximation.
-    R_s = alg.approx_rot(R_s);
+    R_s_init = alg.approx_rot(R_s_init);
 
     % Get least squares linear guess for t
     t = [];
@@ -94,9 +115,16 @@ function [calib,R_s,t_s] = stereo_calib_four_points(cb_imgs,four_points_ps,calib
     end
 
     % Get least squares approximation
-    t_s = mldivide(T,t);
+    t_s_init = mldivide(T,t);
 
     % Perform nonlinear refinement of all parameters ---------------------%
+    
+    if exist('intrin','var')
+        optimization_type = 'extrinsic';
+    else
+        optimization_type = 'full';
+    end
+    
     disp('---');
     disp('Refining full stereo parameters...');
     [A,distortion,rotations,translations,R_s,t_s] = alg.refine_stereo_params(A, ...
@@ -104,16 +132,28 @@ function [calib,R_s,t_s] = stereo_calib_four_points(cb_imgs,four_points_ps,calib
                                                                              rotations, ...
                                                                              translations, ...
                                                                              board_points_ps, ...
-                                                                             R_s, ...
-                                                                             t_s, ....
-                                                                             'full', ...
+                                                                             R_s_init, ...
+                                                                             t_s_init, ....
+                                                                             optimization_type, ...
                                                                              calib_config);  
     
     disp('---');                           
-    disp('Stereo refined intrinsic params (left): ');
+    disp('Stereo refined camera matrix (left): ');
     disp(A.L);
-    disp('Stereo refined intrinsic params (right): ');
+    disp('Stereo refined distortions (left): ');
+    disp(distortion.L');
+    disp('Stereo refined camera matrix (right): ');
     disp(A.R);
+    disp('Stereo refined distortions (right): ');
+    disp(distortion.R');
+    disp('Initial t_s: ');
+    disp(t_s_init');
+    disp('Refined t_s: ');
+    disp(t_s');
+    disp('Initial R_s: ');
+    disp(R_s_init);
+    disp('Refined R_s: ');
+    disp(R_s);
     
     % Repackage outputs --------------------------------------------------%
     % Only need to redo outputs of refine_stereo_params

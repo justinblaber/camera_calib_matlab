@@ -1,4 +1,4 @@
-function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config)
+function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config,intrin)
     % Performs camera calibration (mostly from Zhang's paper, some stuff
     % adapted from Bouguet's toolbox, and some stuff I've added myself) 
     % given calibration board images, four point boxes around the 
@@ -9,6 +9,13 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config)
     %   four_points_ps - cell; Mx1 cell array of four points
     %   calib_config - struct; this is the struct returned by
     %       util.read_calib_config()
+    %   intrin - struct; optional input containing intrinsic parameters; if
+    %       this is passed in, then only extrinsic parameters are optimized 
+    %       contains:
+    %           .A - array; optimized camera matrix
+    %           .distortion - array; optimized distortions (radial and
+    %               tangential) stored as: 
+    %               [beta1; beta2; beta3; beta4]  
     %
     % Outputs:
     %   calib - struct; contains:
@@ -30,7 +37,7 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config)
                                                              
     disp('---');
     disp('Performing single calibration...');       
-    
+        
     % Get calibration board points in world coordinates
     [board_points_w, four_points_w] = alg.cb_points(calib_config);
     
@@ -79,11 +86,16 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config)
                                          calib_config); %#ok<AGROW>
     end
 
-    % Get initial guess for intrinsic camera parameters using all homographies
-    A_init = alg.init_intrinsic_params(homographies, ...
-                                       cb_imgs(1).get_width(), ...
-                                       cb_imgs(1).get_height()); 
-                
+    % Get initial guess for camera matrix
+    if exist('intrin','var')
+        A_init = intrin.A;
+    else
+        % Use homographies to obtain initial guess for camera matrix
+        A_init = alg.init_intrinsic_params(homographies, ...
+                                           cb_imgs(1).get_width(), ...
+                                           cb_imgs(1).get_height()); 
+    end
+
     % Get initial guess for extrinsic camera parameters (R and t) per homography
     rotations = {};
     translations = {};
@@ -95,29 +107,42 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config)
     end
 
     % Perform nonlinear refinement of all parameters ---------------------%
-    % Initialize distortion parameters to zero
-    distortion = zeros(4,1);
     
-    % Perform full optimization
+    % Get initial guess for distortions
+    if exist('intrin','var')
+        distortion_init = intrin.distortion;
+    else
+        % Assume zero lens distortion
+        distortion_init = zeros(4,1);
+    end
+    
+    % Perform optimization    
+    if exist('intrin','var')
+        optimization_type = 'extrinsic';
+    else
+        optimization_type = 'full';
+    end
+    
     disp('---');
-    disp('Refining full single parameters...');
+    disp('Refining single parameters...');
     [A,distortion,rotations,translations] = alg.refine_single_params(A_init, ... 
-                                                                     distortion, ...
+                                                                     distortion_init, ...
                                                                      rotations, ...
                                                                      translations, ...
                                                                      board_points_ps, ...
-                                                                     'full', ...
-                                                                     calib_config);   
-                                                                 
-    % TODO: possibly add frontal refinement here
-                              
+                                                                     optimization_type, ...
+                                                                     calib_config);  
+
     disp('---');
-    disp('Initial intrinsic params: ')
-    disp(A_init)    
-    disp('---');             
-    disp('Refined intrinsic params: ');
-    disp(A);
-    
+    disp('Initial camera matrix: ');
+    disp(A_init);
+    disp('Refined camera matrix: ');
+    disp(A);   
+    disp('Initial distortions: ');
+    disp(distortion_init');
+    disp('Refined distortions: ');
+    disp(distortion');
+
     % Package outputs ----------------------------------------------------%
     calib.config = calib_config;
     calib.intrin.A = A;

@@ -1,4 +1,4 @@
-function gui_single_calib(calib,f)
+function gui_single_calib_four_points(calib,f)
     % GUI for single calibration
             
     if ~exist('f','var')

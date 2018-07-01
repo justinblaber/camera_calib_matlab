@@ -25,6 +25,7 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     %       from the left camera to the right camera
     %   type - string; 
     %       'full' - Attempts to do full calibration
+    %       'extrinsic' - Only rotations and translations are optimized
     %   calib_config - struct; this is the struct returned by
     %       util.read_calib_config()
     %
@@ -88,15 +89,16 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     % Store R_s and t_s
     p(16+6*num_boards+1:16+6*num_boards+3) = alg.rot2euler(R_s);
     p(16+6*num_boards+4:16+6*num_boards+6) = t_s;
-   
-    % TODO: Possibly add other optimization options besides "full"
-    
+       
     % Determine which parameters to update based on type
     update_idx = false(num_params,1);
     switch type
         case 'full'
             % Attempt to calibrate everything
-            update_idx(1:end) = true;
+            update_idx(1:end) = true;            
+        case 'extrinsic'
+            % Only update rotations and translations
+            update_idx(17:end) = true;
         otherwise
             error(['Input type of: "' type '" was not recognized']);
     end    

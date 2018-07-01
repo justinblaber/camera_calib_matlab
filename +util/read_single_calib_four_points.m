@@ -1,5 +1,5 @@
-function calib = read_single_calib(file_path)
-    % Reads a single calibration file
+function calib = read_single_calib_four_points(file_path)
+    % Reads a four point single calibration file
     %
     % Inputs:
     %   file_path - string; path to file to read calibration
@@ -33,6 +33,6 @@ function calib = read_single_calib(file_path)
     calib_raw = util.read_data(file_path);
     
     % Parse out the single calibration
-    [calib, calib_config] = util.parse_single_calib(calib_raw);
+    [calib, calib_config] = util.parse_single_calib_four_points(calib_raw);
     calib.config = calib_config;
 end

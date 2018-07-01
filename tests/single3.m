@@ -22,12 +22,12 @@ calib = alg.single_calib_four_points(cb_imgs, ...
                                      calib_config);
                                                                                              
 %% Save calibration
-util.write_single_calib(calib,'calibrations/single3.txt');
+util.write_single_calib_four_points(calib,'calibrations/single3.txt');
                     
 %% Read calibration
 clear;
 
-calib = util.read_single_calib('calibrations/single3.txt');
+calib = util.read_single_calib_four_points('calibrations/single3.txt');
 
 %% Debug with gui
-debug.gui_single_calib(calib);
+debug.gui_single_calib_four_points(calib);

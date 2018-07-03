@@ -146,6 +146,7 @@ function [calib,R_s,t_s] = stereo_calib_four_points(cb_imgs,four_points_ps,calib
     disp(A.R);
     disp('Stereo refined distortions (right): ');
     disp(distortion.R');
+    disp('---'); 
     disp('Initial t_s: ');
     disp(t_s_init');
     disp('Refined t_s: ');

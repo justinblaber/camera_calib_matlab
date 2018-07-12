@@ -27,7 +27,7 @@ This example should yeild the following:
 ## dot_vision.m
 This example does something a little extra; it detects four fiducial markers automagically:
 <p align="center">
-  <img src="https://i.imgur.com/jGVCtwT.png">
+  <img src="https://i.imgur.com/HCosdlB.png">
 </p>
 
 Then, it uses these four points to calibrate the cameras automatically:

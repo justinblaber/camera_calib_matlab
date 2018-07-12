@@ -13,13 +13,13 @@ git clone https://github.com/justinblaber/camera_calib.git
 Some examples are already included in the toolbox in the `tests` directory:
 
 ## single1.m
-This example should yeild the following:
+This example should yield the following:
 <p align="center">
   <img src="https://i.imgur.com/J86Myd5.png">
 </p>
 
 ## stereo1.m
-This example should yeild the following:
+This example should yield the following:
 <p align="center">
   <img src="https://i.imgur.com/h5DgxT0.png">
 </p>

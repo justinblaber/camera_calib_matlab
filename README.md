@@ -15,22 +15,22 @@ Some examples are already included in the toolbox in the `tests` directory:
 ## single1.m
 This example should yeild the following:
 <p align="center">
-  <img src="https://i.imgur.com/yTAqcJS.png">
+  <img src="https://i.imgur.com/J86Myd5.png">
 </p>
 
 ## stereo1.m
 This example should yeild the following:
 <p align="center">
-  <img src="https://i.imgur.com/rKG7QSd.png">
+  <img src="https://i.imgur.com/h5DgxT0.png">
 </p>
 
 ## dot_vision.m
 This example does something a little extra; it detects four fiducial markers automagically:
 <p align="center">
-  <img src="https://i.imgur.com/YfvECWY.png">
+  <img src="https://i.imgur.com/jGVCtwT.png">
 </p>
 
 Then, it uses these four points to calibrate the cameras automatically:
 <p align="center">
-  <img src="https://i.imgur.com/oSkPnRS.png">
+  <img src="https://i.imgur.com/vz1wRZa.png">
 </p>

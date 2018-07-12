@@ -1,5 +1,7 @@
 # camera_calib
-This is camera calibration toolbox based off the theory discussed [here](http://justinblaber.org/camera-calibration-theory/). Why did I write this? Simply because I wanted to know how camera calibration works. This toolbox is based off [Bouguet's toolbox](http://www.vision.caltech.edu/bouguetj/calib_doc/) and Zhang's camera calibration paper.
+This is camera calibration toolbox based off the theory discussed [here](http://justinblaber.org/camera-calibration-theory/) which is mostly based on [Bouguet's toolbox](http://www.vision.caltech.edu/bouguetj/calib_doc/) and Zhang's camera calibration paper. A more in depth example is given [here](http://justinblaber.org/camera-calibration-application/).
+
+Why did I write this? Simply because I wanted to know how camera calibration works. 
 
 # Installation instructions:
 1) Clone the repo:

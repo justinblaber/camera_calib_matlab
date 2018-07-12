@@ -10,7 +10,7 @@ git clone https://github.com/justinblaber/camera_calib.git
 ```
 
 # Examples:
-Some examples are already included in the toolbox in the `test` directory:
+Some examples are already included in the toolbox in the `tests` directory:
 
 ## single1.m
 This example should yeild the following:

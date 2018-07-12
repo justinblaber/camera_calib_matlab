@@ -1,16 +1,23 @@
+% This example tests out calibration of a stereo camera using a single 
+% calibration board (not recommended, this is just to test out an edge case)
+% by using the "four point method" which is similar to Bouguet's toolbox.
+
 %% Clear
 clear, clc;
 
+%% Set environment
+addpath('~/camera_calib/');
+                     
+%% Read calibration config
+calib_config = util.read_calib_config('configs/stereo.conf');
+
 %% Set images
-cb_img_paths.L = {'images/left01.jpg'};
-cb_img_paths.R = {'images/right01.jpg'};
+cb_img_paths.L = {'images/stereo/left01.jpg'};
+cb_img_paths.R = {'images/stereo/right01.jpg'};
 
 % Validate all calibration board images
 cb_imgs.L = class.img.validate_similar_imgs(cb_img_paths.L);
 cb_imgs.R = class.img.validate_similar_imgs(cb_img_paths.R);
-                     
-%% Load calibration config file
-calib_config = util.read_calib_config('configs/stereo.conf');
 
 %% Get four points in pixel coordinates per calibration board image
 four_points_ps.L{1} = [245.4038  95.1070

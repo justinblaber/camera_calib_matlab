@@ -30,7 +30,7 @@ This example does something a little extra; it detects four fiducial markers aut
   <img src="https://i.imgur.com/HCosdlB.png">
 </p>
 
-Then, it uses these four points to calibrate the cameras automatically:
+Then, it uses these four points to calibrate the cameras:
 <p align="center">
   <img src="https://i.imgur.com/vz1wRZa.png">
 </p>

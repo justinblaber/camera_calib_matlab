@@ -4,25 +4,25 @@ classdef img < handle
 % usage.
     
     properties(Access = private)
-        img_path    % string
+        path    % string
     end
         
     methods(Static, Access = public)
-        function imgs = validate_similar_imgs(img_paths)
+        function imgs = validate_similar_imgs(paths)
             % This function will make sure all image paths in the cell
-            % array img_paths exist, are the same size, have valid 
-            % imfinfos, have valid colortypes and then returns all images 
-            % as img objects.
+            % array paths exist, are the same size, have valid imfinfos, 
+            % have valid colortypes and then returns all images as img 
+            % objects.
                                 
             % Initialize imgs
             imgs = class.img.empty();         
-            if isempty(img_paths)
+            if isempty(paths)
                 return
             end   
             
             % Set images
-            for i = 1:length(img_paths)
-                imgs(i) = class.img(img_paths{i});
+            for i = 1:length(paths)
+                imgs(i) = class.img(paths{i});
             end
                                 
             % Make sure all imgs exist, have valid imfinfos, and valid
@@ -77,12 +77,12 @@ classdef img < handle
     end
         
     methods(Access = public)
-        function obj = img(img_path)
-            obj.img_path = img_path;
+        function obj = img(path)
+            obj.path = path;
         end
             
-        function img_path = get_path(obj)
-            img_path = obj.img_path;
+        function path = get_path(obj)
+            path = obj.path;
         end
         
         function success = exist(obj)

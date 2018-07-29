@@ -10,9 +10,6 @@
 %% Clear
 clear, clc;
 
-%% Set environment
-addpath('~/camera_calib/')
-
 %% Read calibration config
 calib_config = util.read_calib_config('configs/dot_vision.conf');
 

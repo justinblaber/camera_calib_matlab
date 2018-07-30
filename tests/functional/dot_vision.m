@@ -10,15 +10,20 @@
 %% Clear
 clear, clc;
 
+%% Get test path and name
+[test_path, test_name] = fileparts(mfilename('fullpath'));
+
 %% Read calibration config
-calib_config = util.read_calib_config('configs/dot_vision.conf');
+calib_config = util.read_calib_config(fullfile(test_path,'configs','dot_vision.conf'));
+
+%% Set image path
+img_dir_path = fullfile(test_path,'images','dot_vision');
 
 %% Calibration of left camera
-
-cb_img_paths_L = { ...
-'images/dot_vision/16276941_2018-07-12_01:34:06_883766_1_L.png', ...
-'images/dot_vision/16276941_2018-07-12_01:34:19_464618_2_L.png' ...
-};
+for i = 1:2
+    l_img = dir(fullfile(img_dir_path,['*_' num2str(i) '_L.png']));
+    cb_img_paths_L{i} = fullfile(img_dir_path,l_img.name); %#ok<SAGROW>
+end
 
 % Validate all calibration board images
 cb_imgs_L = class.img.validate_similar_imgs(cb_img_paths_L);
@@ -33,7 +38,6 @@ debug.gui_single_four_points_detect(four_points_ps_L, ...
                                     cb_imgs_L, ...
                                     calib_config);
 
-
 % Perform calibration
 calib_L = alg.single_calib_four_points(cb_imgs_L, ...
                                        four_points_ps_L, ...
@@ -43,11 +47,10 @@ calib_L = alg.single_calib_four_points(cb_imgs_L, ...
 debug.gui_single_calib_four_points(calib_L);
                                    
 %% Calibration of right camera
-
-cb_img_paths_R = {
-'images/dot_vision/16276942_2018-07-12_01:34:06_885104_1_R.png', ...
-'images/dot_vision/16276942_2018-07-12_01:34:19_465629_2_R.png' ...
-};
+for i = 1:2
+    l_img = dir(fullfile(img_dir_path,['*_' num2str(i) '_R.png']));
+    cb_img_paths_R{i} = fullfile(img_dir_path,l_img.name); %#ok<SAGROW>
+end
 
 % Validate all calibration board images
 cb_imgs_R = class.img.validate_similar_imgs(cb_img_paths_R);
@@ -72,14 +75,13 @@ debug.gui_single_calib_four_points(calib_R);
 
 %% Stereo calibration
 
-cb_img_paths.L = {
-'images/dot_vision/16276941_2018-07-12_01:34:37_254931_3_L.png', ...
-'images/dot_vision/16276941_2018-07-12_01:34:54_380623_4_L.png' ...
-};
-cb_img_paths.R = {
-'images/dot_vision/16276942_2018-07-12_01:34:37_255926_3_R.png', ...
-'images/dot_vision/16276942_2018-07-12_01:34:54_382094_4_R.png' ...
-};
+for i = 1:2
+    % Add 2 to select 3rd and 4th images
+    l_img_L = dir(fullfile(img_dir_path,['*_' num2str(i+2) '_L.png']));
+    l_img_R = dir(fullfile(img_dir_path,['*_' num2str(i+2) '_R.png']));
+    cb_img_paths.L{i} = fullfile(img_dir_path,l_img_L.name);
+    cb_img_paths.R{i} = fullfile(img_dir_path,l_img_R.name);
+end
 
 % Validate all calibration board images
 cb_imgs.L = class.img.validate_similar_imgs(cb_img_paths.L);

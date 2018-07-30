@@ -1,11 +1,14 @@
-% Read markers and create templates
+%% Clear
 clear; clc;
+
+%% Read markers and create templates
 
 % Initialize figure
 f = figure();
 
 % Load marker config
-marker_config = util.read_data(fullfile('+markers','marker.conf'));
+markers_dir_path = fileparts(mfilename('fullpath'));
+marker_config = util.read_data(fullfile(markers_dir_path,'marker.conf'));
 
 % Get radius and theta samples
 r_samples = linspace(marker_config.marker_radius*marker_config.radius_norm_range(1), ...
@@ -16,7 +19,7 @@ theta_samples = linspace(0,2*pi,marker_config.theta_num_samples+1);
 theta_samples(end) = []; 
 
 % Cycle over markers and create/save polar patch templates
-marker_templates_path = fullfile('+markers','marker_templates.txt');
+marker_templates_path = fullfile(markers_dir_path,'marker_templates.txt');
 fclose(fopen(marker_templates_path,'w')); % Creates/clears file
 for i = 1:length(marker_config.marker_paths)
     % Read marker

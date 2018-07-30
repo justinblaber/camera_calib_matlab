@@ -60,7 +60,7 @@ distortion =
 -0.0003286648008198017
 
 % Calibration 1
-cb_img = images/single/Image1.tif
+cb_img = /home/justin/camera_calib/tests/functional/images/single/Image1.tif
 rotation = 
 0.9923017089972874 0.05392913745394576 -0.1114852746085158
 0.05195148798909257 0.6359062058222158 0.7700158052225375
@@ -81,7 +81,7 @@ homography_refine =
 4.007779937606419e-05 -0.0002573948187729888 1
 
 % Calibration 2
-cb_img = images/single/Image2.tif
+cb_img = /home/justin/camera_calib/tests/functional/images/single/Image2.tif
 rotation = 
 0.9928316120471272 0.004840889960045194 -0.1194234311360111
 0.05628649713930934 0.8625085898384596 0.5029023391222779
@@ -102,7 +102,7 @@ homography_refine =
 4.393699216222022e-05 -0.0001937268293798396 1
 
 % Calibration 3
-cb_img = images/single/Image3.tif
+cb_img = /home/justin/camera_calib/tests/functional/images/single/Image3.tif
 rotation = 
 0.9856292791088698 -0.1589258986729501 -0.05724930474970754
 0.1661027596791477 0.850150073629531 0.4996546062378233
@@ -123,7 +123,7 @@ homography_refine =
 -7.485678033566242e-06 -0.0001878334073552388 1
 
 % Calibration 4
-cb_img = images/single/Image4.tif
+cb_img = /home/justin/camera_calib/tests/functional/images/single/Image4.tif
 rotation = 
 0.9009321984780426 -0.2557200936372662 0.3506114765030786
 -0.002803678952709974 0.8044884417765931 0.5939616876804426
@@ -144,7 +144,7 @@ homography_refine =
 -0.00014831681038722 -0.000210295734499599 1
 
 % Calibration 5
-cb_img = images/single/Image5.tif
+cb_img = /home/justin/camera_calib/tests/functional/images/single/Image5.tif
 rotation = 
 0.2258299481301773 0.7670771550116229 -0.6004943569982955
 -0.5876383430801755 0.5989056452955208 0.54405257629676
@@ -165,7 +165,7 @@ homography_refine =
 0.0004693566884365003 0.0001254261409315278 1
 
 % Calibration 6
-cb_img = images/single/Image6.tif
+cb_img = /home/justin/camera_calib/tests/functional/images/single/Image6.tif
 rotation = 
 0.9894189239572639 -0.1395042588485169 -0.03985918562108125
 0.07571299269469603 0.7308099450245776 -0.6783689018449965
@@ -186,7 +186,7 @@ homography_refine =
 7.649418569724872e-05 0.000441229251561034 1
 
 % Calibration 7
-cb_img = images/single/Image7.tif
+cb_img = /home/justin/camera_calib/tests/functional/images/single/Image7.tif
 rotation = 
 0.7881013924490189 -0.1523770862354773 -0.5963869706912647
 -0.2094700738925624 0.8446600285012295 -0.4926172189395603
@@ -207,7 +207,7 @@ homography_refine =
 0.000380057172281288 0.0003416040294309793 1
 
 % Calibration 8
-cb_img = images/single/Image8.tif
+cb_img = /home/justin/camera_calib/tests/functional/images/single/Image8.tif
 rotation = 
 0.7304613298833106 -0.1312668679520899 -0.6702203032758361
 -0.2494758811493784 0.86225148847019 -0.4407767636294851

@@ -4,20 +4,19 @@
 %% Clear
 clear, clc;
 
+%% Get test path and name
+[test_path, test_name] = fileparts(mfilename('fullpath'));
+
 %% Read calibration config
-calib_config = util.read_calib_config('configs/stereo.conf');
+calib_config = util.read_calib_config(fullfile(test_path,'configs','stereo.conf'));
 
 %% Set images
-cb_img_paths.L = {'images/stereo/left01.jpg', ...
-                  'images/stereo/left02.jpg', ...
-                  'images/stereo/left03.jpg', ...
-                  'images/stereo/left04.jpg', ...
-                  'images/stereo/left05.jpg'};
-cb_img_paths.R = {'images/stereo/right01.jpg', ...
-                  'images/stereo/right02.jpg', ...
-                  'images/stereo/right03.jpg', ...
-                  'images/stereo/right04.jpg', ...
-                  'images/stereo/right05.jpg'};
+img_dir_path = fullfile(test_path,'images','stereo');
+num_imgs = 5;
+for i = 1:num_imgs
+    cb_img_paths.L{i} = fullfile(img_dir_path,['left0' num2str(i) '.jpg']);
+    cb_img_paths.R{i} = fullfile(img_dir_path,['right0' num2str(i) '.jpg']);
+end     
 
 % Validate all calibration board images
 cb_imgs.L = class.img.validate_similar_imgs(cb_img_paths.L);
@@ -75,15 +74,16 @@ four_points_ps.R{5} = [102.6426  116.3835
                                                calib_config);
                 
 %% Save calibration
+calib_path = fullfile(test_path,'calibrations',[test_name '.txt']);
 util.write_stereo_calib_four_points(calib, ...
                                     R_s, ...
                                     t_s, ...
-                                    'calibrations/stereo1.txt');
+                                    calib_path);
                     
 %% Read calibration
-clear;
+clearvars -except calib_path;
 
-[calib,R_s,t_s] = util.read_stereo_calib_four_points('calibrations/stereo1.txt');
+[calib,R_s,t_s] = util.read_stereo_calib_four_points(calib_path);
 
 %% Debug with stereo gui
 debug.gui_stereo_calib_four_points(calib,R_s,t_s);

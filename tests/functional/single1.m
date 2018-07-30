@@ -3,19 +3,19 @@
 
 %% Clear
 clear, clc;
+
+%% Get test path and name
+[test_path, test_name] = fileparts(mfilename('fullpath'));
                      
 %% Read calibration config
-calib_config = util.read_calib_config('configs/single.conf');
+calib_config = util.read_calib_config(fullfile(test_path,'configs','single.conf'));
 
 %% Set images
-cb_img_paths = {'images/single/Image1.tif', ...
-                'images/single/Image2.tif', ...
-                'images/single/Image3.tif', ...
-                'images/single/Image4.tif', ...
-                'images/single/Image5.tif', ...
-                'images/single/Image6.tif', ...
-                'images/single/Image7.tif', ...
-                'images/single/Image8.tif'};
+img_dir_path = fullfile(test_path,'images','single');
+num_imgs = 8;
+for i = 1:num_imgs
+    cb_img_paths{i} = fullfile(img_dir_path,['Image' num2str(i) '.tif']); %#ok<SAGROW>
+end     
                      
 % Validate all calibration board images
 cb_imgs = class.img.validate_similar_imgs(cb_img_paths);
@@ -67,12 +67,13 @@ calib = alg.single_calib_four_points(cb_imgs, ...
                                      calib_config);
 
 %% Save calibration
-util.write_single_calib_four_points(calib,'calibrations/single1.txt');
+calib_path = fullfile(test_path,'calibrations',[test_name '.txt']);
+util.write_single_calib_four_points(calib,calib_path);
                     
 %% Read calibration
-clear;
+clearvars -except calib_path;
 
-calib = util.read_single_calib_four_points('calibrations/single1.txt');
+calib = util.read_single_calib_four_points(calib_path);
 
 %% Debug with gui
 debug.gui_single_calib_four_points(calib);

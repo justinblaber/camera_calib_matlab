@@ -12,6 +12,6 @@ function write_num(num,name,file_path)
       
     % Write num
     f = fopen(file_path,'a');
-    fprintf(f,'%s = %.16g\n',name,num);
+    fprintf(f,['%s = %.16g' newline],name,num);
     fclose(f);
 end

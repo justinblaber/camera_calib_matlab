@@ -74,7 +74,7 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config,in
         end
         
         time = toc(t);
-        fprintf('Time ellapsed: %f seconds.\n',time);
+        fprintf(['Time ellapsed: %f seconds.' newline],time);
     end
     % Store for debugging purposes
     homographies_refine = homographies;

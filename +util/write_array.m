@@ -13,7 +13,7 @@ function write_array(array,name,file_path)
       
     % Write name
     f = fopen(file_path,'a');
-    fprintf(f,'%s = \n',name);
+    fprintf(f,['%s = ' newline],name);
     fclose(f);
     
     % Write array

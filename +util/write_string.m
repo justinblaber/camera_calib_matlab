@@ -10,6 +10,6 @@ function write_string(s,name,file_path)
       
     % Write string
     f = fopen(file_path,'a');
-    fprintf(f,'%s = %s\n',name,s);
+    fprintf(f,['%s = %s' newline],name,s);
     fclose(f);
 end

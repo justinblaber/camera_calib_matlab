@@ -27,11 +27,6 @@ function calib_config = read_calib_config(calib_config_path)
     %
     %       Algorithmic info:
     %
-    %       homography_it_cutoff - int; number of iterations performed for 
-    %           nonlinear homography refinement
-    %       homography_norm_cutoff - scalar; cutoff for norm of difference
-    %           of parameter vector for nonlinear homography refinement
-    %
     %       refine_checker_it_cutoff - int; number of iterations performed 
     %           for refinement of checker target
     %       refine_checker_norm_cutoff - scalar; cutoff for the difference 

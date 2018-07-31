@@ -1,12 +1,15 @@
-function homography_1_2 = homography(points_1,points_2,calib_config)
+function homography_1_2 = homography(points_1,points_2,opts)
     % This will compute a homography using non-linear least squares fit 
     % which transforms the points in "perspective 1" to "perspective 2".
     %
     % Inputs:
     %   points_1 - array; Nx2 array of points
     %   points_2 - array; Nx2 array of points
-    %   calib_config - struct; this is the struct returned by
-    %       util.read_calib_config()
+    %   opts - struct; 
+    %       .homography_it_cutoff - int; number of iterations performed for 
+    %           nonlinear homography refinement
+    %       .homography_norm_cutoff - scalar; cutoff for norm of difference
+    %           of parameter vector for nonlinear homography refinement
     %
     % Outputs:
     %   homography_1_2 - array; 3x3 array which transforms the points from 
@@ -51,7 +54,7 @@ function homography_1_2 = homography(points_1,points_2,calib_config)
     res = zeros(2*num_points,1);
     
     % Perform gauss newton iterations until convergence
-    for it = 1:calib_config.homography_it_cutoff
+    for it = 1:opts.homography_it_cutoff
         % Form homography from vector
         homography = ones(3,3);
         homography(1:8) = h;
@@ -85,14 +88,10 @@ function homography_1_2 = homography(points_1,points_2,calib_config)
         h = h + delta_h;
         
         % Exit if change in distance is small
-        diff_norm = norm(delta_h); 
-        if norm(delta_h) < calib_config.homography_norm_cutoff
+        if norm(delta_h) < opts.homography_norm_cutoff
             break
         end
     end    
-    if it == calib_config.homography_it_cutoff
-        warning('Homography iterations hit cutoff before converging!!!');
-    end
     
     % Store final homography
     homography_1_2 = ones(3,3);

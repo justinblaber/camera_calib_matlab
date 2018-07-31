@@ -27,8 +27,6 @@ function calib_config = read_calib_config(calib_config_path)
     %
     %       Algorithmic info:
     %
-    %       verbose - int; level of verbosity in output.
-    %
     %       homography_it_cutoff - int; number of iterations performed for 
     %           nonlinear homography refinement
     %       homography_norm_cutoff - scalar; cutoff for norm of difference
@@ -147,7 +145,6 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','four_point_height'                      ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','four_point_width'                       ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
     % Algorithmic info
-    field_info(end+1) = struct('field','verbose'                                ,'required',false,'default',1                              ,'validation_fun',@validate_pos_int);
     field_info(end+1) = struct('field','homography_it_cutoff'                   ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);
     field_info(end+1) = struct('field','homography_norm_cutoff'                 ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','refine_checker_it_cutoff'               ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);

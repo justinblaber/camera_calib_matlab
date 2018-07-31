@@ -15,10 +15,6 @@ function points_p = refine_checkers(points_p,array,homography,calib_config)
     % Outputs:
     %   points_p - array; Px2 array of refined points.
         
-    if calib_config.verbose > 1
-        disp('---');
-    end
-    
     % Get gradient images
     array_dx = alg.array_grad(array,'x');
     array_dy = alg.array_grad(array,'y');
@@ -65,13 +61,8 @@ function points_p = refine_checkers(points_p,array,homography,calib_config)
                 break
             end
         end  
-        if calib_config.verbose > 2
-            if it == calib_config.refine_checker_it_cutoff
-                warning('iterations hit cutoff before converging!!!');
-            else
-                disp(['Iterations: ' num2str(it)]);
-            end
-            disp(['Pixel difference norm: ' num2str(diff_norm)]);
+        if it == calib_config.refine_checker_it_cutoff
+            warning('iterations hit cutoff before converging!!!');
         end
     end  
 end

@@ -32,10 +32,6 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
           
     % TODO: make sure rotations and translations have the same length
         
-    if calib_config.verbose > 1    
-        disp('---');
-    end
-    
     % Get board points in world coordinates
     board_points_w = alg.cb_points(calib_config);
     
@@ -141,7 +137,7 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
                        
         % Exit if change in distance is small
         diff_norm = norm(delta_p);         
-        if calib_config.verbose > 1 || strcmp(type,'full')
+        if strcmp(type,'full')
             disp(['Iteration #: ' sprintf('%3u',it) '; ' ...
                   'MSE: ' sprintf('%12.10f',mse) '; ' ...
                   'Norm of delta_p: ' sprintf('%12.10f',diff_norm) '; ' ...

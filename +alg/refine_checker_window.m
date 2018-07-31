@@ -125,10 +125,6 @@ function wf = window_factor(point_w,homography,calib_config)
     % Recompute window_factor if any of the distances are below the minimum
     % window size
     if any(l_p < calib_config.refine_checker_window_min_size)
-        if calib_config.verbose > 2
-            warning('min window constraint met; recomputing window factor for this corner.');
-        end
-        
         [~, min_idx] = min(l_p);
         switch min_idx
             case 1
@@ -169,9 +165,6 @@ function wf = window_factor(point_w,homography,calib_config)
     
     % Threshold window_factor to 4/3 to prevent overlap
     if wf >= 4/3
-        if calib_config.verbose > 2
-            warning('max window_factor is being set.');
-        end
         wf = 4/3;
     end
 end

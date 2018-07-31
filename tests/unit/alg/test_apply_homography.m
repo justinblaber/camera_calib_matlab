@@ -12,7 +12,4 @@ homography_1_2 = 1.0e+03 * [-0.018210854110471   0.008525092901192   1.464595380
                             -0.010223759443507  -0.016530874118072   1.332481167835518;
                             -0.000002183551664   0.000001353040608   0.001000000000000];
 
-opts.homography_it_cutoff = 20;
-opts.homography_norm_cutoff = 1e-6;
-
-assert(all(all(abs(alg.homography(points_1,points_2,opts) - homography_1_2) < eps('single'))));
+assert(all(all(abs(alg.apply_homography(homography_1_2,points_1) - points_2) < eps('single'))));

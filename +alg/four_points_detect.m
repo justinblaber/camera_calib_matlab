@@ -140,15 +140,11 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
                
             % Exit if change in distance is small
             diff_norm = norm(p-p_prev);            
-            if calib_config.verbose > 2
-                disp(['Marker detect iteration #: ' num2str(it)]);
-                disp(['Difference norm for nonlinear parameter refinement: ' num2str(diff_norm)]);
-            end
             if diff_norm < calib_config.ellipse_detect_norm_cutoff
                 break
             end
         end
-        if calib_config.verbose > 2 && it == calib_config.ellipse_detect_it_cutoff
+        if it == calib_config.ellipse_detect_it_cutoff
             warning('Marker iterations hit cutoff before converging!!!');
         end
                 

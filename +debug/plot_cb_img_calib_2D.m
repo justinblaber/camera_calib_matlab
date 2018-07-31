@@ -8,7 +8,7 @@ function plot_cb_img_calib_2D(calib,idx_board,a)
     cla(a);
     
     % Show image
-    calib.extrin(idx_board).cb_img.imshow(a);
+    calib.extrin(idx_board).cb_img.imshow('parent',a);
     hold(a,'on');
         
     switch calib.config.calibration_target

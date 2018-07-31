@@ -144,9 +144,6 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
                 break
             end
         end
-        if it == calib_config.ellipse_detect_it_cutoff
-            warning('Marker iterations hit cutoff before converging!!!');
-        end
                 
         % Check if any params are NaNs or if minor/major axes is very small
         if any(isnan(p)) || ...

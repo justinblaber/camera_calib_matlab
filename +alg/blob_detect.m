@@ -175,9 +175,6 @@ function blobs = blob_detect(array,calib_config)
                 break
             end
         end
-        if it == calib_config.blob_detect_it_cutoff
-            warning('Blob detect iterations hit cutoff before converging!!!');
-        end
         
         if isnan(maxima_x) || isnan(maxima_y) || isnan(maxima_r_idx)
             continue
@@ -247,10 +244,7 @@ function blobs = blob_detect(array,calib_config)
             if diff_norm < calib_config.blob_detect_centroid_norm_cutoff
                 break
             end
-        end  
-        if it == calib_config.blob_detect_centroid_it_cutoff
-            warning('Blob detect centroid refinement iterations hit cutoff before converging!!!');
-        end 
+        end
                                
         % Get iteratively refined second moment matrix.
         r1_ellipse = maxima_r;

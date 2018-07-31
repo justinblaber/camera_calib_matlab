@@ -15,10 +15,6 @@ function homography_1_2 = homography(points_1,points_2,calib_config)
     % TODO: validate inputs. There must be at least four points? Any other
     % conditions?
         
-    if calib_config.verbose > 2
-        disp('---');
-    end
-    
     % Number of points
     num_points = size(points_1,1);
     
@@ -90,15 +86,11 @@ function homography_1_2 = homography(points_1,points_2,calib_config)
         
         % Exit if change in distance is small
         diff_norm = norm(delta_h); 
-        if calib_config.verbose > 2
-            disp(['Homography refinement iteration #: ' num2str(it)]);
-            disp(['Difference norm for nonlinear parameter refinement: ' num2str(diff_norm)]);
-        end
         if norm(delta_h) < calib_config.homography_norm_cutoff
             break
         end
     end    
-    if calib_config.verbose > 2 && it == calib_config.homography_it_cutoff
+    if it == calib_config.homography_it_cutoff
         warning('Homography iterations hit cutoff before converging!!!');
     end
     

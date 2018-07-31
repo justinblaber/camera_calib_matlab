@@ -21,10 +21,6 @@ function [R,t] = init_extrinsic_params(homography,A,board_points_p,calib_config)
     %   R - array; 3x3 rotation matrix
     %   t - array; 3x1 translation vector
     
-    if calib_config.verbose > 1
-        disp('---');
-    end
-        
     % Get initial guess --------------------------------------------------%
     % Remove intrinsics from homography
     H_bar = A^-1*homography;
@@ -46,9 +42,6 @@ function [R,t] = init_extrinsic_params(homography,A,board_points_p,calib_config)
     t = H_bar(:,3)./mean([lambda1 lambda2]);
         
     % Perform non-linear refinement --------------------------------------% 
-    if calib_config.verbose > 1
-        disp('Refining initial extrinsic parameters...');
-    end
     [~,~,R,t] = alg.refine_single_params(A, ...  
                                          [0 0 0 0]', ... % set distortions to zero
                                          {R}, ...

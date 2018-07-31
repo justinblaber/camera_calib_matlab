@@ -171,15 +171,11 @@ function blobs = blob_detect(array,calib_config)
             
             % Exit if change in distance is small
             diff_norm = norm(delta_p);            
-            if calib_config.verbose > 2
-                disp(['Blob detect iteration #: ' num2str(it)]);
-                disp(['Difference norm for nonlinear parameter refinement: ' num2str(diff_norm)]);
-            end
             if diff_norm < calib_config.blob_detect_norm_cutoff
                 break
             end
         end
-        if calib_config.verbose > 2 && it == calib_config.blob_detect_it_cutoff
+        if it == calib_config.blob_detect_it_cutoff
             warning('Blob detect iterations hit cutoff before converging!!!');
         end
         
@@ -248,15 +244,11 @@ function blobs = blob_detect(array,calib_config)
             maxima_y = sum(sum(c_sub_array_weighted.*y_sub_array))/c_sub_array_weighted_sum;
 
             diff_norm = sqrt((maxima_x_prev-maxima_x)^2 + (maxima_y_prev-maxima_y)^2);        
-            if calib_config.verbose > 2
-                disp(['Blob detect centroid refinement iteration #: ' num2str(it)]);
-                disp(['Difference norm for centroid refinement: ' num2str(diff_norm)]);
-            end
             if diff_norm < calib_config.blob_detect_centroid_norm_cutoff
                 break
             end
         end  
-        if calib_config.verbose > 2 && it == calib_config.blob_detect_centroid_it_cutoff
+        if it == calib_config.blob_detect_centroid_it_cutoff
             warning('Blob detect centroid refinement iterations hit cutoff before converging!!!');
         end 
                                

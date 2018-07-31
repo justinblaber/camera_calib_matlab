@@ -132,18 +132,12 @@ classdef img < handle
             width = img_info.Width;
         end
         
-        function h = imshow(obj,parent)   
+        function h = imshow(obj,varargin)   
             obj.validate_exist();
             obj.validate_imfinfo();
             obj.validate_colortype();
             
-            if exist('parent','var')
-                h = imshow(obj.get_gs(),[],'parent',parent);
-            else
-                f = figure();
-                a = axes(f);
-                h = imshow(obj.get_gs(),[],'parent',a);
-            end
+            h = imshow(obj.get_gs(),varargin{:});
         end
     end
 end

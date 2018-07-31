@@ -61,9 +61,6 @@ function points_p = refine_checkers(points_p,array,homography,calib_config)
                 break
             end
         end  
-        if it == calib_config.refine_checker_it_cutoff
-            warning('iterations hit cutoff before converging!!!');
-        end
     end  
 end
 

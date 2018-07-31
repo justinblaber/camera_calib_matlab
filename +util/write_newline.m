@@ -6,6 +6,6 @@ function write_newline(file_path)
       
     % Write newline
     f = fopen(file_path,'a');
-    fprintf(f,'\n');
+    fprintf(f,newline);
     fclose(f);
 end

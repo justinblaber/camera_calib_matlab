@@ -95,11 +95,11 @@ for i = 1:length(camera_calib_sub_dir_names)
                 run(unit_test_path);   
 
                 % Test passed if it gets here
-                fprintf(['Passed:       ' func_name '... \n']);
+                fprintf(['Passed:       ' func_name '...' newline]);
                 passed = passed + 1;
             catch e
                 % Test failed if it gets here
-                fprintf(2,['Failed:       ' func_name '... \n']);
+                fprintf(2,['Failed:       ' func_name '...' newline]);
                 failed = failed + 1;
             end  
 
@@ -107,7 +107,7 @@ for i = 1:length(camera_calib_sub_dir_names)
             unit_test_paths(strcmp(unit_test_path,unit_test_paths)) = [];
         else
             % Test is missing
-            fprintf(2,['Doesnt exist: ' func_name '... \n']);
+            fprintf(2,['Doesnt exist: ' func_name '...' newline]);
             missing = missing+1;
         end
     end    

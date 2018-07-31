@@ -9,6 +9,6 @@ function write_comment(comment,file_path)
       
     % Write comment
     f = fopen(file_path,'a');
-    fprintf(f,'%% %s\n',comment);
+    fprintf(f,['%% %s' newline],comment);
     fclose(f);
 end

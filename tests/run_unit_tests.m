@@ -70,7 +70,7 @@ for i = 1:length(camera_calib_sub_dir_names)
     for j = 1:length(l_camera_calib_sub)
         % Only m-files are allowed in the camera_calib sub directories
         if l_camera_calib_sub(j).isdir || ~endsWith(l_camera_calib_sub(j).name,'.m')
-            unknown_path = fullfile(l_camera_calib_sub(j).folder,l_camera_calib_sub(j).name);
+            unknown_path = fullfile(camera_calib_sub_dir_path,l_camera_calib_sub(j).name);
             error(['Only m-files are allowed: "' unknown_path '"']);
         end
         
@@ -85,9 +85,9 @@ for i = 1:length(camera_calib_sub_dir_names)
             % Make sure test actually contains the function
             full_func_name = strjoin({unit_tests_sub_dir_name,func_name},'.');
             if ~contains(fileread(unit_test_path),full_func_name)
-                error(['Unit test: ' unit_test_path ' does not ' ...
+                error(['Unit test: "' unit_test_path '" does not ' ...
                        'contain the function it is supposed to ' ...
-                       'be testing: ' full_func_name])
+                       'be testing: "' full_func_name '"'])
             end
 
             % Run the test

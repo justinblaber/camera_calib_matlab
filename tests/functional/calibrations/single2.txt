@@ -6,7 +6,6 @@ target_spacing = 100
 units = mm
 four_point_height = 500
 four_point_width = 700
-verbose = 1
 homography_it_cutoff = 20
 homography_norm_cutoff = 1e-06
 refine_checker_it_cutoff = 10

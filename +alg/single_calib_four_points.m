@@ -50,28 +50,15 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config,in
     end
 
     % Get sub-pixel board points -----------------------------------------%
-    % Use homography to initialize
-    board_points_ps = {};
-    for i = 1:length(cb_imgs)
-        board_points_ps{i} = alg.apply_homography(homographies{i}, ...
-                                                  board_points_w); %#ok<AGROW>
-    end
-
-    % Refine points    
     disp('---');
     for i = 1:length(cb_imgs)    
         t = tic;
         fprintf('Refining "%s" points for: %s. ',calib_config.calibration_target,cb_imgs(i).get_path());
         
-        switch calib_config.calibration_target
-            case 'checker'
-                board_points_ps{i} = alg.refine_checkers(board_points_ps{i}, ...
-                                                         cb_imgs(i).get_gs(), ...
-                                                         homographies{i}, ...
-                                                         calib_config); %#ok<AGROW>
-            otherwise
-                error(['Calibration target: "' calib_config.calibration_target '" is not supported.']);
-        end
+        % For first pass use homography to approximate transform
+        board_points_ps{i} = alg.refine_points(cb_imgs(i).get_gs(), ...
+                                               homographies{i}, ...
+                                               calib_config); 
         
         time = toc(t);
         fprintf(['Time ellapsed: %f seconds.' newline],time);

@@ -1,30 +1,35 @@
-function [board_points_w, four_points_w] = cb_points(calib_config)
+function [board_points_w, four_points_w] = cb_points(opts)
     % This will return the calibration board points in world coordinates
-    % and the four point box around the board in world coordinates.
+    % and the four point box in world coordinates.
     %
     % Inputs:
-    %   calib_config - struct; this is the struct returned by
-    %       util.read_calib_config()
+    %   opts - struct;
+    %       .four_point_height - scalar; height of the "four point" box
+    %       .four_point_width - scalar; width of the "four point" box
+    %       .num_targets_height - int; number of targets in the "height" 
+    %           dimension
+    %       .num_targets_width - int; number of targets in the "width"
+    %           dimension
+    %       .target_spacing - scalar; space between targets
     %
     % Outputs:
-    %   board_points_w - array; Nx2 array of calibration board points in 
-    %       world coordinates
-    %   four_points_w - array; 4x2 array of four point box around the board
-    %       in world coordinates.
-    
-    % Get four points first
-    four_points_w = [0                               0;
-                     0                               calib_config.four_point_height;
-                     calib_config.four_point_width   0;
-                     calib_config.four_point_width   calib_config.four_point_height];
-    
-    % Get board points next
-    board_height = calib_config.num_targets_height * calib_config.target_spacing;
-    board_width = calib_config.num_targets_width * calib_config.target_spacing;           
-    [board_y, board_x] = ndgrid(0:calib_config.target_spacing:board_height, ...
-                                0:calib_config.target_spacing:board_width);
-    
-    % Assume board is centered between four points 
-    board_points_w = [board_x(:)-board_width/2+calib_config.four_point_width/2 ...
-                      board_y(:)-board_height/2+calib_config.four_point_height/2];
+    %   board_points_w - cell; MxN cell array of calibration board points
+    %       in world coordinates
+    %   four_points_w - cell; 2x2 cell array of the four point box in world
+    %       coordinates
+        
+    % Get board points
+    t_h = (opts.num_targets_height-1) * opts.target_spacing;
+    t_w = (opts.num_targets_width-1) * opts.target_spacing;           
+    [board_y, board_x] = ndgrid(0:opts.target_spacing:t_h, ...
+                                0:opts.target_spacing:t_w);
+    board_points_w = [board_x(:) board_y(:)];
+                                                                
+    % Get four points - assume they are centered around board points
+    fp_h = opts.four_point_height;
+    fp_w = opts.four_point_width;
+    four_points_w = [t_w/2-fp_w/2 t_h/2-fp_h/2;
+                     t_w/2-fp_w/2 t_h/2+fp_h/2;
+                     t_w/2+fp_w/2 t_h/2-fp_h/2;
+                     t_w/2+fp_w/2 t_h/2+fp_h/2];
 end

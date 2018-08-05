@@ -13,15 +13,8 @@ function calib_config = read_calib_config(calib_config_path)
     %       Calibration board info:    
     %
     %       calibration_target - string; type of calibration target
-    %       num_targets_height - int; number of targets in the "height" 
-    %           dimension
-    %       num_targets_width - int; number of targets in the "width"
-    %           dimension
-    %       target_spacing - scalar; space between targets
     %       units - string; units of calibration board dimensions
     %
-    %       four_point_height - scalar; height of the "four point" box
-    %       four_point_width - scalar; width of the "four point" box
     %
     % ------------------------------------------------------------------- %
     %
@@ -133,8 +126,8 @@ function calib_config = read_calib_config(calib_config_path)
     % Perform validations on input fields    
     % Calibration board info
     field_info        = struct('field','calibration_target'                     ,'required',true ,'default',''                             ,'validation_fun',@validate_calibration_target);
-    field_info(end+1) = struct('field','num_targets_height'                     ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_odd_int);
-    field_info(end+1) = struct('field','num_targets_width'                      ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_odd_int);
+    field_info(end+1) = struct('field','num_targets_height'                     ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','num_targets_width'                      ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_int);
     field_info(end+1) = struct('field','target_spacing'                         ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','units'                                  ,'required',true ,'default',''                             ,'validation_fun',@validate_string);
     field_info(end+1) = struct('field','four_point_height'                      ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
@@ -240,13 +233,6 @@ end
 function calib_config = validate_pos_int(calib_config,field)
     if ~util.is_pos(calib_config.(field)) || ~util.is_int(calib_config.(field))
         error(['Field: "' field '" has a value which is not a positive integer.']);
-    end
-    calib_config.(field) = calib_config.(field);
-end
-
-function calib_config = validate_pos_odd_int(calib_config,field)
-    if ~util.is_pos(calib_config.(field)) || ~util.is_int(calib_config.(field)) || util.is_even(calib_config.(field))
-        error(['Field: "' field '" has a value which is not a positive odd integer.']);
     end
     calib_config.(field) = calib_config.(field);
 end

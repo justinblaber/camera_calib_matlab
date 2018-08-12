@@ -1,4 +1,4 @@
-function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config,intrin)
+function calib = single_calib_four_points(cb_imgs,four_points_ps,opts,intrin)
     % Performs camera calibration (mostly from Zhang's paper, some stuff
     % adapted from Bouguet's toolbox, and some stuff I've added myself) 
     % given calibration board images, four point boxes around the 
@@ -39,38 +39,63 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config,in
     disp('Performing single calibration...');       
         
     % Get calibration board points in world coordinates
-    [board_points_w, four_points_w] = alg.cb_points(calib_config);
+    [board_points_w, four_points_w] = alg.cb_points(opts);
     
     % Initialize homographies using four points in pixel coordinates -----%
-    homographies = {};
     for i = 1:length(cb_imgs)
         homographies{i} = alg.homography(four_points_w, ...
                                          four_points_ps{i}, ...
-                                         calib_config); %#ok<AGROW>
+                                         opts); %#ok<AGROW>
     end
 
     % Get sub-pixel board points -----------------------------------------%
     disp('---');
     for i = 1:length(cb_imgs)    
         t = tic;
-        fprintf('Refining "%s" points for: %s. ',calib_config.calibration_target,cb_imgs(i).get_path());
+        fprintf('Refining "%s" points for: %s. ',opts.calibration_target,cb_imgs(i).get_path());
         
-        % For first pass use homography to approximate transform
-        board_points_ps{i} = alg.refine_points(cb_imgs(i).get_gs(), ...
-                                               homographies{i}, ...
-                                               calib_config); 
+        % For first pass use homography to approximate transform - this
+        % assumes low distortion
+        forward_xfm = @(p)(alg.apply_homography(homographies{i},p));
+        switch opts.target_type
+            case 'checker'
+                [board_points_ps{i}, idx_valids{i}, covs{i}, debug{i}] = alg.refine_checker_points(cb_imgs(i).get_gs(), ...
+                                                                                                   forward_xfm, ...
+                                                                                                   opts); %#ok<AGROW>
+            otherwise
+                error(['Unknown target type: "' opts.target_type '"']);
+        end
         
-        time = toc(t);
+        time = toc(t);%
         fprintf(['Time ellapsed: %f seconds.' newline],time);
+        
+        figure;
+        cb_imgs(i).imshow();
+        hold on;
+        plot(board_points_ps{i}(idx_valids{i},1),board_points_ps{i}(idx_valids{i},2),'gs')
+        for j = 1:length(debug{i})
+            if idx_valids{i}(j)
+                bb = debug{i}{j};
+                line([bb(1,1) bb(1,1)],[bb(1,2) bb(2,2)])
+                line([bb(1,1) bb(2,1)],[bb(1,2) bb(1,2)])
+                line([bb(1,1) bb(2,1)],[bb(2,2) bb(2,2)])
+                line([bb(2,1) bb(2,1)],[bb(1,2) bb(2,2)])
+                
+                cov = covs{i}{j};
+                d = max(eig(cov));
+                p = board_points_ps{i}(j,:);
+                plot(p(1),p(2),'ro','Markersize',d*30000);
+            end
+        end
+        
+        
     end
-    % Store for debugging purposes
-    homographies_refine = homographies;
 
     % Update homographies using refined points ---------------------------%
     for i = 1:length(cb_imgs)
         homographies{i} = alg.homography(board_points_w, ...
                                          board_points_ps{i}, ...
-                                         calib_config); %#ok<AGROW>
+                                         opts); 
     end
 
     % Get initial guess for camera matrix
@@ -90,7 +115,7 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config,in
         [rotations{i}, translations{i}] = alg.init_extrinsic_params(homographies{i}, ...
                                                                     A_init, ...
                                                                     board_points_ps{i}, ...
-                                                                    calib_config); %#ok<AGROW>
+                                                                    opts); %#ok<AGROW>
     end
 
     % Perform nonlinear refinement of all parameters ---------------------%
@@ -118,7 +143,7 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config,in
                                                                      translations, ...
                                                                      board_points_ps, ...
                                                                      optimization_type, ...
-                                                                     calib_config);  
+                                                                     opts);  
 
     disp('---');
     disp('Initial camera matrix: ');
@@ -131,7 +156,7 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config,in
     disp(distortion');
 
     % Package outputs ----------------------------------------------------%
-    calib.config = calib_config;
+    calib.config = opts;
     calib.intrin.A = A;
     calib.intrin.distortion = distortion;
     for i = 1:length(cb_imgs)

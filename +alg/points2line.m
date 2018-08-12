@@ -17,13 +17,8 @@ function l = points2line(p1,p2)
     y2 = p2(2);
     
     % Get slope
-    m = (y2-y1)/(x1-x2);
+    m = (y2-y1)/(x2-x1);
     
-    % Form homogeneous line
-    a = m;
-    b = -1;
-    c = y1-m*x1;
-    
-    % Store
-    l = [a b c];
+    % Get line
+    l = alg.pointslope2line(p1,m);
 end

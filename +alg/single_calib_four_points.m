@@ -56,12 +56,16 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,opts,intrin)
         
         % For first pass use homography to approximate transform - this
         % assumes low distortion
-        forward_xfm = @(p)(alg.apply_homography(homographies{i},p));
+        xfm_w2p = @(p)(alg.apply_homography(homographies{i},p));
         switch opts.target_type
             case 'checker'
-                [board_points_ps{i}, idx_valids{i}, covs{i}, debug{i}] = alg.refine_checker_points(cb_imgs(i).get_gs(), ...
-                                                                                                   forward_xfm, ...
-                                                                                                   opts); %#ok<AGROW>
+                [board_points_ps{i}, board_covs_ps{i}, idx_valids{i}, debug{i}] = alg.refine_checker_points(cb_imgs(i).get_gs(), ...
+                                                                                                            xfm_w2p, ...
+                                                                                                            opts); %#ok<AGROW>
+            case 'circle'
+                [board_points_ps{i}, board_covs_ps{i}, idx_valids{i}, debug{i}] = alg.refine_circle_points(cb_imgs(i).get_gs(), ...
+                                                                                                           xfm_w2p, ...
+                                                                                                           opts); %#ok<AGROW>
             otherwise
                 error(['Unknown target type: "' opts.target_type '"']);
         end
@@ -81,10 +85,10 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,opts,intrin)
                 line([bb(1,1) bb(2,1)],[bb(2,2) bb(2,2)])
                 line([bb(2,1) bb(2,1)],[bb(1,2) bb(2,2)])
                 
-                cov = covs{i}{j};
-                d = max(eig(cov));
+                cov = board_covs_ps{i}{j};
+                d = sqrt(max(eig(cov)));
                 p = board_points_ps{i}(j,:);
-                plot(p(1),p(2),'ro','Markersize',d*30000);
+                plot(p(1),p(2),'ro','Markersize',d*500);
             end
         end
         

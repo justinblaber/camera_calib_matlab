@@ -1,22 +1,22 @@
-function [p, cov] = refine_checker_opencv(array)
-    % Performs "opencv" refinement of checker center on an array.
+function [p, cov_p] = refine_checker_opencv(array_dx,array_dy,p)
+    % Performs "opencv" refinement of a checker center on input array
+    % gradients.
     %
     % Inputs:
-    %   array - array; MxN array
+    %   array_dx - array; MxN array gradient in x direction
+    %   array_dy - array; MxN array gradient in y direction
+    %   p - array; 1x2 initial guess of checker center
     %
     % Outputs:
-    %   p - array; 1x2 sub pixel point at center of checker
-    %   cov - array; 2x2 covariance array
+    %   p - array; 1x2 refined checker center
+    %   cov_p - array; 2x2 covariance array
     
-    if size(array,1) ~= size(array,2)
-        error('Input array must be square');
+    if size(array_dx,1) ~= size(array_dx,2) || ~isequal(size(array_dx),size(array_dy))
+        error('Input gradient arrays must be square and equal in size');
     end
-
-    % Normalize array so gradients aren't crazy
-    array = (array-min(array(:)))./(max(array(:))-min(array(:)));
     
     % Get size
-    s = size(array,1);
+    s = length(array_dx);
     
     % Get coordinates of pixels
     [y,x] = ndgrid(1:s,1:s);
@@ -24,26 +24,20 @@ function [p, cov] = refine_checker_opencv(array)
     y = y(:);
     
     % Get covariance matrix of gaussian kernel
-    sigma = s/4;
+    sigma = (s-1)/4;
     cov = [sigma^2 0; ...
            0       sigma^2];
-    
-    % Initial guess for center point
-    p = [(s+1)/2 (s+1)/2];    
-    
+        
     % Get gaussian mask
     kernel_gauss = mvnpdf([x y], p, cov);
     kernel_gauss = reshape(kernel_gauss,[s s]);
 
-    % Get gradients and apply weights
-    array_dx = alg.array_grad(array,'x');
-    array_dy = alg.array_grad(array,'y');
-
     % Form linear system
     A = [array_dx(:) array_dy(:)];
-    b = (array_dx(:).*x + array_dy(:).*y);
+    b = array_dx(:).*x + array_dy(:).*y;
 
-    % Solve for point and covariance
-    [p,~,~,cov] = lscov(A,b,kernel_gauss(:).^2);
+    % Solve for center point and center point covariance using gaussian
+    % kernel as weights
+    [p,~,~,cov_p] = lscov(A,b,kernel_gauss(:).^2);
     p = p';
 end

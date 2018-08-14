@@ -211,6 +211,7 @@ end
 function calib_config = validate_calibration_target(calib_config,field)
     switch calib_config.(field)
         case 'checker'
+        case 'circle'
         otherwise
             error(['Calibration target: "' calib_config.(field) '" is not supported.']);
     end

@@ -70,30 +70,16 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,opts,intrin)
                 error(['Unknown target type: "' opts.target_type '"']);
         end
         
-        time = toc(t);%
-        fprintf(['Time ellapsed: %f seconds.' newline],time);
-        
-        figure;
-        cb_imgs(i).imshow();
-        hold on;
-        plot(board_points_ps{i}(idx_valids{i},1),board_points_ps{i}(idx_valids{i},2),'gs')
-        for j = 1:length(debug{i})
-            if idx_valids{i}(j)
-                bb = debug{i}{j};
-                line([bb(1,1) bb(1,1)],[bb(1,2) bb(2,2)])
-                line([bb(1,1) bb(2,1)],[bb(1,2) bb(1,2)])
-                line([bb(1,1) bb(2,1)],[bb(2,2) bb(2,2)])
-                line([bb(2,1) bb(2,1)],[bb(1,2) bb(2,2)])
-                
-                cov = board_covs_ps{i}{j};
-                d = sqrt(max(eig(cov)));
-                p = board_points_ps{i}(j,:);
-                plot(p(1),p(2),'ro','Markersize',d*500);
-            end
-        end
-        
-        
+        time = toc(t);
+        fprintf(['Time ellapsed: %f seconds.' newline],time);        
     end
+    
+    
+    figure;
+    cb_imgs(i).imshow();
+    hold on;
+    plot(board_points_ps{i}(idx_valids{i},1),board_points_ps{i}(idx_valids{i},2),'gs')
+
 
     % Update homographies using refined points ---------------------------%
     for i = 1:length(cb_imgs)

@@ -1,9 +1,10 @@
-function Aq = fit_conic(array)
+function Aq = fit_conic(array_dx,array_dy)
     % Given an input array containing a conic section, this will attempt to
     % find the parameters of the conic matrix.
     %
     % Inputs:
-    %   array - array; MxN array containing a conic section
+    %   array_dx - array; MxN array gradient in x direction
+    %   array_dy - array; MxN array gradient in y direction
     %
     % Outputs:
     %   Aq - array; 3x3 conic matrix matrix stored as:
@@ -11,15 +12,12 @@ function Aq = fit_conic(array)
     %        B/2 C   E/2;
     %        D/2 E/2 F];
 
-    % Scale array between 0 and 1 so gradients arent crazy
-    array = (array-min(array(:)))./(max(array(:))-min(array(:)));      
-
-    % Get gradients
-    array_dx = alg.array_grad(array,'x');
-    array_dy = alg.array_grad(array,'y');
-
+    if ~isequal(size(array_dx),size(array_dy))
+        error('Input gradient arrays must be equal in size');
+    end
+        
     % Get coordinates of each pixel
-    [y,x] = ndgrid(1:size(array,1),1:size(array,2));
+    [y,x] = ndgrid(1:size(array_dx,1),1:size(array_dx,2));
     p = [x(:) y(:)];
 
     % Normalize coordinates; shift the origin of the coordinate system to

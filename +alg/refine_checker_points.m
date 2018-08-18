@@ -1,5 +1,5 @@
 function [board_points_p, board_covs_p, idx_valid, debug] = refine_checker_points(array,xfm_w2p,opts)
-    % Performs refinement of checker points on an array.
+    % Performs refinement of center of checker targets on an array.
     %
     % Inputs:
     %   array - array; MxN array

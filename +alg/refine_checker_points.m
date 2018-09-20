@@ -1,9 +1,9 @@
-function [board_points_p, board_covs_p, idx_valid, debug] = refine_checker_points(array,xfm_w2p,opts)
+function [board_points_p, board_covs_p, idx_valid, debug] = refine_checker_points(array,f_xfm_w2p,opts,idx_init)
     % Performs refinement of center of checker targets on an array.
     %
     % Inputs:
     %   array - array; MxN array
-    %   xfm_w2p - function handle; function which transforms world
+    %   f_xfm_w2p - function handle; function which transforms world
     %   	coordinates to pixel coordinates
     %   opts - struct;
     %       .four_point_height - scalar; height of the "four point" box
@@ -29,6 +29,8 @@ function [board_points_p, board_covs_p, idx_valid, debug] = refine_checker_point
     %       .refine_checker_edges_norm_cutoff - scalar; cutoff for the 
     %           difference in norm of the parameter vector for "edges" 
     %           checker refinement
+    %       idx_init - array; logical indices which indicate which target 
+    %           points are valid 
     %
     % Outputs:
     %   board_points_p - array; Px2 array of optimized subpixel checker
@@ -38,6 +40,10 @@ function [board_points_p, board_covs_p, idx_valid, debug] = refine_checker_point
     %   idx_valid - array; Px1 logical array of "valid" checker points
     %   debug - cell array; Px1 cell array of bounding boxes of the
     %       refinement windows
+    
+    if ~exist('idx_init','var')
+        idx_init = true(opts.num_targets_height*opts.num_targets_width,1);
+    end
     
     % Get board points in world coordinates
     board_points_w = alg.cb_points(opts);
@@ -52,15 +58,19 @@ function [board_points_p, board_covs_p, idx_valid, debug] = refine_checker_point
     board_covs_p = cell(size(board_points_w,1),1);
     idx_valid = false(size(board_points_w,1),1);
     for i = 1:size(board_points_w,1)
+        if ~idx_init(i)
+            continue
+        end
+        
         % Get point in world coordinates
         p_w = board_points_w(i,:);
         
         % Convert point to pixel coordinates to get initial guess
-        p_p_init = xfm_w2p(p_w);
+        p_p_init = f_xfm_w2p(p_w);
         
         % Get half window of sub array
         hw_sub_array = get_hw_sub_array(p_w, ...
-                                        xfm_w2p, ...
+                                        f_xfm_w2p, ...
                                         opts);
         
         % Perform initial refinement with "opencv" checker detection. This
@@ -79,7 +89,7 @@ function [board_points_p, board_covs_p, idx_valid, debug] = refine_checker_point
         % Perform final "edges" refinement
         [p_p_edges, cov_p_edges, bb_sub_array_edges] = edges(p_p_opencv, ...
                                                              p_w, ...
-                                                             xfm_w2p, ...
+                                                             f_xfm_w2p, ...
                                                              array_dx, ...
                                                              array_dy, ...
                                                              hw_sub_array, ...
@@ -96,7 +106,7 @@ function [board_points_p, board_covs_p, idx_valid, debug] = refine_checker_point
     end    
 end
 
-function hw_sub_array = get_hw_sub_array(p_w,xfm_w2p,opts)
+function hw_sub_array = get_hw_sub_array(p_w,f_xfm_w2p,opts)
     % Get box around point in world coordinates
     % Note:
     %    p1 - l2 - p3
@@ -110,7 +120,7 @@ function hw_sub_array = get_hw_sub_array(p_w,xfm_w2p,opts)
              p_w(1)+opts.target_spacing p_w(2)+opts.target_spacing];
 
     % Apply xform to go from world coordinates to pixel coordinates
-    box_p = xfm_w2p(box_w);
+    box_p = f_xfm_w2p(box_w);
 
     % Form lines in pixel coordinates
     l1_p = alg.points2line(box_p(1,:),box_p(2,:));
@@ -120,7 +130,7 @@ function hw_sub_array = get_hw_sub_array(p_w,xfm_w2p,opts)
 
     % Get shortest distance from lines to target point in pixel
     % coordinates
-    p_p = xfm_w2p(p_w);        
+    p_p = f_xfm_w2p(p_w);        
     d1 = alg.point_line_distance(p_p,l1_p);
     d2 = alg.point_line_distance(p_p,l2_p);
     d3 = alg.point_line_distance(p_p,l3_p);
@@ -185,7 +195,7 @@ function p_p = opencv(p_p_init,array_dx,array_dy,hw_sub_array,opts)
     end
 end
 
-function [p_p, cov_p, bb_sub_array] = edges(p_p_init,p_w,xfm_w2p,array_dx,array_dy,hw_sub_array,opts)
+function [p_p, cov_p, bb_sub_array] = edges(p_p_init,p_w,f_xfm_w2p,array_dx,array_dy,hw_sub_array,opts)
     % Initialize
     p_p = p_p_init;
     
@@ -222,7 +232,7 @@ function [p_p, cov_p, bb_sub_array] = edges(p_p_init,p_w,xfm_w2p,array_dx,array_
                  p_w(1)+opts.target_spacing p_w(2)];
 
     % Apply xform to go from world coordinates to pixel coordinates
-    diamond_p = xfm_w2p(diamond_w);            
+    diamond_p = f_xfm_w2p(diamond_w);            
 
     % Get points in sub array coordinates
     diamond_p_sub = diamond_p - bb_sub_array(1,:) + 1;

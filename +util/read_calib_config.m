@@ -126,12 +126,13 @@ function calib_config = read_calib_config(calib_config_path)
     % Perform validations on input fields    
     % Calibration board info
     field_info        = struct('field','calibration_target'                     ,'required',true ,'default',''                             ,'validation_fun',@validate_calibration_target);
-    field_info(end+1) = struct('field','num_targets_height'                     ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','num_targets_width'                      ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','target_spacing'                         ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','num_targets_height'                     ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','num_targets_width'                      ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','target_spacing'                         ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','units'                                  ,'required',true ,'default',''                             ,'validation_fun',@validate_string);
-    field_info(end+1) = struct('field','four_point_height'                      ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','four_point_width'                       ,'required',true ,'default',''                             ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','four_point_height'                      ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','four_point_width'                       ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','target_mat'                             ,'required',false,'default',[]                             ,'validation_fun',@validate_target_mat);
     % Algorithmic info
     field_info(end+1) = struct('field','homography_it_cutoff'                   ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);
     field_info(end+1) = struct('field','homography_norm_cutoff'                 ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);
@@ -243,4 +244,21 @@ function calib_config = validate_file_path(calib_config,field)
         error(['Field: "' field '" has a value which is not an existing file.']);
     end
     calib_config.(field) = calib_config.(field);
+end
+
+function calib_config = validate_target_mat(calib_config,~)    
+    if isempty(calib_config.target_mat)
+        % If not set, initialize to all true
+        calib_config.target_mat = true(calib_config.num_targets_height, ...
+                                       calib_config.num_targets_width);
+    end
+    
+    % Validate size of target_mat
+    if size(calib_config.target_mat,1) ~= calib_config.num_targets_height || ...
+       size(calib_config.target_mat,2) ~= calib_config.num_targets_width
+        error(['Field: "target_mat" has an invalid size of: ' num2str(size(calib_config.target_mat))]);
+    end        
+    
+    % Ensure target_mat is boolean
+    calib_config.target_mat = logical(calib_config.target_mat);
 end

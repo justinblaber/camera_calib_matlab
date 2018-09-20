@@ -57,7 +57,7 @@ function [e, cov_e] = refine_ellipse_edges(array_dx,array_dy,e_init,opts)
                                                y);
 
         % Get and store update
-        delta_h = -mldivide(hess,grad);
+        delta_h = -lscov(hess,grad);
         h = h + delta_h;        
          
         % Exit if change in distance is small

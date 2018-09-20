@@ -42,8 +42,9 @@ function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
     % Initial guess for center point
     p = alg.line_line_intersect(l1, l2);    
             
-    % Get gradient magnitude
-    array_grad_mag = sqrt(array_dx.^2 + array_dy.^2);
+    % Get gradient magnitude - I found that using squared magnitude is
+    % better because it tends to supress smaller gradients due to noise
+    array_grad_mag = array_dx.^2 + array_dy.^2;
     
     % Normalize gradient magnitude between 0 and 1
     array_grad_mag = (array_grad_mag-min(array_grad_mag(:)))./(max(array_grad_mag(:))-min(array_grad_mag(:)));
@@ -66,7 +67,7 @@ function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
                                                cov);
 
         % Get and store update
-        delta_h = -mldivide(hess,grad);
+        delta_h = -lscov(hess,grad);
         h = h + delta_h;        
          
         % Exit if change in distance is small

@@ -1,9 +1,9 @@
-function [board_points_p, board_covs_p, idx_valid, debug] = refine_circle_points(array,xfm_w2p,opts)
+function [board_points_p, board_covs_p, idx_valid, debug] = refine_circle_points(array,f_xfm_w2p,opts,idx_init)
     % Performs refinement of center of circle targets on an array.
     %
     % Inputs:
     %   array - array; MxN array
-    %   xfm_w2p - function handle; function which transforms world
+    %   f_xfm_w2p - function handle; function which transforms world
     %   	coordinates to pixel coordinates
     %   opts - struct;
     %       .four_point_height - scalar; height of the "four point" box
@@ -20,6 +20,8 @@ function [board_points_p, board_covs_p, idx_valid, debug] = refine_circle_points
     %       .refine_ellipse_edges_norm_cutoff - scalar; cutoff for the 
     %           difference in norm of the parameter vector for "edges" 
     %           ellipse refinement
+    %       idx_init - array; logical indices which indicate which target 
+    %           points are valid 
     %
     % Outputs:
     %   board_points_p - array; Px2 array of optimized subpixel ellipse
@@ -35,6 +37,10 @@ function [board_points_p, board_covs_p, idx_valid, debug] = refine_circle_points
     %       .boundary - array; 4x2 array of boundary points used in "edges"
     %           method
     
+    if ~exist('idx_init','var')
+        idx_init = true(opts.num_targets_height*opts.num_targets_width,1);
+    end
+    
     % Get board points in world coordinates
     board_points_w = alg.cb_points(opts);
     
@@ -48,15 +54,19 @@ function [board_points_p, board_covs_p, idx_valid, debug] = refine_circle_points
     board_covs_p = cell(size(board_points_w,1),1);
     idx_valid = false(size(board_points_w,1),1);
     for i = 1:size(board_points_w,1)
+        if ~idx_init(i)
+            continue
+        end
+        
         % Get point in world coordinates
         p_w = board_points_w(i,:);
         
         % Convert point to pixel coordinates to get initial guess
-        p_p_init = xfm_w2p(p_w);
+        p_p_init = f_xfm_w2p(p_w);
         
         % Get four point box in pixel coordinates centered around point
         box_center = get_box_center(p_w, ...
-                                    xfm_w2p, ...
+                                    f_xfm_w2p, ...
                                     opts);
         
         % Perform initial refinement with "dual conic" ellipse detection.
@@ -90,7 +100,7 @@ function [board_points_p, board_covs_p, idx_valid, debug] = refine_circle_points
     end    
 end
 
-function box_center = get_box_center(p_w,xfm_w2p,opts)
+function box_center = get_box_center(p_w,f_xfm_w2p,opts)
     % Get box around point in world coordinates
     % Note:
     %    p1 - l2 - p3
@@ -104,10 +114,10 @@ function box_center = get_box_center(p_w,xfm_w2p,opts)
              p_w(1)+opts.target_spacing/2 p_w(2)+opts.target_spacing/2];
 
     % Apply xform to go from world coordinates to pixel coordinates
-    box_p = xfm_w2p(box_w);
+    box_p = f_xfm_w2p(box_w);
     
     % Subtract center point
-    p_p = xfm_w2p(p_w);
+    p_p = f_xfm_w2p(p_w);
     box_center = box_p - p_p;
 end
 

@@ -19,7 +19,7 @@ function [four_points_ps,four_points_debugs] = single_four_points_detect(cb_imgs
     for i = 1:length(cb_imgs)
         t = tic;
         fprintf('Performing four-point detection for image: %s. ', cb_imgs(i).get_path());
-        [four_points_ps{i},four_points_debugs(i)] = alg.four_points_detect(cb_imgs(i).get_gs(),calib_config); %#ok<AGROW>
+        [four_points_ps{i},four_points_debugs(i)] = alg.four_points_detect(cb_imgs(i).get_array(),calib_config); %#ok<AGROW>
         time = toc(t);
         fprintf(['Time ellapsed: %f seconds.' newline],time);
     end

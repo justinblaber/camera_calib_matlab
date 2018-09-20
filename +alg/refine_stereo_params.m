@@ -350,5 +350,5 @@ function delta_p = calc_delta_p(p,board_points_w,board_points_ps,update_idx,lamb
     end  
 
     % Get change in params using Levenberg–Marquardt update     
-    delta_p = -mldivide(jacob(:,update_idx)'*jacob(:,update_idx)+lambda*eye(sum(update_idx)),jacob(:,update_idx)'*calc_res(p,board_points_w,board_points_ps));        
+    delta_p = -lscov(jacob(:,update_idx)'*jacob(:,update_idx)+lambda*eye(sum(update_idx)),jacob(:,update_idx)'*calc_res(p,board_points_w,board_points_ps));        
 end

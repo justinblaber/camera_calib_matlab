@@ -8,7 +8,7 @@ function plot_four_point_debug(four_points_p,four_points_debug,cb_img,calib_conf
     cla(a);
     
     % Show calibration board (must rescale)
-    array = cb_img.get_gs();
+    array = cb_img.get_array();
     if calib_config.four_point_detect_scaled_array_min_size == realmax
         scale_factor = 1;
     else

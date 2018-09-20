@@ -100,7 +100,7 @@ function [calib,R_s,t_s] = stereo_calib_four_points(cb_imgs,four_points_ps,calib
     end
 
     % Get least squares approximation
-    R_s_init = reshape(mldivide(R,r),3,3);
+    R_s_init = reshape(lscov(R,r),3,3);
 
     % R_s is not necessarily orthogonal, so get the best rotational 
     % approximation.
@@ -115,7 +115,7 @@ function [calib,R_s,t_s] = stereo_calib_four_points(cb_imgs,four_points_ps,calib
     end
 
     % Get least squares approximation
-    t_s_init = mldivide(T,t);
+    t_s_init = lscov(T,t);
 
     % Perform nonlinear refinement of all parameters ---------------------%
     

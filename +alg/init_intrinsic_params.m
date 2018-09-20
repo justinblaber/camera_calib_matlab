@@ -60,7 +60,13 @@ function A = init_intrinsic_params(homographies,width,height)
     % Get x by finding value which makes projection of A on b equal to b.
     % I believe this tends to prevent over estimates when A and b are not
     % collinear.
-    alpha = sqrt(dot(b,A)/dot(b,b));
+    alpha_squared = dot(b,A)/dot(b,b);
+    if alpha_squared < 0
+        error(['Alpha squared is equal to: ' num2str(alpha_squared) '. ' ...
+               'This quantity must be positive. Are calibration board ' ...
+               'parameters correct?']);
+    end    
+    alpha = sqrt(alpha_squared);
     
     % Set A
     A = [alpha 0      x_o;

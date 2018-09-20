@@ -84,7 +84,7 @@ function homography_1_2 = homography(points_1,points_2,opts)
         res(num_points+1:2*num_points,1) = v_prime./w_prime - points_2(:,2);
 
         % Get and store update
-        delta_h = -mldivide(jacob,res);
+        delta_h = -lscov(jacob,res);
         h = h + delta_h;
         
         % Exit if change in distance is small

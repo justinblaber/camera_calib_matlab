@@ -35,7 +35,7 @@ function Aq = fit_conic(array_dx,array_dy)
     b = -l(:,3).^2;
 
     % Solve
-    aq = mldivide(A,b);
+    aq = lscov(A,b);
 
     % Get conic matrix
     Aq_inv = [aq(1)   aq(2)/2 aq(4)/2;

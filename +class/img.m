@@ -1,7 +1,5 @@
 classdef img < handle
-% This is the class definition for an image file. Use get_gs() to load 
-% images on demand (instead of loading all images at once) to reduce memory
-% usage.
+% This is the class definition for an image file.
     
     properties(Access = private)
         path    % string
@@ -10,8 +8,8 @@ classdef img < handle
     methods(Static, Access = public)
         function imgs = validate_similar_imgs(paths)
             % This function will make sure all image paths in the cell
-            % array paths exist, are the same size, have valid imfinfos, 
-            % have valid colortypes and then returns all images as img 
+            % array "paths" exist, are the same size, have valid imfinfos, 
+            % have valid colortypes and then returns all images as "img" 
             % objects.
                                 
             % Initialize imgs
@@ -95,24 +93,23 @@ classdef img < handle
             img_info = imfinfo(obj.get_path()); 
         end
                         
-        function img_gs = get_gs(obj)    
-            % This function returns the image as double precision grayscale
-            % intensities, which is most useful for image processing
-            % algorithms.            
+        function array_gs = get_array_gs(obj)    
+            % This function returns the image as a double precision
+            % grayscale array
             obj.validate_exist();
             obj.validate_imfinfo();
             obj.validate_colortype();
              
-            % Read file
-            img_gs = imread(obj.get_path());  
+            % Read array
+            array = imread(obj.get_path());  
 
             % Convert to double precision gray scale
             img_info = obj.get_imfinfo();            
             switch img_info.ColorType
                 case 'grayscale'
-                    img_gs = im2double(img_gs);
+                    array_gs = im2double(array);
                 case 'truecolor'
-                    img_gs = rgb2gray(im2double(img_gs));
+                    array_gs = rgb2gray(im2double(array));
             end
         end
         
@@ -137,7 +134,7 @@ classdef img < handle
             obj.validate_imfinfo();
             obj.validate_colortype();
             
-            h = imshow(obj.get_gs(),varargin{:});
+            h = imshow(obj.get_array_gs(),varargin{:});
         end
     end
 end

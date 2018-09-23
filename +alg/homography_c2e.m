@@ -1,7 +1,7 @@
 function H_12 = homography_c2e(p_1s,p_2s,opts,cov)
-    % This will compute a homography assuming points in perspecitive "1"
+    % This will compute a homography, assuming points in perspecitive "1"
     % are centers of circles while points in perspective "2" are centers
-    % of ellipses using non-linear least squares fit.
+    % of ellipses, using non-linear least squares fit.
     %
     % Inputs:
     %   p_1s - array; Nx2 array of points in perspective "1"; centers of

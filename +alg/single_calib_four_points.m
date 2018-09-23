@@ -32,7 +32,7 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config,in
                 % approximate the transform from world to undistorted pixel 
                 % coordinates; this assumes low distortion.
                 array = cb_imgs(i).get_array_gs();
-                f_xfm_w2p = @(p)(alg.apply_homography(homographies{i},p));
+                f_xfm_w2p = @(p)(alg.apply_homography_p2p(homographies{i},p));
             else
                 % For iterations after first, correct the calibration 
                 % board image for distortion and use the transform from 

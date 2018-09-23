@@ -25,7 +25,7 @@ function H_12 = homography_p2p_nonlin(p_1s,p_2s,H_12_init,opts,cov)
     if size(p_1s,1) ~= size(p_2s,1)
         error('The same number of input points must be used to compute homography');
     end
-        
+
     % Number of points
     num_points = size(p_1s,1);
     
@@ -36,36 +36,14 @@ function H_12 = homography_p2p_nonlin(p_1s,p_2s,H_12_init,opts,cov)
     % Perform gauss newton iterations until convergence
     for it = 1:opts.homography_p2p_it_cutoff
         % Form homography from vector
-        H_1_2 = reshape([h; 1],3,3);
+        H_12 = reshape([h; 1],3,3);
         
         % Compute jacobian
-        p_prime = H_1_2*[p_1s ones(num_points,1)]';
-        u_prime = p_prime(1,:);
-        v_prime = p_prime(2,:);
-        w_prime = p_prime(3,:);
-        
-        jacob = [p_1s(:,1)'./w_prime;
-                 zeros(1,num_points);
-                 -u_prime.*p_1s(:,1)'./w_prime.^2;
-                 p_1s(:,2)'./w_prime;
-                 zeros(1,num_points);
-                 -u_prime.*p_1s(:,2)'./w_prime.^2;
-                 1./w_prime;
-                 zeros(1,num_points);
-                 zeros(1,num_points);
-                 p_1s(:,1)'./w_prime;
-                 -v_prime.*p_1s(:,1)'./w_prime.^2;
-                 zeros(1,num_points);
-                 p_1s(:,2)'./w_prime;
-                 -v_prime.*p_1s(:,2)'./w_prime.^2;
-                 zeros(1,num_points);
-                 1./w_prime];        
-        jacob = reshape(jacob,8,2*num_points)';    
-             
+        jacob = alg.dp_dh_p2p(H_12,p_1s);
+        jacob = jacob(:,1:end-1); % Remove last column since H_12(3,3) is constant
+                     
         % Compute residual
-        res = [u_prime./w_prime - p_2s(:,1)';
-               v_prime./w_prime - p_2s(:,2)'];
-        res = reshape(res,1,2*num_points)';
+        res = reshape((alg.apply_homography_p2p(H_12,p_1s) - p_2s)',2*num_points,1);
 
         % Get and store update
         if ~exist('cov','var')

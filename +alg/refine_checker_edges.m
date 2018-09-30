@@ -1,10 +1,9 @@
 function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
-    % Performs "edges" refinement of a checker center on input array
-    % gradients.
+    % Performs "edges" refinement of a checker center.
     %
     % Inputs:
-    %   array_dx - array; MxN array gradient in x direction
-    %   array_dy - array; MxN array gradient in y direction
+    %   array_dx - array; MxM array gradient in x direction
+    %   array_dy - array; MxM array gradient in y direction
     %   l1 - array; 3x1 array of a line in the form: 
     %       [a; b; c] where ax + by + c = 0
     %   l2 - array; 3x1 array of a line in the form: 

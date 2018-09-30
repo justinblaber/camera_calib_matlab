@@ -1,4 +1,4 @@
-function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,distortion,rotations,translations,board_points_ps,R_s,t_s,type,calib_config)
+function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,distortion,rotations,translations,p_cb_pss,R_s,t_s,type,calib_config)
     % This will compute nonlinear refinement of intrinsic and extrinsic
     % camera parameters for both left and right cameras.
     %
@@ -16,7 +16,7 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     %       .L and .R - cell; Mx1 initial guesses of rotations
     %   translations - struct; contains:
     %       .L and .R - cell; Mx1 initial guesses of translations
-    %   board_points_ps - struct; contains:
+    %   p_cb_pss - struct; contains:
     %       .L and .R - cell; Mx1 of optimized subpixel calibration 
     %           board points in pixel coordinates.
     %   R_s - array; initial guess of rotation describing rotation from the 
@@ -48,10 +48,10 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     disp('---');
               
     % Get board points in world coordinates
-    board_points_w = alg.cb_points(calib_config);
+    p_cb_ws = alg.p_cb_w(calib_config);
     
     % Get number of boards
-    num_boards = length(board_points_ps.L);
+    num_boards = length(p_cb_pss.L);
     
     % Supply initial parameter vector. p has a length of 22 + 6*M, where M 
     % is the number of calibration boards. There are 16 intrinsic 
@@ -113,7 +113,7 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     % Initialize lambda
     lambda = calib_config.refine_param_lambda_init;
     % Get initial mean squared error
-    mse = mean(calc_res(p,board_points_w,board_points_ps).^2)*2;
+    mse = mean(calc_res(p,p_cb_ws,p_cb_pss).^2)*2;
     for it = 1:calib_config.refine_param_it_cutoff                                    
         % Store previous p and mse  
         p_prev = p;
@@ -121,14 +121,14 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
         
         % Compute delta_p
         delta_p = calc_delta_p(p_prev, ...
-                               board_points_w, ...
-                               board_points_ps, ...
+                               p_cb_ws, ...
+                               p_cb_pss, ...
                                update_idx, ...
                                lambda);
                            
         % update params and mse
         p(update_idx) = p_prev(update_idx) + delta_p;
-        mse = mean(calc_res(p,board_points_w,board_points_ps).^2)*2;
+        mse = mean(calc_res(p,p_cb_ws,p_cb_pss).^2)*2;
         
         % If mse decreases, decrease lambda and store results; if mse
         % increases, then increase lambda until mse descreases
@@ -151,14 +151,14 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
                 
                 % Compute delta_p
                 delta_p = calc_delta_p(p_prev, ...
-                                       board_points_w, ...
-                                       board_points_ps, ...
+                                       p_cb_ws, ...
+                                       p_cb_pss, ...
                                        update_idx, ...
                                        lambda);
             
                 % update params and mse
                 p(update_idx) = p_prev(update_idx) + delta_p;
-                mse = mean(calc_res(p,board_points_w,board_points_ps).^2)*2;
+                mse = mean(calc_res(p,p_cb_ws,p_cb_pss).^2)*2;
             end            
         end
                 
@@ -203,8 +203,8 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     end  
 end
 
-function res = calc_res(p,board_points_w,board_points_ps) 
-    res = zeros(4*length(board_points_ps.L)*size(board_points_w,1),1);   
+function res = calc_res(p,p_cb_ws,p_cb_pss) 
+    res = zeros(4*length(p_cb_pss.L)*size(p_cb_ws,1),1);   
  
     % Get intrinsic parameters
     % left
@@ -219,10 +219,10 @@ function res = calc_res(p,board_points_w,board_points_ps)
     distortion_R = p(13:16)';
 
     % Get R_s and t_s; only need to do this once per iteration
-    R_s = alg.euler2rot(p(16+6*length(board_points_ps.L)+1:16+6*length(board_points_ps.L)+3));
-    t_s = p(16+6*length(board_points_ps.L)+4:16+6*length(board_points_ps.L)+6);
+    R_s = alg.euler2rot(p(16+6*length(p_cb_pss.L)+1:16+6*length(p_cb_pss.L)+3));
+    t_s = p(16+6*length(p_cb_pss.L)+4:16+6*length(p_cb_pss.L)+6);
 
-    for i = 1:length(board_points_ps.L)
+    for i = 1:length(p_cb_pss.L)
         % Get rotation and translation for the left board
         R_L = alg.euler2rot(p(16+6*(i-1)+1:16+6*(i-1)+3));
         t_L = p(16+6*(i-1)+4:16+6*(i-1)+6);
@@ -232,12 +232,12 @@ function res = calc_res(p,board_points_w,board_points_ps)
                         distortion_L, ...
                         R_L, ...
                         t_L, ...
-                        board_points_w);
+                        p_cb_ws);
 
         % Store residuals
-        res((i-1)*4*size(board_points_w,1)+1:((i-1)*4+2)*size(board_points_w,1)) =  ...
-            vertcat(p_m_L(:,1)-board_points_ps.L{i}(:,1), ...
-                    p_m_L(:,2)-board_points_ps.L{i}(:,2)); 
+        res((i-1)*4*size(p_cb_ws,1)+1:((i-1)*4+2)*size(p_cb_ws,1)) =  ...
+            vertcat(p_m_L(:,1)-p_cb_pss.L{i}(:,1), ...
+                    p_m_L(:,2)-p_cb_pss.L{i}(:,2)); 
         
         % Get rotation and translation for the right board
         R_R = R_s*R_L;         
@@ -248,18 +248,18 @@ function res = calc_res(p,board_points_w,board_points_ps)
                         distortion_R, ...
                         R_R, ...
                         t_R, ...
-                        board_points_w); 
+                        p_cb_ws); 
 
         % Store residuals
-        res(((i-1)*4+2)*size(board_points_w,1)+1:i*4*size(board_points_w,1)) =  ...
-            vertcat(p_m_R(:,1)-board_points_ps.R{i}(:,1), ...
-                    p_m_R(:,2)-board_points_ps.R{i}(:,2)); 
+        res(((i-1)*4+2)*size(p_cb_ws,1)+1:i*4*size(p_cb_ws,1)) =  ...
+            vertcat(p_m_R(:,1)-p_cb_pss.R{i}(:,1), ...
+                    p_m_R(:,2)-p_cb_pss.R{i}(:,2)); 
     end  
 end
 
-function delta_p = calc_delta_p(p,board_points_w,board_points_ps,update_idx,lambda)
+function delta_p = calc_delta_p(p,p_cb_ws,p_cb_pss,update_idx,lambda)
     % Initialize jacobian
-    jacob = sparse(4*length(board_points_ps.L)*size(board_points_w,1),length(p));
+    jacob = sparse(4*length(p_cb_pss.L)*size(p_cb_ws,1),length(p));
     
     % Get intrinsic parameters
     % left
@@ -274,11 +274,11 @@ function delta_p = calc_delta_p(p,board_points_w,board_points_ps,update_idx,lamb
     distortion_R = p(13:16)';
 
     % Get R_s and t_s; only need to do this once per iteration
-    R_s = alg.euler2rot(p(16+6*length(board_points_ps.L)+1:16+6*length(board_points_ps.L)+3));
-    t_s = p(16+6*length(board_points_ps.L)+4:16+6*length(board_points_ps.L)+6);
+    R_s = alg.euler2rot(p(16+6*length(p_cb_pss.L)+1:16+6*length(p_cb_pss.L)+3));
+    t_s = p(16+6*length(p_cb_pss.L)+4:16+6*length(p_cb_pss.L)+6);
 
     % Fill jacobian and residuals per board
-    for i = 1:length(board_points_ps.L)
+    for i = 1:length(p_cb_pss.L)
         % Fill jacobian for left board -----------------------------------%
         % This is basically the same for single board calibration since
         % the left board is independent
@@ -288,23 +288,23 @@ function delta_p = calc_delta_p(p,board_points_w,board_points_ps,update_idx,lamb
         t_L = p(16+6*(i-1)+4:16+6*(i-1)+6);
 
         % Intrinsic params
-        jacob((i-1)*4*size(board_points_w,1)+1:((i-1)*4+2)*size(board_points_w,1),1:8) = ...
+        jacob((i-1)*4*size(p_cb_ws,1)+1:((i-1)*4+2)*size(p_cb_ws,1),1:8) = ...
             alg.dp_m_dintrinsic(A_L, ...
                                 distortion_L, ...
                                 R_L, ...
                                 t_L, ...
-                                board_points_w); %#ok<SPRIX>
+                                p_cb_ws); %#ok<SPRIX>
 
         % Extrinsic params
         dR_L_deuler_L = alg.dR_deuler(alg.rot2euler(R_L));
         dRt_L_dm_L = blkdiag(dR_L_deuler_L(1:6,:),eye(3));
-        jacob((i-1)*4*size(board_points_w,1)+1:((i-1)*4+2)*size(board_points_w,1),16+(i-1)*6+1:16+i*6) =  ...
+        jacob((i-1)*4*size(p_cb_ws,1)+1:((i-1)*4+2)*size(p_cb_ws,1),16+(i-1)*6+1:16+i*6) =  ...
             alg.dp_m_dextrinsic(A_L, ...
                                 distortion_L, ...
                                 R_L, ...
                                 t_L, ...
                                 dRt_L_dm_L, ...
-                                board_points_w);  %#ok<SPRIX>
+                                p_cb_ws);  %#ok<SPRIX>
 
         % Fill jacobian for right board ----------------------------------%
         % Right board is dependent on left board transformation and R_s
@@ -315,23 +315,23 @@ function delta_p = calc_delta_p(p,board_points_w,board_points_ps,update_idx,lamb
         t_R = R_s*t_L+t_s;
 
         % Intrinsic params
-        jacob(((i-1)*4+2)*size(board_points_w,1)+1:i*4*size(board_points_w,1),9:16) = ...
+        jacob(((i-1)*4+2)*size(p_cb_ws,1)+1:i*4*size(p_cb_ws,1),9:16) = ...
             alg.dp_m_dintrinsic(A_R, ...
                                 distortion_R, ...
                                 R_R, ...
                                 t_R, ...
-                                board_points_w); %#ok<SPRIX>
+                                p_cb_ws); %#ok<SPRIX>
 
         % Extrinsic params; do dRt_R_dm_L first
         dRt_R_dRt_L = blkdiag(R_s,R_s,R_s);
         dRt_R_dm_L = dRt_R_dRt_L*dRt_L_dm_L;
-        jacob(((i-1)*4+2)*size(board_points_w,1)+1:i*4*size(board_points_w,1),16+(i-1)*6+1:16+i*6) = ...
+        jacob(((i-1)*4+2)*size(p_cb_ws,1)+1:i*4*size(p_cb_ws,1),16+(i-1)*6+1:16+i*6) = ...
             alg.dp_m_dextrinsic(A_R, ...
                                 distortion_R, ...
                                 R_R, ...
                                 t_R, ...
                                 dRt_R_dm_L, ...
-                                board_points_w);  %#ok<SPRIX>
+                                p_cb_ws);  %#ok<SPRIX>
 
         % Do dRt_R_dm_s next
         dRt_R_dRt_s = [R_L(1,1)*eye(3) R_L(2,1)*eye(3) R_L(3,1)*eye(3) zeros(3);
@@ -340,15 +340,15 @@ function delta_p = calc_delta_p(p,board_points_w,board_points_ps,update_idx,lamb
         dR_s_deuler_s = alg.dR_deuler(alg.rot2euler(R_s));
         dRt_s_dm_s = blkdiag(dR_s_deuler_s,eye(3));
         dRt_R_dm_s = dRt_R_dRt_s*dRt_s_dm_s;
-        jacob(((i-1)*4+2)*size(board_points_w,1)+1:i*4*size(board_points_w,1),16+length(board_points_ps.L)*6+1:16+(length(board_points_ps.L)+1)*6) = ...
+        jacob(((i-1)*4+2)*size(p_cb_ws,1)+1:i*4*size(p_cb_ws,1),16+length(p_cb_pss.L)*6+1:16+(length(p_cb_pss.L)+1)*6) = ...
             alg.dp_m_dextrinsic(A_R, ...
                                 distortion_R, ...
                                 R_R, ...
                                 t_R, ...
                                 dRt_R_dm_s, ...
-                                board_points_w);  %#ok<SPRIX>
+                                p_cb_ws);  %#ok<SPRIX>
     end  
 
     % Get change in params using Levenberg–Marquardt update     
-    delta_p = -lscov(jacob(:,update_idx)'*jacob(:,update_idx)+lambda*eye(sum(update_idx)),jacob(:,update_idx)'*calc_res(p,board_points_w,board_points_ps));        
+    delta_p = -lscov(jacob(:,update_idx)'*jacob(:,update_idx)+lambda*eye(sum(update_idx)),jacob(:,update_idx)'*calc_res(p,p_cb_ws,p_cb_pss));        
 end

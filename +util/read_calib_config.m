@@ -31,14 +31,6 @@ function calib_config = read_calib_config(calib_config_path)
     %           refinement window. This will recompute the window_factor to
     %           meet the minimum specified length.
     %
-    %       refine_param_it_cutoff - int; number of iterations performed 
-    %           for refinement of calibration parameters
-    %       refine_param_norm_cutoff - scalar; cutoff for the difference in
-    %           norm of calibration parameters
-    %       refine_param_lambda_init - scalar; initial lambda for 
-    %           Levenberg–Marquardt algorithm
-    %       refine_param_lambda_factor - scalar; multiplicative factor for
-    %           lambda in Levenberg–Marquardt algorithm
     %
     %       four_point_detect_scaled_array_min_size - int; rescales input 
     %           array such that the smallest dimension is set to this
@@ -130,8 +122,8 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','num_targets_width'                      ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_int);
     field_info(end+1) = struct('field','target_spacing'                         ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','units'                                  ,'required',true ,'default',''                             ,'validation_fun',@validate_string);
-    field_info(end+1) = struct('field','four_point_height'                      ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','four_point_width'                       ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','height_fp'                              ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','width_fp'                               ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','target_mat'                             ,'required',false,'default',[]                             ,'validation_fun',@validate_target_mat);
     % Algorithmic info
     field_info(end+1) = struct('field','homography_it_cutoff'                   ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);

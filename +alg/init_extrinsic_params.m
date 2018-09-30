@@ -1,21 +1,17 @@
-function [R,t] = init_extrinsic_params(homography,A,board_points_p,calib_config)
-    % This will compute initial guesses for rotation and translation of a 
-    % single calibration board. It will first compute an initial linear 
-    % guess and then perform non-linear refinement.
+function [R, t] = init_extrinsic_params(H,A)
+    % This will compute initial guesses for the rotation and translation 
+    % of a single calibration board image using linear least squares.
     %
     % Inputs:
-    %   homography - array; 3x3 homography array. Note that homography(3,3)
-    %   should be positive (if computed through alg.homography(), it will 
-    %   be 1), which guarantees t(3) (translation in the z direction)
-    %   is positive.
+    %   H - array; 3x3 homography array. Note that homography(3,3) should
+    %       be positive, which guarantees t(3) (translation in the z 
+    %       direction) is positive.
     %   A - array; 3x3 array containing:
-    %       [alpha_x    0       x_o;
-    %        0          alpha_y y_o;
-    %        0          0       1]
-    %   board_points_p - array; Nx2 array of calibration board points in
-    %       pixel coordinates.
-    %   calib_config - struct; this is the struct returned by
-    %       util.read_calib_config()
+    %       [alpha 0     x_o;
+    %        0     alpha y_o;
+    %        0     0     1]
+    %   p_cb_ps - array; Nx2 array of calibration board points in pixel
+    %       coordinates.
     %
     % Outputs:
     %   R - array; 3x3 rotation matrix
@@ -23,7 +19,7 @@ function [R,t] = init_extrinsic_params(homography,A,board_points_p,calib_config)
     
     % Get initial guess --------------------------------------------------%
     % Remove intrinsics from homography
-    H_bar = A^-1*homography;
+    H_bar = A^-1*H;
     
     % Compute scaling factors
     lambda1 = norm(H_bar(:,1));
@@ -40,15 +36,4 @@ function [R,t] = init_extrinsic_params(homography,A,board_points_p,calib_config)
     
     % Compute translation - use average of both lambdas to normalize
     t = H_bar(:,3)./mean([lambda1 lambda2]);
-        
-    % Perform non-linear refinement --------------------------------------% 
-    [~,~,R,t] = alg.refine_single_params(A, ...  
-                                         [0 0 0 0]', ... % set distortions to zero
-                                         {R}, ...
-                                         {t}, ...
-                                         {board_points_p}, ...
-                                         'extrinsic', ...
-                                         calib_config);
-    R = R{1};
-    t = t{1};
 end

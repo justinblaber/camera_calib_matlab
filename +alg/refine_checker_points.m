@@ -1,13 +1,14 @@
-function [board_points_p, board_covs_p, idx_valid, debug] = refine_checker_points(array,f_xfm_w2p,opts,idx_init)
-    % Performs refinement of center of checker targets on an array.
+function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points(array_cb,f_xfm_w2p,opts,idx_init)
+    % Performs refinement of center of checker targets on a calibration
+    % board image array.
     %
     % Inputs:
-    %   array - array; MxN array
+    %   array_cb - array; MxN array
     %   f_xfm_w2p - function handle; function which transforms world
     %   	coordinates to pixel coordinates
     %   opts - struct;
-    %       .four_point_height - scalar; height of the "four point" box
-    %       .four_point_width - scalar; width of the "four point" box
+    %       .height_fp - scalar; height of the "four point" box
+    %       .width_fp - scalar; width of the "four point" box
     %       .num_targets_height - int; number of targets in the "height" 
     %           dimension
     %       .num_targets_width - int; number of targets in the "width"
@@ -29,14 +30,14 @@ function [board_points_p, board_covs_p, idx_valid, debug] = refine_checker_point
     %       .refine_checker_edges_norm_cutoff - scalar; cutoff for the 
     %           difference in norm of the parameter vector for "edges" 
     %           checker refinement
-    %       idx_init - array; logical indices which indicate which target 
-    %           points are valid 
+    %   idx_init - array; logical indices which indicate which target 
+    %       points are valid 
     %
     % Outputs:
-    %   board_points_p - array; Px2 array of optimized subpixel checker
-    %       points in pixel coordinates
-    %   board_covs_p - cell array; Px1 cell array of covariance matrices 
-    %       for detected corners
+    %   p_cb_ps - array; Px2 array of optimized subpixel checker points in
+    %       pixel coordinates
+    %   cov_cb_ps - cell array; Px1 cell array of covariance matrices of
+    %       checker points
     %   idx_valid - array; Px1 logical array of "valid" checker points
     %   debug - cell array; Px1 cell array of bounding boxes of the
     %       refinement windows
@@ -46,67 +47,67 @@ function [board_points_p, board_covs_p, idx_valid, debug] = refine_checker_point
     end
     
     % Get board points in world coordinates
-    board_points_w = alg.cb_points(opts);
+    p_cb_ws = alg.p_cb_w(opts);
     
     % Get array gradients
-    array_dx = alg.array_grad(array,'x');
-    array_dy = alg.array_grad(array,'y');
+    array_dx = alg.array_grad(array_cb,'x');
+    array_dy = alg.array_grad(array_cb,'y');
 
     % Cycle over points and refine them; also keep track of which indices
     % are "valid"
-    board_points_p = zeros(size(board_points_w));
-    board_covs_p = cell(size(board_points_w,1),1);
-    idx_valid = false(size(board_points_w,1),1);
-    for i = 1:size(board_points_w,1)
+    p_cb_ps = zeros(size(p_cb_ws));
+    cov_cb_ps = cell(size(p_cb_ws,1),1);
+    idx_valid = false(size(p_cb_ws,1),1);
+    for i = 1:size(p_cb_ws,1)
         if ~idx_init(i)
             continue
         end
         
         % Get point in world coordinates
-        p_w = board_points_w(i,:);
+        p_cb_w = p_cb_ws(i,:);
         
         % Convert point to pixel coordinates to get initial guess
-        p_p_init = f_xfm_w2p(p_w);
+        p_cb_p_init = f_xfm_w2p(p_cb_w);
         
         % Get half window of sub array
-        hw_sub_array = get_hw_sub_array(p_w, ...
-                                        f_xfm_w2p, ...
-                                        opts);
+        hw_p = get_half_window(p_cb_w, ...
+                               f_xfm_w2p, ...
+                               opts);
         
         % Perform initial refinement with "opencv" checker detection. This
         % method is pretty robust and reasonably accurate.
-        p_p_opencv = opencv(p_p_init, ...
-                            array_dx, ...
-                            array_dy, ...
-                            hw_sub_array, ...
-                            opts);
+        p_cb_p_opencv = opencv(p_cb_p_init, ...
+                               array_dx, ...
+                               array_dy, ...
+                               hw_p, ...
+                               opts);
        
-        % If "opencv" refinement failed, then p_p_opencv will be nans
-        if any(isnan(p_p_opencv))
+        % If "opencv" refinement failed, then p_cb_p_opencv will be nans
+        if any(isnan(p_cb_p_opencv))
             continue
         end
         
         % Perform final "edges" refinement
-        [p_p_edges, cov_p_edges, bb_sub_array_edges] = edges(p_p_opencv, ...
-                                                             p_w, ...
-                                                             f_xfm_w2p, ...
-                                                             array_dx, ...
-                                                             array_dy, ...
-                                                             hw_sub_array, ...
-                                                             opts);
+        [p_cb_p_edges, cov_cb_p_edges, bb_p_sub_edges] = edges(p_cb_p_opencv, ...
+                                                               p_cb_w, ...
+                                                               f_xfm_w2p, ...
+                                                               array_dx, ...
+                                                               array_dy, ...
+                                                               hw_p, ...
+                                                               opts);
 
-        % If "edges" refinement failed, then p_p_edges or cov_p_edges will 
-        % be nans
-        if ~any(isnan(p_p_edges)) && ~any(isnan(cov_p_edges(:)))
-            board_points_p(i,:) = p_p_edges;
-            board_covs_p{i} = cov_p_edges;
+        % If "edges" refinement failed, then p_cb_p_edges or cov_cb_p_edges
+        % will be nans
+        if ~any(isnan(p_cb_p_edges)) && ~any(isnan(cov_cb_p_edges(:)))
+            p_cb_ps(i,:) = p_cb_p_edges;
+            cov_cb_ps{i} = cov_cb_p_edges;
             idx_valid(i) = true;
-            debug{i} = bb_sub_array_edges; %#ok<AGROW>
+            debug{i} = bb_p_sub_edges; %#ok<AGROW>
         end
     end    
 end
 
-function hw_sub_array = get_hw_sub_array(p_w,f_xfm_w2p,opts)
+function hw_p = get_half_window(p_w,f_xfm_w2p,opts)
     % Get box around point in world coordinates
     % Note:
     %    p1 - l2 - p3
@@ -131,27 +132,27 @@ function hw_sub_array = get_hw_sub_array(p_w,f_xfm_w2p,opts)
     % Get shortest distance from lines to target point in pixel
     % coordinates
     p_p = f_xfm_w2p(p_w);        
-    d1 = alg.point_line_distance(p_p,l1_p);
-    d2 = alg.point_line_distance(p_p,l2_p);
-    d3 = alg.point_line_distance(p_p,l3_p);
-    d4 = alg.point_line_distance(p_p,l4_p);
+    d1_p = alg.point_line_distance(p_p,l1_p);
+    d2_p = alg.point_line_distance(p_p,l2_p);
+    d3_p = alg.point_line_distance(p_p,l3_p);
+    d4_p = alg.point_line_distance(p_p,l4_p);
 
     % Get minimum distance
-    d_min = min([d1 d2 d3 d4]);
+    d_p_min = min([d1_p d2_p d3_p d4_p]);
 
     % Get half width of circumscribed square, which should help prevent
     % neighboring checkers from being inside the square.
-    hw_sub_array = floor(d_min/sqrt(2));
-    if hw_sub_array < opts.refine_checker_min_hw
+    hw_p = floor(d_p_min/sqrt(2));
+    if hw_p < opts.refine_checker_min_hw
         warning(['Minimum half width set, check to make sure checkers ' ...
                  'in this image are not too small.']);
-        hw_sub_array = opts.refine_checker_min_hw;
-    elseif hw_sub_array > opts.refine_checker_max_hw
-        hw_sub_array = opts.refine_checker_max_hw;
+        hw_p = opts.refine_checker_min_hw;
+    elseif hw_p > opts.refine_checker_max_hw
+        hw_p = opts.refine_checker_max_hw;
     end
 end
 
-function p_p = opencv(p_p_init,array_dx,array_dy,hw_sub_array,opts)
+function p_p = opencv(p_p_init,array_dx,array_dy,hw_p,opts)
     % Initialize
     p_p = p_p_init;
 
@@ -159,54 +160,54 @@ function p_p = opencv(p_p_init,array_dx,array_dy,hw_sub_array,opts)
     for it = 1:opts.refine_checker_opencv_it_cutoff            
         % Get bounding box of sub array
         p_p_rounded = round(p_p);
-        bb_sub_array = [p_p_rounded(1)-hw_sub_array p_p_rounded(2)-hw_sub_array;
-                        p_p_rounded(1)+hw_sub_array p_p_rounded(2)+hw_sub_array];
+        bb_p_sub = [p_p_rounded(1)-hw_p p_p_rounded(2)-hw_p;
+                    p_p_rounded(1)+hw_p p_p_rounded(2)+hw_p];
 
         % Check bounds
-        if bb_sub_array(1,1) < 1 || bb_sub_array(2,1) > size(array_dx,2) || ...
-           bb_sub_array(1,2) < 1 || bb_sub_array(2,2) > size(array_dx,1)
+        if bb_p_sub(1,1) < 1 || bb_p_sub(2,1) > size(array_dx,2) || ...
+           bb_p_sub(1,2) < 1 || bb_p_sub(2,2) > size(array_dx,1)
             % An output with nans indicates that this process failed
             p_p = nan(1,2);
             return
         end
 
         % Get sub arrays
-        sub_array_dx = array_dx(bb_sub_array(1,2):bb_sub_array(2,2), ...
-                                bb_sub_array(1,1):bb_sub_array(2,1));
-        sub_array_dy = array_dy(bb_sub_array(1,2):bb_sub_array(2,2), ...
-                                bb_sub_array(1,1):bb_sub_array(2,1));
+        sub_array_dx = array_dx(bb_p_sub(1,2):bb_p_sub(2,2), ...
+                                bb_p_sub(1,1):bb_p_sub(2,1));
+        sub_array_dy = array_dy(bb_p_sub(1,2):bb_p_sub(2,2), ...
+                                bb_p_sub(1,1):bb_p_sub(2,1));
 
         % Cache previous point
-        p_prev = p_p;
+        p_p_prev = p_p;
 
         % Get refined point; note that coordinates will be WRT sub_array.
         p_p_sub = alg.refine_checker_opencv(sub_array_dx, ...
                                             sub_array_dy, ...
-                                            p_p - bb_sub_array(1,:) + 1);
+                                            p_p - bb_p_sub(1,:) + 1);
 
         % Get point in array coordinates.
-        p_p = p_p_sub + bb_sub_array(1,:) - 1;    
+        p_p = p_p_sub + bb_p_sub(1,:) - 1;    
         
         % Exit if change in distance is small
-        diff_norm = norm(p_prev-p_p);
+        diff_norm = norm(p_p_prev-p_p);
         if diff_norm < opts.refine_checker_opencv_norm_cutoff
             break
         end
     end
 end
 
-function [p_p, cov_p, bb_sub_array] = edges(p_p_init,p_w,f_xfm_w2p,array_dx,array_dy,hw_sub_array,opts)
+function [p_p, cov_p, bb_p_sub] = edges(p_p_init,p_w,f_xfm_w2p,array_dx,array_dy,hw_p,opts)
     % Initialize
     p_p = p_p_init;
     
     % Get bounding box of sub array
     p_p_rounded = round(p_p);
-    bb_sub_array = [p_p_rounded(1)-hw_sub_array p_p_rounded(2)-hw_sub_array;
-                    p_p_rounded(1)+hw_sub_array p_p_rounded(2)+hw_sub_array];
+    bb_p_sub = [p_p_rounded(1)-hw_p p_p_rounded(2)-hw_p;
+                p_p_rounded(1)+hw_p p_p_rounded(2)+hw_p];
 
     % Check bounds
-    if bb_sub_array(1,1) < 1 || bb_sub_array(2,1) > size(array_dx,2) || ...
-       bb_sub_array(1,2) < 1 || bb_sub_array(2,2) > size(array_dx,1)
+    if bb_p_sub(1,1) < 1 || bb_p_sub(2,1) > size(array_dx,2) || ...
+       bb_p_sub(1,2) < 1 || bb_p_sub(2,2) > size(array_dx,1)
         % An output with nans indicates that this process failed
         p_p = nan(1,2);
         cov_p = nan(2);
@@ -214,10 +215,10 @@ function [p_p, cov_p, bb_sub_array] = edges(p_p_init,p_w,f_xfm_w2p,array_dx,arra
     end
 
     % Get sub arrays
-    sub_array_dx = array_dx(bb_sub_array(1,2):bb_sub_array(2,2), ...
-                            bb_sub_array(1,1):bb_sub_array(2,1));
-    sub_array_dy = array_dy(bb_sub_array(1,2):bb_sub_array(2,2), ...
-                            bb_sub_array(1,1):bb_sub_array(2,1));
+    sub_array_dx = array_dx(bb_p_sub(1,2):bb_p_sub(2,2), ...
+                            bb_p_sub(1,1):bb_p_sub(2,1));
+    sub_array_dy = array_dy(bb_p_sub(1,2):bb_p_sub(2,2), ...
+                            bb_p_sub(1,1):bb_p_sub(2,1));
 
     % Get diamond around point in world coordinates
     % Note:
@@ -235,22 +236,21 @@ function [p_p, cov_p, bb_sub_array] = edges(p_p_init,p_w,f_xfm_w2p,array_dx,arra
     diamond_p = f_xfm_w2p(diamond_w);            
 
     % Get points in sub array coordinates
-    diamond_p_sub = diamond_p - bb_sub_array(1,:) + 1;
+    diamond_p_sub = diamond_p - bb_p_sub(1,:) + 1;
 
     % Get initial line estimates
-    l1_p = alg.pointslope2line(p_p - bb_sub_array(1,:) + 1, ...
-                               (diamond_p_sub(4,2)-diamond_p_sub(1,2))/(diamond_p_sub(4,1)-diamond_p_sub(1,1)));
-    l2_p = alg.pointslope2line(p_p - bb_sub_array(1,:) + 1, ...
-                               (diamond_p_sub(3,2)-diamond_p_sub(2,2))/(diamond_p_sub(3,1)-diamond_p_sub(2,1)));
+    l1_p_sub = alg.pointslope2line(p_p - bb_p_sub(1,:) + 1, ...
+                                   (diamond_p_sub(4,2)-diamond_p_sub(1,2))/(diamond_p_sub(4,1)-diamond_p_sub(1,1)));
+    l2_p_sub = alg.pointslope2line(p_p - bb_p_sub(1,:) + 1, ...
+                                   (diamond_p_sub(3,2)-diamond_p_sub(2,2))/(diamond_p_sub(3,1)-diamond_p_sub(2,1)));
 
-    % Get refined point; note that coordinates will be WRT
-    % sub_array.
+    % Get refined point; note that coordinates will be WRT sub_array.
     [p_p_sub, cov_p] = alg.refine_checker_edges(sub_array_dx, ...
                                                 sub_array_dy, ...
-                                                l1_p, ...
-                                                l2_p, ...
+                                                l1_p_sub, ...
+                                                l2_p_sub, ...
                                                 opts);
     
     % Get point in array coordinates.
-    p_p = p_p_sub + bb_sub_array(1,:) - 1;  
+    p_p = p_p_sub + bb_p_sub(1,:) - 1;  
 end

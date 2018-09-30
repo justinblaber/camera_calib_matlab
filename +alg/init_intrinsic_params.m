@@ -1,4 +1,4 @@
-function A = init_intrinsic_params(homographies,width,height)
+function A = init_intrinsic_params(Hs,width,height)
     % This will initialize the intrinsic parameters of a given set of 
     % homographies. This assumes a single alpha and that the principle
     % point is at the center of the image. 
@@ -7,7 +7,7 @@ function A = init_intrinsic_params(homographies,width,height)
     % good results from the tests I've done.
     %
     % Inputs:
-    %   homographies - cell; cell of 3x3 homographies
+    %   Hs - cell; cell of 3x3 homographies
     %   width - scalar; width of the calibration board image
     %   height - scalar; height of the calibration board image
     %
@@ -17,10 +17,10 @@ function A = init_intrinsic_params(homographies,width,height)
     %        0        alpha   y_o;
     %        0        0       1]
     %
-    %       alpha - positive scalar; alpha = f*kx = f*ky
+    %       alpha - positive scalar; alpha = f*k
     %       x_o - scalar; x component of image center
     %       y_o - scalar; y component of image center
-    
+        
     % Set principle point
     x_o = (width+1)/2;
     y_o = (height+1)/2;
@@ -32,11 +32,11 @@ function A = init_intrinsic_params(homographies,width,height)
                0 0  1];
            
     % Fill A and b
-    A = zeros(2*length(homographies),1);
-    b = zeros(2*length(homographies),1);
-    for i = 1:length(homographies)
+    A = zeros(2*length(Hs),1);
+    b = zeros(2*length(Hs),1);
+    for i = 1:length(Hs)
         % Remove principle point from homography
-        H_bar = p_o_inv*homographies{i};
+        H_bar = p_o_inv*Hs{i};
         
         % Get orthogonal vanishing points
         v1 = H_bar(:,1);

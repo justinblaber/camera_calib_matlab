@@ -19,8 +19,8 @@ function plot_stereo_extrinsic(rotations,translations,R_s,t_s,colors,alphas,cali
     % Plot calibration boards
     % Note that xform is applied to get the calibration board in the coordinates
     % of the left camera
-    height_offset = (calib_config.four_point_height-calib_config.num_targets_height*calib_config.target_spacing)/2;
-    width_offset = (calib_config.four_point_width-calib_config.num_targets_width*calib_config.target_spacing)/2;
+    height_offset = (calib_config.height_fp-calib_config.num_targets_height*calib_config.target_spacing)/2;
+    width_offset = (calib_config.width_fp-calib_config.num_targets_width*calib_config.target_spacing)/2;
     for i = 1:length(rotations.L)    
         % Get affine xform
         xform = [rotations.L{i} translations.L{i}; zeros(1,3) 1];

@@ -14,8 +14,8 @@ function plot_cb_img_calib_2D(calib,idx_board,a)
     switch calib.config.calibration_target
         case 'checker'
             % Plot border around checkers
-            height_offset = (calib.config.four_point_height-calib.config.num_targets_height*calib.config.target_spacing)/2;
-            width_offset = (calib.config.four_point_width-calib.config.num_targets_width*calib.config.target_spacing)/2;
+            height_offset = (calib.config.height_fp-calib.config.num_targets_height*calib.config.target_spacing)/2;
+            width_offset = (calib.config.width_fp-calib.config.num_targets_width*calib.config.target_spacing)/2;
             for i = 1:calib.config.num_targets_width
                 for j = 1:calib.config.num_targets_height            
                     % Get checker coords
@@ -107,7 +107,7 @@ function plot_cb_img_calib_2D(calib,idx_board,a)
                              calib.intrin.distortion, ...
                              calib.extrin(idx_board).rotation, ...
                              calib.extrin(idx_board).translation, ...
-                             alg.cb_points(calib.config));    
+                             alg.p_cb_w(calib.config));    
     quiver(calib.extrin(idx_board).board_points_p(:,1), ...
            calib.extrin(idx_board).board_points_p(:,2), ...
            board_points_m(:,1)-calib.extrin(idx_board).board_points_p(:,1), ...

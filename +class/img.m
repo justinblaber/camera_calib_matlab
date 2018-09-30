@@ -1,5 +1,5 @@
 classdef img < handle
-% This is the class definition for an image file.
+    % This is the class definition for an image file.
     
     properties(Access = private)
         path    % string

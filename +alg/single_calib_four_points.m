@@ -35,7 +35,7 @@ function calib = single_calib_four_points(img_cbs,p_fp_p_dss,calib_config,intrin
         if it == 1
             for i = 1:length(img_cbs) 
                 % Get four point box in pixel coordinates
-                if exist('intrin','var')
+                if exist('A','var') && exist('d','var')
                     % Apply inverse distortion to "four points" if
                     % intrinsics are already passed in
                     p_fp_ps = alg.inv_p_p_d_f(f_p_p_d, ...
@@ -66,12 +66,18 @@ function calib = single_calib_four_points(img_cbs,p_fp_p_dss,calib_config,intrin
 
             % Get calibration board image array and the transform from 
             % world to pixel coordinates.
-            if exist('d','var')
-                error('Distortion refinement not implemented yet!');
+            if exist('A','var') && exist('d','var')
+                % "undo" distortion on image
+                array_cb = undistort_array(img_cbs(i).get_array_gs(), ...
+                                           f_p_p_d, ...
+                                           A, ...
+                                           d, ...
+                                           calib_config);
             else
+                % If no distortion is provided, assume distortion is small
                 array_cb = img_cbs(i).get_array_gs();
-                f_xfm_w2p = @(p)(alg.apply_homography_p2p(H_w2ps{i},p));
             end
+            f_xfm_w2p = @(p)(alg.apply_homography_p2p(H_w2ps{i},p));
 
             % Get point refinement function
             switch calib_config.target_type
@@ -88,15 +94,6 @@ function calib = single_calib_four_points(img_cbs,p_fp_p_dss,calib_config,intrin
                                                                                      f_xfm_w2p, ...
                                                                                      calib_config, ...
                                                                                      calib_config.target_mat(:)); %#ok<AGROW>
-
-            % Apply distortion to points and covariances
-            if exist('d','var')
-                error('Distortion refinement not implemented yet!');
-                
-                % Use taylor approximation and distortion jacobian to
-                % estimate new covariances
-                
-            end
                                                                                           
             time = toc(t);
             fprintf(['Time ellapsed: %f seconds.' newline],time);        
@@ -154,6 +151,13 @@ function calib = single_calib_four_points(img_cbs,p_fp_p_dss,calib_config,intrin
                 d = zeros(4,1); % Assume low initial distortion
             end
         end
+        
+        % Apply distortion to points and covariances
+        d_cell = num2cell(d);
+        p_cb_p_ds = f_p_p_d(x_p_bar,y_p_bar,alpha,x_o,y_o,d_cell{:});
+
+        % Use taylor approximation and distortion jacobian to
+        % estimate new covariances
 
         % Perform nonlinear refinement of all parameters -----------------%        
         disp('---');
@@ -162,7 +166,7 @@ function calib = single_calib_four_points(img_cbs,p_fp_p_dss,calib_config,intrin
                                                d, ...
                                                Rs, ...
                                                ts, ...
-                                               p_cb_pss, ...
+                                               p_cb_p_ds, ...
                                                optimization_type, ...
                                                calib_config);
                                            

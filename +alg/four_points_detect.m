@@ -192,7 +192,7 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
             cost_sub_array_ellipse = (cost_sub_array_ellipse - min(cost_sub_array_ellipse(:)))/(max(cost_sub_array_ellipse(:)) - min(cost_sub_array_ellipse(:)));
             x = cost_scale_factor*(p(3)*cos(p(5))*cos(ellipse_theta_samples) - p(4)*sin(p(5))*sin(ellipse_theta_samples) + (p(1)-sub_array_l+1) - 1/2*(1-1/cost_scale_factor));
             y = cost_scale_factor*(p(3)*sin(p(5))*cos(ellipse_theta_samples) + p(4)*cos(p(5))*sin(ellipse_theta_samples) + (p(2)-sub_array_t+1) - 1/2*(1-1/cost_scale_factor));
-            ellipse_costs(end+1) = min(alg.array_interp(cost_sub_array_ellipse,[x' y'],'linear')); %#ok<AGROW>
+            ellipse_costs(end+1) = min(alg.interp_array(cost_sub_array_ellipse,[x' y'],'linear')); %#ok<AGROW>
 
             % Store ellipse
             ellipses(end+1).x = p(1); %#ok<AGROW>
@@ -253,7 +253,7 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
         end
             
         % Resample
-        polar_patch = alg.array_interp(array, p_affine', 'linear');
+        polar_patch = alg.interp_array(array, p_affine', 'linear');
         polar_patches{i} = reshape(polar_patch,marker_config.theta_num_samples,[]);    
     end
     

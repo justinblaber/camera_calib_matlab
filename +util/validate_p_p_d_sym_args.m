@@ -1,4 +1,4 @@
-function validate_sym_p_p_d_args(sym_p_p_d)
+function validate_p_p_d_sym_args(sym_p_p_d)
     % Makes sure input symbolic function is a valid distortion function
     %
     % Inputs:

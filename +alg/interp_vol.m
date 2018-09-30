@@ -1,4 +1,4 @@
-function vals = vol_interp(vol,points,method)
+function vals = interp_vol(vol,points,method)
     % Interpolates volume at specified points.
     %
     % Inputs:

@@ -1,4 +1,4 @@
-function validate_f_p_p_d_args(f_p_p_d)
+function validate_p_p_d_f_args(f_p_p_d)
     % Makes sure input function handle is a valid distortion function
     %
     % Inputs:

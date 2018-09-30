@@ -21,8 +21,8 @@ function plot_cb_board_3D(calib_config,xform,color,alpha,a)
             patch_x_white = [];
             patch_y_white = [];
             patch_z_white = [];
-            height_offset = (calib_config.four_point_height-calib_config.num_targets_height*calib_config.target_spacing)/2;
-            width_offset = (calib_config.four_point_width-calib_config.num_targets_width*calib_config.target_spacing)/2;
+            height_offset = (calib_config.height_fp-calib_config.num_targets_height*calib_config.target_spacing)/2;
+            width_offset = (calib_config.width_fp-calib_config.num_targets_width*calib_config.target_spacing)/2;
             for j = 1:calib_config.num_targets_width
                 for k = 1:calib_config.num_targets_height            
                     % Get checker coords

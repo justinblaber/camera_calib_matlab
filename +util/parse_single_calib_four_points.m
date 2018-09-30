@@ -46,8 +46,8 @@ function [calib,calib_raw] = parse_single_calib_four_points(calib_raw,suffix)
     translations = cell_check(translations);
     [four_points_ps, calib_raw] = read_and_remove(calib_raw,['four_points_p' suffix]);
     four_points_ps = cell_check(four_points_ps);   
-    [board_points_ps, calib_raw] = read_and_remove(calib_raw,['board_points_p' suffix]);
-    board_points_ps = cell_check(board_points_ps); 
+    [p_cb_pss, calib_raw] = read_and_remove(calib_raw,['board_points_p' suffix]);
+    p_cb_pss = cell_check(p_cb_pss); 
     [homographies_refine, calib_raw] = read_and_remove(calib_raw,['homography_refine' suffix]);
     homographies_refine = cell_check(homographies_refine);
     
@@ -57,7 +57,7 @@ function [calib,calib_raw] = parse_single_calib_four_points(calib_raw,suffix)
         calib.extrin(i).rotation = rotations{i};
         calib.extrin(i).translation = translations{i};
         calib.extrin(i).four_points_p = four_points_ps{i}';   % Must transpose
-        calib.extrin(i).board_points_p = board_points_ps{i}'; % Must transpose
+        calib.extrin(i).board_points_p = p_cb_pss{i}'; % Must transpose
         calib.extrin(i).debug.homography_refine = homographies_refine{i};
     end
 end

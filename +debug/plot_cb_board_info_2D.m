@@ -9,7 +9,7 @@ function plot_cb_board_info_2D(calib_config,a)
     cla(a);
     
     % Get board points in world coordinates
-    [board_points_w, four_points_w] = alg.cb_points(calib_config);
+    [p_cb_ws, four_points_w] = alg.p_cb_w(calib_config);
     
     % Format axes
     padding = calib_config.target_spacing/2;
@@ -22,8 +22,8 @@ function plot_cb_board_info_2D(calib_config,a)
     switch calib_config.calibration_target
         case 'checker'
             % Plot patches
-            height_offset = (calib_config.four_point_height-calib_config.num_targets_height*calib_config.target_spacing)/2;
-            width_offset = (calib_config.four_point_width-calib_config.num_targets_width*calib_config.target_spacing)/2;
+            height_offset = (calib_config.height_fp-calib_config.num_targets_height*calib_config.target_spacing)/2;
+            width_offset = (calib_config.width_fp-calib_config.num_targets_width*calib_config.target_spacing)/2;
             for i = 1:calib_config.num_targets_width
                 for j = 1:calib_config.num_targets_height
                     % Get checker color; only odd # of checkers are allowed on
@@ -69,9 +69,9 @@ function plot_cb_board_info_2D(calib_config,a)
          'FontWeight','bold','parent',a);
     
     % Plot board points    
-    plot(board_points_w(:,1),board_points_w(:,2),'gs','MarkerSize',12, ...
+    plot(p_cb_ws(:,1),p_cb_ws(:,2),'gs','MarkerSize',12, ...
          'MarkerFaceColor','w','parent',a);
-    text(board_points_w(:,1),board_points_w(:,2),cellstr(num2str([1:size(board_points_w,1)]')), ...
+    text(p_cb_ws(:,1),p_cb_ws(:,2),cellstr(num2str([1:size(p_cb_ws,1)]')), ...
          'FontSize',6,'HorizontalAlignment','center','color','k','parent',a); %#ok<NBRAK>
     
     % Plot four points 

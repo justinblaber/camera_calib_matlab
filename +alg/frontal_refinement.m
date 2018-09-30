@@ -36,8 +36,8 @@ function board_points_p_refined = frontal_refinement(array,A,distortion,R,t,cali
     array_frontal_height_w = num_targets_frontal_height * calib_config.target_spacing;
 
     % Get world coordinates of bounding box of frontal image
-    x_frontal_top_left_w = calib_config.four_point_width/2 - array_frontal_width_w/2;
-    y_frontal_top_left_w = calib_config.four_point_height/2 - array_frontal_height_w/2;
+    x_frontal_top_left_w = calib_config.width_fp/2 - array_frontal_width_w/2;
+    y_frontal_top_left_w = calib_config.height_fp/2 - array_frontal_height_w/2;
 
     x_frontal_bottom_right_w = x_frontal_top_left_w + array_frontal_width_w;
     y_frontal_bottom_right_w = y_frontal_top_left_w + array_frontal_height_w;
@@ -64,9 +64,9 @@ function board_points_p_refined = frontal_refinement(array,A,distortion,R,t,cali
                             array_frontal_width);
 
     % Convert board points to frontal pixel space
-    board_points_w = alg.cb_points(calib_config);
-    board_points_x_w = board_points_w(:,1);
-    board_points_y_w = board_points_w(:,2);
+    p_cb_ws = alg.p_cb_w(calib_config);
+    board_points_x_w = p_cb_ws(:,1);
+    board_points_y_w = p_cb_ws(:,2);
 
     board_points_x_frontal_p = (board_points_x_w-x_frontal_top_left_w)./array_frontal_width_w*(array_frontal_width-1)+1;
     board_points_y_frontal_p = (board_points_y_w-y_frontal_top_left_w)./array_frontal_height_w*(array_frontal_height-1)+1;
@@ -76,7 +76,7 @@ function board_points_p_refined = frontal_refinement(array,A,distortion,R,t,cali
         case 'checker'
             board_points_frontal_p_refined = alg.refine_checkers([board_points_x_frontal_p, board_points_y_frontal_p], ...
                                                                  array_frontal, ...
-                                                                 alg.homography(board_points_w,[board_points_x_frontal_p board_points_y_frontal_p],calib_config), ...
+                                                                 alg.homography(p_cb_ws,[board_points_x_frontal_p board_points_y_frontal_p],calib_config), ...
                                                                  calib_config);
         otherwise
             error(['Calibration target: "' calib_config.calibration_target '" is not supported.']);
@@ -86,13 +86,13 @@ function board_points_p_refined = frontal_refinement(array,A,distortion,R,t,cali
     board_points_frontal_p_refined_x = board_points_frontal_p_refined(:,1);
     board_points_frontal_p_refined_y = board_points_frontal_p_refined(:,2);
 
-    board_points_w_refined_x = (board_points_frontal_p_refined_x-1)./(array_frontal_width-1)*array_frontal_width_w+x_frontal_top_left_w;
-    board_points_w_refined_y = (board_points_frontal_p_refined_y-1)./(array_frontal_height-1)*array_frontal_height_w+y_frontal_top_left_w;
+    p_cb_ws_refined_x = (board_points_frontal_p_refined_x-1)./(array_frontal_width-1)*array_frontal_width_w+x_frontal_top_left_w;
+    p_cb_ws_refined_y = (board_points_frontal_p_refined_y-1)./(array_frontal_height-1)*array_frontal_height_w+y_frontal_top_left_w;
 
     % Re-project world coordinate points to distorted pixel coordinates
     board_points_p_refined = alg.p_m(A, ...
                                      distortion, ...
                                      R, ...
                                      t, ...
-                                     [board_points_w_refined_x board_points_w_refined_y]);
+                                     [p_cb_ws_refined_x p_cb_ws_refined_y]);
 end

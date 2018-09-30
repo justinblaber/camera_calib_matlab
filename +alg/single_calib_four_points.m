@@ -1,43 +1,76 @@
-function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config,intrin)
+function calib = single_calib_four_points(img_cbs,p_fp_p_dss,calib_config,intrin)
     % Performs camera calibration (mostly from Zhang's paper, some stuff
     % adapted from Bouguet's toolbox, and some stuff I've added myself)
-                                                             
+    
     disp('---');
-    disp('Performing single calibration...');       
+    disp('Performing single calibration...');
         
-    % Get calibration board points and four point boxes in world coordinates
-    [board_points_w, four_points_w] = alg.cb_points(calib_config);
-    
-    % Initialize homographies using four point boxes in pixel coordinates %
-    for i = 1:length(cb_imgs)
-        homographies{i} = alg.homography_p2p(four_points_w, ...
-                                             four_points_ps{i}, ...
-                                             calib_config); %#ok<AGROW>
+    % If intrinsics are passed in, don't optimize for them
+    if exist('intrin','var')
+        A = intrin.A;
+        d = intrin.d;
+        optimization_type = 'extrinsic';
+        distortion_refinement_it_cutoff = 1;
+    else
+        optimization_type = 'full';
+        distortion_refinement_it_cutoff = calib_config.distortion_refinement_it_cutoff;
     end
-        
-    % Perform distortion refinement iterations
-    for it = 1:calib_config.distortion_refinement_it_cutoff
-        disp(['Performing distortion refinement iteration: ' num2str(it) '...']);
     
-        % Get sub-pixel calibration board points -------------------------%
+    % Get the calibration board points and the four point box on the 
+    % calibration board in world coordinates.
+    [p_cb_ws, p_fp_ws] = alg.p_cb_w(calib_config);
+    
+    % Get function handles for distortion function and its derivatives    
+    f_p_p_d = matlabFunction(calib_config.sym_p_p_d);
+    f_dp_p_d_dp_p_bar = matlabFunction(alg.diff_vars(calib_config.sym_p_p_d,{'x_p_bar','y_p_bar'}));  
+    
+    % Perform distortion refinement iterations, which iteratively applies
+    % distortion correction to images to help refine target point locations
+    for it = 1:distortion_refinement_it_cutoff
+        disp(['Performing distortion refinement iteration: ' num2str(it) '...']);
+             
+        % Get sub pixel calibration board points -------------------------%        
+        % For first iteration, initialize homographies from world to pixel
+        % coordinates using four point boxes
+        if it == 1
+            for i = 1:length(img_cbs) 
+                % Get four point box in pixel coordinates
+                if exist('intrin','var')
+                    % Apply inverse distortion to "four points" if
+                    % intrinsics are already passed in
+                    p_fp_ps = alg.inv_p_p_d_f(f_p_p_d, ...
+                                              f_dp_p_d_dp_p_bar, ...
+                                              p_fp_p_dss{i}, ... % Use distorted points for initial guess
+                                              p_fp_p_dss{i}, ...
+                                              A, ...
+                                              d, ...
+                                              calib_config);
+                else
+                    % Assume small distortion if intrinsics aren't
+                    % initially provided
+                    p_fp_ps = p_fp_p_dss{i};
+                end
+                
+                % Compute homography
+                H_w2ps{i} = alg.homography_p2p(p_fp_ws, ...
+                                               p_fp_ps, ...
+                                               calib_config); %#ok<AGROW>
+            end
+        end
+        
+        % Get calibration board points
         disp('---');
-        for i = 1:length(cb_imgs)    
+        for i = 1:length(img_cbs)    
             t = tic;
-            fprintf('Refining "%s" points for: %s. ',calib_config.calibration_target,cb_imgs(i).get_path());
+            fprintf(['Refining "' calib_config.calibration_target '" points for: ' img_cbs(i).get_path() '. ']);
 
             % Get calibration board image array and the transform from 
             % world to pixel coordinates.
-            if it == 1
-                % For first iteration, use original image and homography to 
-                % approximate the transform from world to undistorted pixel 
-                % coordinates; this assumes low distortion.
-                array = cb_imgs(i).get_array_gs();
-                f_xfm_w2p = @(p)(alg.apply_homography_p2p(homographies{i},p));
-            else
-                % For iterations after first, correct the calibration 
-                % board image for distortion and use the transform from 
-                % world to undistorted pixel coordinates.
+            if exist('d','var')
                 error('Distortion refinement not implemented yet!');
+            else
+                array_cb = img_cbs(i).get_array_gs();
+                f_xfm_w2p = @(p)(alg.apply_homography_p2p(H_w2ps{i},p));
             end
 
             % Get point refinement function
@@ -51,17 +84,14 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config,in
             end
 
             % Refine points
-            [board_points_ps{i}, board_covs_ps{i}, idx_valids{i}, debug{i}] = f_refine_points(array, ...
-                                                                                              f_xfm_w2p, ...
-                                                                                              calib_config, ...
-                                                                                              calib_config.target_mat(:)); %#ok<AGROW>
+            [p_cb_pss{i}, cov_cb_pss{i}, idx_valids{i}, debugs{i}] = f_refine_points(array_cb, ...
+                                                                                     f_xfm_w2p, ...
+                                                                                     calib_config, ...
+                                                                                     calib_config.target_mat(:)); %#ok<AGROW>
 
-            % If distortion refinement was used, then apply distortion to 
-            % points and covariances to bring them into distorted pixel 
-            % coordinates
-            if it > 1
+            % Apply distortion to points and covariances
+            if exist('d','var')
                 error('Distortion refinement not implemented yet!');
-                % Apply distortion to points
                 
                 % Use taylor approximation and distortion jacobian to
                 % estimate new covariances
@@ -72,102 +102,90 @@ function calib = single_calib_four_points(cb_imgs,four_points_ps,calib_config,in
             fprintf(['Time ellapsed: %f seconds.' newline],time);        
         end
 
-        % Update homographies using refined points -----------------------%
-        for i = 1:length(cb_imgs)     
-            % Get the homography estimation function
-            switch calib_config.target_type
-                case 'checker'
-                    % Use "point to point" homography estimation
-                    f_homography = @alg.homography_p2p;
-                case 'circle'
-                    % Use "circle to ellipse" homography estimation
-                    f_homography = @alg.homography_c2e;                
-                otherwise
-                    error(['Unknown target type: "' calib_config.target_type '"']);
-            end 
+        % Get initial intrinsic and extrinsic parameters -----------------%     
+        if it == 1
+            % Update homographies using refined points
+            for i = 1:length(img_cbs)     
+                % Get the homography estimation function
+                switch calib_config.target_type
+                    case 'checker'
+                        % Use "point to point" homography estimation
+                        f_homography = @alg.homography_p2p;
+                    case 'circle'
+                        % Use "circle to ellipse" homography estimation
+                        f_homography = @alg.homography_c2e;                
+                    otherwise
+                        error(['Unknown target type: "' calib_config.target_type '"']);
+                end 
 
-            % Compute homography 
-            if calib_config.apply_covariance_optimization
-                % Use covariance matrix in homography estimation
-                homographies{i} = f_homography(board_points_w(idx_valids{i},:), ...
-                                               board_points_ps{i}(idx_valids{i},:), ...
-                                               calib_config, ...
-                                               blkdiag(board_covs_ps{i}{idx_valids{i}})); % This is full covariance matrix
-            else
-                homographies{i} = f_homography(board_points_w(idx_valids{i},:), ...
-                                               board_points_ps{i}(idx_valids{i},:), ...
-                                               calib_config); 
+                % Compute homography 
+                if calib_config.apply_covariance_optimization
+                    % Use covariance matrix in homography estimation
+                    H_w2ps{i} = f_homography(p_cb_ws(idx_valids{i},:), ...
+                                             p_cb_pss{i}(idx_valids{i},:), ...
+                                             calib_config, ...
+                                             blkdiag(cov_cb_pss{i}{idx_valids{i}})); % This is full covariance matrix
+                else
+                    H_w2ps{i} = f_homography(p_cb_ws(idx_valids{i},:), ...
+                                             p_cb_pss{i}(idx_valids{i},:), ...
+                                             calib_config); 
+                end
+            end    
+
+            % Get initial guess for camera matrix
+            if ~exist('A','var')
+                A = alg.init_intrinsic_params(H_w2ps, ...
+                                              img_cbs(1).get_width(), ...
+                                              img_cbs(1).get_height()); 
             end
-        end    
 
-        % Get initial guess for camera matrix
-        if exist('intrin','var')
-            A_init = intrin.A;
-        else
-            % Use homographies to obtain initial guess for camera matrix
-            A_init = alg.init_intrinsic_params(homographies, ...
-                                               cb_imgs(1).get_width(), ...
-                                               cb_imgs(1).get_height()); 
-        end
-                
-        % Get initial guess for extrinsic camera parameters (R and t) per homography
-        rotations = {};
-        translations = {};
-        for i = 1:length(cb_imgs)
-            [rotations{i}, translations{i}] = alg.init_extrinsic_params(homographies{i}, ...
-                                                                        A_init, ...
-                                                                        board_points_ps{i}, ...
-                                                                        calib_config); %#ok<AGROW>
+            % Get initial guess for extrinsics        
+            if ~exist('Rs','var') && ~exist('ts','var')
+                Rs = {};
+                ts = {};
+                for i = 1:length(img_cbs)
+                    [Rs{i}, ts{i}] = alg.init_extrinsic_params(H_w2ps{i}, A); %#ok<AGROW>
+                end
+            end
+            
+            % Get initial distortion parameters
+            if ~exist('d','var')
+                % TODO - base number of params on f_distortion
+                d = zeros(4,1); % Assume low initial distortion
+            end
         end
 
-        % Perform nonlinear refinement of all parameters -----------------%
-
-        % Get initial guess for distortions
-        if exist('intrin','var')
-            distortion_init = intrin.distortion;
-        else
-            % Assume zero lens distortion
-            distortion_init = zeros(4,1);
-        end
-
-        % Perform optimization    
-        if exist('intrin','var')
-            optimization_type = 'extrinsic';
-        else
-            optimization_type = 'full';
-        end
-
+        % Perform nonlinear refinement of all parameters -----------------%        
         disp('---');
         disp('Refining single parameters...');
-        [A,distortion,rotations,translations] = alg.refine_single_params(A_init, ... 
-                                                                         distortion_init, ...
-                                                                         rotations, ...
-                                                                         translations, ...
-                                                                         board_points_ps, ...
-                                                                         optimization_type, ...
-                                                                         calib_config);  
-
+        [A,d,Rs,ts] = alg.refine_single_params(A, ... 
+                                               d, ...
+                                               Rs, ...
+                                               ts, ...
+                                               p_cb_pss, ...
+                                               optimization_type, ...
+                                               calib_config);
+                                           
         disp('---');
-        disp('Initial camera matrix: ');
-        disp(A_init);
         disp('Refined camera matrix: ');
         disp(A);   
-        disp('Initial distortions: ');
-        disp(distortion_init');
         disp('Refined distortions: ');
-        disp(distortion');
+        disp(d');  
+                                           
+        % Update homographies --------------------------------------------%
 
-        % Package outputs ----------------------------------------------------%
-        calib.config = calib_config;
-        calib.intrin.A = A;
-        calib.intrin.distortion = distortion;
-        for i = 1:length(cb_imgs)
-            calib.extrin(i).cb_img = cb_imgs(i);
-            calib.extrin(i).rotation = rotations{i};
-            calib.extrin(i).translation = translations{i};
-            calib.extrin(i).four_points_p = four_points_ps{i};
-            calib.extrin(i).board_points_p = board_points_ps{i};
-            calib.extrin(i).debug.homography_refine = homographies_refine{i};
-        end
+    end
+    
+    % Package outputs ----------------------------------------------------%
+    calib.config = calib_config;
+    calib.intrin.A = A;
+    calib.intrin.d = d;
+    for i = 1:length(img_cbs)
+        calib.extrin(i).cb_img = img_cbs(i);
+        calib.extrin(i).rotation = Rs{i};
+        calib.extrin(i).translation = ts{i};
+        calib.extrin(i).four_points_p = p_fp_p_dss{i};
+        calib.extrin(i).board_points_p = p_cb_pss{i};
+        calib.extrin(i).debug.homography_refine = homographies_refine{i};
     end
 end

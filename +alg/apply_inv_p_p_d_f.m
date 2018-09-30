@@ -1,4 +1,4 @@
-function p_p = inv_p_p_d_f(f_p_p_d,f_dp_p_d_dp_p_bar,p_p_init,p_p_d,A,d,opts)
+function p_p = apply_inv_p_p_d_f(f_p_p_d,f_dp_p_d_dp_p_bar,p_p_init,p_p_d,A,d,opts)
     % Computes inverse of distortion function given function handles of 
     % distortion function and its derivatives.
     %
@@ -27,8 +27,8 @@ function p_p = inv_p_p_d_f(f_p_p_d,f_dp_p_d_dp_p_bar,p_p_init,p_p_d,A,d,opts)
     %   p_p - array; Nx2 array of optimized ideal points
 
     % Validate function handles arguments
-    util.validate_f_p_p_d_args(f_p_p_d);
-    util.validate_f_p_p_d_args(f_dp_p_d_dp_p_bar);  
+    util.validate_p_p_d_f_args(f_p_p_d);
+    util.validate_p_p_d_f_args(f_dp_p_d_dp_p_bar);  
  
     % Validate camera matrix
     if A(1,1) ~= A(2,2) || A(1,2) ~= 0 || A(2,1) ~= 0

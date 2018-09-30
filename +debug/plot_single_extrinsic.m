@@ -19,7 +19,7 @@ function plot_single_extrinsic(rotations,translations,colors,alphas,calib_config
     % Plot calibration boards
     height_offset = (calib_config.height_fp-calib_config.num_targets_height*calib_config.target_spacing)/2;
     width_offset = (calib_config.width_fp-calib_config.num_targets_width*calib_config.target_spacing)/2;
-    for i = 1:length(rotations)    
+    for i = 1:numel(rotations)    
         % Get affine xform
         xform = [rotations{i} translations{i}; zeros(1,3) 1];
 

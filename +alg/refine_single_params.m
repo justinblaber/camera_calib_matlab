@@ -6,7 +6,7 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
     p_cb_ws = alg.p_cb_w(opts);
     
     % Get number of boards
-    num_boards = length(p_cb_pss);
+    num_boards = numel(p_cb_pss);
     
     % Supply initial parameter vector. p has a length of 8 + 6*M, where M 
     % is the number of calibration boards. There are 8 intrinsic 
@@ -135,7 +135,7 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
 end
 
 function res = calc_res(p,p_cb_ws,p_cb_pss)    
-    res = zeros(2*length(p_cb_pss)*size(p_cb_ws,1),1);
+    res = zeros(2*numel(p_cb_pss)*size(p_cb_ws,1),1);
     
     % Get intrinsic parameters
     A = [p(1) 0    p(3);
@@ -143,7 +143,7 @@ function res = calc_res(p,p_cb_ws,p_cb_pss)
          0    0    1];
     distortion = p(5:8)';
     
-    for i = 1:length(p_cb_pss)
+    for i = 1:numel(p_cb_pss)
         % Get rotation and translation for this board
         R = alg.euler2rot(p(8+6*(i-1)+1:8+6*(i-1)+3));
         t = p(8+6*(i-1)+4:8+6*(i-1)+6);
@@ -160,7 +160,7 @@ end
 
 function delta_p = calc_delta_p(p,p_cb_ws,p_cb_pss,update_idx,lambda)
     % Initialize jacobian
-    jacob = sparse(2*length(p_cb_pss)*size(p_cb_ws,1),length(p));
+    jacob = sparse(2*numel(p_cb_pss)*size(p_cb_ws,1),numel(p));
     
     % Get intrinsic parameters
     A = [p(1) 0    p(3);
@@ -169,7 +169,7 @@ function delta_p = calc_delta_p(p,p_cb_ws,p_cb_pss,update_idx,lambda)
     distortion = p(5:8)';
 
     % Fill jacobian and residuals per board
-    for i = 1:length(p_cb_pss)
+    for i = 1:numel(p_cb_pss)
         % Get rotation and translation for this board
         R = alg.euler2rot(p(8+6*(i-1)+1:8+6*(i-1)+3));
         t = p(8+6*(i-1)+4:8+6*(i-1)+6);

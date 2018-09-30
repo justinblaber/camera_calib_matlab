@@ -38,7 +38,7 @@ function write_single_calib_four_points(calib,file_path,suffix,append_calib)
         % Write calib_config
         util.write_comment('calib_config',file_path);
         calib_config_fields = fields(calib.config);
-        for i = 1:length(calib_config_fields)
+        for i = 1:numel(calib_config_fields)
             param = calib.config.(calib_config_fields{i});
             if ischar(param) % TODO: this could cause problems if the string is a number...
                 % Must be string
@@ -64,7 +64,7 @@ function write_single_calib_four_points(calib,file_path,suffix,append_calib)
     
     % Write stuff per calibration image; transpose anything with points so
     % they do not take a lot of vertical space.
-    for i = 1:length(calib.extrin)
+    for i = 1:numel(calib.extrin)
         util.write_comment(['Calibration' suffix ' ' num2str(i)],file_path);
         util.write_string(calib.extrin(i).cb_img.get_path(),['cb_img' suffix],file_path);
         util.write_array(calib.extrin(i).rotation,['rotation' suffix],file_path);

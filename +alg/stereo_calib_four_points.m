@@ -44,7 +44,7 @@ function [calib,R_s,t_s] = stereo_calib_four_points(cb_imgs,four_points_ps,calib
     disp('Performing stereo calibration...');     
         
     % Get number of boards
-    num_boards = length(cb_imgs.L);
+    num_boards = numel(cb_imgs.L);
     
     % Perform single calibration on the left and right camera ------------%                                                                
     disp('---------');

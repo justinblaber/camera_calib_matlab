@@ -16,7 +16,7 @@ functional_test_names = {'single1', ...
 
 tests_dir_path = fileparts(mfilename('fullpath'));
 functional_tests_dir_path = fullfile(tests_dir_path,'functional');
-for i = 1:length(functional_test_names)
+for i = 1:numel(functional_test_names)
     functional_test_path = fullfile(functional_tests_dir_path, ...
                                     functional_test_names{i});
     run(functional_test_path);

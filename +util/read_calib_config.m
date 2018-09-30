@@ -170,7 +170,7 @@ function calib_config = read_calib_config(calib_config_path)
     
     % Check to see if any unrecognized fields exist
     calib_config_fields = fields(calib_config);
-    for i = 1:length(calib_config_fields)
+    for i = 1:numel(calib_config_fields)
         if ~any(strcmp(calib_config_fields{i},{field_info.field}))
             error(['Unrecognized field: "' calib_config_fields{i} '" ' ...
                    'in calibration config file.']);
@@ -178,7 +178,7 @@ function calib_config = read_calib_config(calib_config_path)
     end
     
     % Validate all inputs
-    for i = 1:length(field_info)
+    for i = 1:numel(field_info)
         % For optional fields that dont exist, set the default value
         if ~any(strcmp(field_info(i).field,calib_config_fields))            
             if field_info(i).required

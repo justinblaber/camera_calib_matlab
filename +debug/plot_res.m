@@ -12,7 +12,7 @@ function plot_res(res,colors,alphas,lim,a)
     
     % Plot points; plot highest alpha last
     [~,idx_sorted] = sort(alphas);
-    for i = 1:length(res)
+    for i = 1:numel(res)
         idx = idx_sorted(i);
         scatter(res{idx}(:,1),res{idx}(:,2),12, ...
                 'MarkerFaceColor',colors(idx,:),'MarkerFaceAlpha',alphas(idx), ...

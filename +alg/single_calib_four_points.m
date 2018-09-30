@@ -33,7 +33,7 @@ function calib = single_calib_four_points(img_cbs,p_fp_p_dss,calib_config,intrin
         % For first iteration, initialize homographies from world to pixel
         % coordinates using four point boxes
         if it == 1
-            for i = 1:length(img_cbs) 
+            for i = 1:numel(img_cbs) 
                 % Get four point box in pixel coordinates
                 if exist('A','var') && exist('d','var')
                     % Apply inverse distortion to "four points" if
@@ -60,7 +60,7 @@ function calib = single_calib_four_points(img_cbs,p_fp_p_dss,calib_config,intrin
         
         % Get calibration board points
         disp('---');
-        for i = 1:length(img_cbs)    
+        for i = 1:numel(img_cbs)    
             t = tic;
             fprintf(['Refining "' calib_config.calibration_target '" points for: ' img_cbs(i).get_path() '. ']);
 
@@ -102,7 +102,7 @@ function calib = single_calib_four_points(img_cbs,p_fp_p_dss,calib_config,intrin
         % Get initial intrinsic and extrinsic parameters -----------------%     
         if it == 1
             % Update homographies using refined points
-            for i = 1:length(img_cbs)     
+            for i = 1:numel(img_cbs)     
                 % Get the homography estimation function
                 switch calib_config.target_type
                     case 'checker'
@@ -140,7 +140,7 @@ function calib = single_calib_four_points(img_cbs,p_fp_p_dss,calib_config,intrin
             if ~exist('Rs','var') && ~exist('ts','var')
                 Rs = {};
                 ts = {};
-                for i = 1:length(img_cbs)
+                for i = 1:numel(img_cbs)
                     [Rs{i}, ts{i}] = alg.init_extrinsic_params(H_w2ps{i}, A); %#ok<AGROW>
                 end
             end
@@ -184,7 +184,7 @@ function calib = single_calib_four_points(img_cbs,p_fp_p_dss,calib_config,intrin
     calib.config = calib_config;
     calib.intrin.A = A;
     calib.intrin.d = d;
-    for i = 1:length(img_cbs)
+    for i = 1:numel(img_cbs)
         calib.extrin(i).cb_img = img_cbs(i);
         calib.extrin(i).rotation = Rs{i};
         calib.extrin(i).translation = ts{i};

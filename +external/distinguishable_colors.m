@@ -63,7 +63,7 @@ function colors = distinguishable_colors(n_colors,bg,func)
     if iscell(bg)
       % User specified a list of colors as a cell aray
       bgc = bg;
-      for i = 1:length(bgc)
+      for i = 1:numel(bgc)
 	bgc{i} = parsecolor(bgc{i});
       end
       bg = cat(1,bgc{:});

@@ -12,7 +12,7 @@ function gui_single_four_points_detect(four_points_ps,four_points_debugs,cb_imgs
     % Initialize parameters
     mode = 'whole';
     idx_board = 1;
-    num_boards = length(cb_imgs); 
+    num_boards = numel(cb_imgs); 
     axes_cal_board = matlab.graphics.axis.Axes.empty();
     
     % Set axes parameters

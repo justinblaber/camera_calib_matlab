@@ -12,7 +12,7 @@ function gui_single_calib_four_points(calib,f)
     % Initialize parameters
     mode = 'whole';
     idx_board = 1;
-    num_boards = length(calib.extrin);                               
+    num_boards = numel(calib.extrin);                               
     alphas = 0.1*ones(1,num_boards);
     alphas(idx_board) = 1;             
     colors = external.distinguishable_colors(num_boards,{'w','r','k'});

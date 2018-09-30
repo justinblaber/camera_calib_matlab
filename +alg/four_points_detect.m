@@ -30,7 +30,7 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
     marker_templates = util.read_data(calib_config.marker_templates_path);
     
     % Make sure there are four marker templates
-    if ~isfield(marker_templates,'polar_patches') || length(marker_templates.polar_patches) ~= 4
+    if ~isfield(marker_templates,'polar_patches') || numel(marker_templates.polar_patches) ~= 4
         error('There must be four templates in the marker templates file!');
     end
     
@@ -53,7 +53,7 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
     % Also store "cost" of ellipse which should indicate which blobs are 
     % more ellipse-like
     ellipse_costs = [];
-    for i = 1:length(blobs)    
+    for i = 1:numel(blobs)    
         % Get initial guess of ellipse by using second moment matrix
         % Get major/minor axis and rotation of ellipse
         [V,D] = eig(blobs(i).M);
@@ -111,8 +111,8 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
             % Compute gradient at p_prev
             dc_dx = I_cost_sub_array_dx(y_prev',x_prev');
             dc_dy = I_cost_sub_array_dy(y_prev',x_prev');
-            dx_dp = [ones(length(ellipse_theta_samples),1)  zeros(length(ellipse_theta_samples),1) cos(p_prev(5))*cos(ellipse_theta_samples') -sin(p_prev(5))*sin(ellipse_theta_samples') -p_prev(3)*sin(p_prev(5))*cos(ellipse_theta_samples')-p_prev(4)*cos(p_prev(5))*sin(ellipse_theta_samples')];
-            dy_dp = [zeros(length(ellipse_theta_samples),1) ones(length(ellipse_theta_samples),1)  sin(p_prev(5))*cos(ellipse_theta_samples')  cos(p_prev(5))*sin(ellipse_theta_samples')  p_prev(3)*cos(p_prev(5))*cos(ellipse_theta_samples')-p_prev(4)*sin(p_prev(5))*sin(ellipse_theta_samples')];
+            dx_dp = [ones(numel(ellipse_theta_samples),1)  zeros(numel(ellipse_theta_samples),1) cos(p_prev(5))*cos(ellipse_theta_samples') -sin(p_prev(5))*sin(ellipse_theta_samples') -p_prev(3)*sin(p_prev(5))*cos(ellipse_theta_samples')-p_prev(4)*cos(p_prev(5))*sin(ellipse_theta_samples')];
+            dy_dp = [zeros(numel(ellipse_theta_samples),1) ones(numel(ellipse_theta_samples),1)  sin(p_prev(5))*cos(ellipse_theta_samples')  cos(p_prev(5))*sin(ellipse_theta_samples')  p_prev(3)*cos(p_prev(5))*cos(ellipse_theta_samples')-p_prev(4)*sin(p_prev(5))*sin(ellipse_theta_samples')];
             grad = sum(dc_dx.*dx_dp + dc_dy.*dy_dp)';
 
             % Perform backtracking 
@@ -207,13 +207,13 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
     [~,idx_ellipse] = sort(ellipse_costs,'descend');
     ellipses = ellipses(idx_ellipse(1:min(calib_config.ellipse_detect_num_cutoff,end)));
     
-    if length(ellipses) < 4
+    if numel(ellipses) < 4
         error(['At least four ellipses must be detected; only: ' ...
-               num2str(length(ellipses)) ' were found.']);
+               num2str(numel(ellipses)) ' were found.']);
     end
     
     % Get polar patches based on ellipses
-    polar_patches = cell(1,length(ellipses));    
+    polar_patches = cell(1,numel(ellipses));    
     % Get normalized radius and theta samples used for sampling polar patch
     polarpatch_r_samples = linspace(marker_config.radius_norm_range(1), ...
                                     marker_config.radius_norm_range(2), ...
@@ -223,13 +223,13 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
     polarpatch_theta_samples(end) = [];     
     % Apply marker padding to r_samples. This allows some wiggle in case 
     % the size of blob is slightly off
-    if 2*calib_config.marker_padding >= length(polarpatch_r_samples)
+    if 2*calib_config.marker_padding >= numel(polarpatch_r_samples)
         error(['marker_padding size of: ' num2str(calib_config.marker_padding) ' ' ...
                'is too large. Please reduce the amount of padding.']);
     end    
     polarpatch_r_samples = polarpatch_r_samples(calib_config.marker_padding+1: ...
                                                 end-calib_config.marker_padding);    
-    for i = 1:length(ellipses)          
+    for i = 1:numel(ellipses)          
         % Make xform to apply to coordinates of circle: rotation * scaling
         rotation = [cos(ellipses(i).rot) -sin(ellipses(i).rot);  ...
                     sin(ellipses(i).rot)  cos(ellipses(i).rot)];
@@ -258,10 +258,10 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
     end
     
     % Cross correlate each polar patch with 4 templates. 
-    cc_mat = -Inf(length(polar_patches),4);
-    i_idx_mat = -1*ones(length(polar_patches),4);  
-    j_idx_mat = -1*ones(length(polar_patches),4);  
-    for i = 1:length(polar_patches)
+    cc_mat = -Inf(numel(polar_patches),4);
+    i_idx_mat = -1*ones(numel(polar_patches),4);  
+    j_idx_mat = -1*ones(numel(polar_patches),4);  
+    for i = 1:numel(polar_patches)
         % Make sure polar patch isn't empty, which can happen if sampling
         % points were outside of field of view.
         if isempty(polar_patches{i})
@@ -308,7 +308,7 @@ function [four_points_p,four_points_debug] = four_points_detect(array,calib_conf
                        
         % Store best patch matches
         patch_matches(j_max).patch = circshift(polar_patches{i_max},-(i_idx_mat(i_max,j_max)-1));
-        patch_matches(j_max).template = marker_templates.polar_patches{j_max}(:,j_idx_mat(i_max,j_max):j_idx_mat(i_max,j_max)+length(polarpatch_r_samples)-1);
+        patch_matches(j_max).template = marker_templates.polar_patches{j_max}(:,j_idx_mat(i_max,j_max):j_idx_mat(i_max,j_max)+numel(polarpatch_r_samples)-1);
         patch_matches(j_max).ellipse = ellipses(i_max);
         patch_matches(j_max).cc_val = cc_mat(i_max,j_max);
                 

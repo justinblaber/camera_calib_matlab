@@ -14,7 +14,7 @@ function plot_patch(patch,template,num,cc_val,a)
     % Plot boundaries of template over patch
     hold(a,'on');      
     B = bwboundaries(template < 0.5);
-    for k = 1:length(B)
+    for k = 1:numel(B)
         boundary = B{k};
         plot(a, boundary(:,2),boundary(:,1),'Color','g','LineWidth',1);
     end

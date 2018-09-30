@@ -52,7 +52,7 @@ function [calib,calib_raw] = parse_single_calib_four_points(calib_raw,suffix)
     homographies_refine = cell_check(homographies_refine);
     
     % Cycle over everything and store into calib
-    for i = 1:length(cb_imgs)
+    for i = 1:numel(cb_imgs)
         calib.extrin(i).cb_img = cb_imgs(i);
         calib.extrin(i).rotation = rotations{i};
         calib.extrin(i).translation = translations{i};

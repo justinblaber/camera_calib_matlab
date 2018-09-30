@@ -32,7 +32,7 @@ function test_read_data
     % Check string
     assert(isfield(data,name_s));
     assert(iscell(data.(name_s)))
-    assert(length(data.(name_s)) == 2);
+    assert(numel(data.(name_s)) == 2);
     assert(strcmp(data.(name_s){1},'test1'));
     assert(strcmp(data.(name_s){2},'test2'));
 

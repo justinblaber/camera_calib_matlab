@@ -26,7 +26,7 @@ function [p1, p2] = line_bb_intersect(l, bb)
                   ((abs(p_bb(:,2) - bb(1,2)) < eps('single') | p_bb(:,2) > bb(1,2)) & (abs(p_bb(:,2) - bb(2,2)) < eps('single') | p_bb(:,2) < bb(2,2))));
     
     % TODO: handle degenerate cases
-    if length(bb_idx) ~= 2
+    if numel(bb_idx) ~= 2
         error('More than two intersection points of bounding box found!');
     end
     

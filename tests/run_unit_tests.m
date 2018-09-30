@@ -17,7 +17,7 @@ camera_calib_sub_dir_names = {'+alg', ...
 % and exist.
 tests_dir_path = fileparts(mfilename('fullpath'));
 camera_calib_dir_path = fileparts(tests_dir_path);
-for i = 1:length(camera_calib_sub_dir_names)
+for i = 1:numel(camera_calib_sub_dir_names)
     if ~startsWith(camera_calib_sub_dir_names{i},'+')
         error(['camera_calib sub directory: "' ...
                camera_calib_sub_dir_names{i} '" must start with a "+"']);
@@ -52,7 +52,7 @@ missing = 0;
 failed = 0;
 
 % Loop over camera_calib sub directories and run unit tests
-for i = 1:length(camera_calib_sub_dir_names)
+for i = 1:numel(camera_calib_sub_dir_names)
     disp('---'); 
     disp(['Directory:    ' camera_calib_sub_dir_names{i} '...']); 
 
@@ -67,7 +67,7 @@ for i = 1:length(camera_calib_sub_dir_names)
     % Get function to test
     camera_calib_sub_dir_path = fullfile(camera_calib_dir_path,camera_calib_sub_dir_names{i});
     l_camera_calib_sub = dir_without_dots(camera_calib_sub_dir_path);
-    for j = 1:length(l_camera_calib_sub)
+    for j = 1:numel(l_camera_calib_sub)
         % Only m-files are allowed in the camera_calib sub directories
         if l_camera_calib_sub(j).isdir || ~endsWith(l_camera_calib_sub(j).name,'.m')
             unknown_path = fullfile(camera_calib_sub_dir_path,l_camera_calib_sub(j).name);

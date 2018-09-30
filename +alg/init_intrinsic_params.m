@@ -32,9 +32,9 @@ function A = init_intrinsic_params(Hs,width,height)
                0 0  1];
            
     % Fill A and b
-    A = zeros(2*length(Hs),1);
-    b = zeros(2*length(Hs),1);
-    for i = 1:length(Hs)
+    A = zeros(2*numel(Hs),1);
+    b = zeros(2*numel(Hs),1);
+    for i = 1:numel(Hs)
         % Remove principle point from homography
         H_bar = p_o_inv*Hs{i};
         

@@ -93,7 +93,7 @@ function plot_camera_3D(xform,face_color,face_alpha,edge_alpha,axes_color,axes_l
          'Color',axes_color,'HorizontalAlignment','center','VerticalAlignment','middle');
 
     % Apply xform, then plot camera
-    for i = 1:length(cam_patches)
+    for i = 1:numel(cam_patches)
         cam_patches{i} = xform * [cam_patches{i} ones(size(cam_patches{i},1),1)]';
         cam_patches{i} = cam_patches{i}(1:3,:)';
         patch(a,cam_patches{i}(:,3),cam_patches{i}(:,1),cam_patches{i}(:,2),face_color, ...

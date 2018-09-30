@@ -97,7 +97,7 @@ function blobs = blob_detect(array,calib_config)
     [y_box,x_box,r_idx_box] = ndgrid(-1:1:1,-1:1:1,-1:1:1);
     I_stack_LoG = griddedInterpolant({1:size(stack_LoG,1),1:size(stack_LoG,2),1:size(stack_LoG,3)}, ...
                                       stack_LoG,'cubic','none');
-    for i = 1:length(maxima_x_init)
+    for i = 1:numel(maxima_x_init)
         % Grab initial values
         maxima_x = maxima_x_init(i);
         maxima_y = maxima_y_init(i);

@@ -12,7 +12,7 @@ function gui_stereo_calib_four_points(calib,R_s,t_s,f)
     % Initialize parameters
     mode = 'whole';
     idx_board = 1;
-    num_boards = length(calib.L.extrin);                               
+    num_boards = numel(calib.L.extrin);                               
     alphas = 0.1*ones(1,num_boards);
     alphas(idx_board) = 1;             
     colors = external.distinguishable_colors(num_boards,{'w','r','k'});

@@ -41,7 +41,7 @@ function data = read_data(file_path)
             % Splitting string with equal sign should either result in 2 or
             % 1 parts.
             line_split = strsplit(line,'=');
-            if length(line_split) == 2
+            if numel(line_split) == 2
                 % This is a name; initialize cell if name doesn't exist
                 name = strtrim(line_split{1});
                 if ~isfield(data,name)
@@ -66,7 +66,7 @@ function data = read_data(file_path)
                     data.(name){end+1} = [];
                     in_array = true;
                 end
-            elseif length(line_split) == 1
+            elseif numel(line_split) == 1
                 % We must be "in" an array for this to be the case.
                 if in_array
                     % Use name from previous iteration; attempt to 
@@ -97,8 +97,8 @@ function data = read_data(file_path)
     
     % "Uncell" names with single entries.
     data_fields = fields(data);
-    for i = 1:length(data_fields)
-        if length(data.(data_fields{i})) == 1
+    for i = 1:numel(data_fields)
+        if numel(data.(data_fields{i})) == 1
             data.(data_fields{i}) = data.(data_fields{i}){1};
         end
     end

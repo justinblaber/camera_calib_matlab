@@ -1,5 +1,5 @@
 function p_p = apply_inv_p_p_d_sym(sym_p_p_d,p_p_init,p_p_d,A,d,opts)
-    % Computes inverse of distortion function given a symbolic function
+    % Computes inverse of distortion function given a symbolic function.
     %
     % Inputs:
     %   sym_p_p_d - symbolic function; describes mapping between ideal 

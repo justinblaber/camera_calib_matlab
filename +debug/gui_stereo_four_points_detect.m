@@ -12,7 +12,7 @@ function gui_stereo_four_points_detect(four_points_ps,four_points_debugs,cb_imgs
     % Initialize parameters
     mode = 'whole';
     idx_board = 1;
-    num_boards = length(cb_imgs.L); 
+    num_boards = numel(cb_imgs.L); 
     axes_cal_board_L = matlab.graphics.axis.Axes.empty();
     axes_cal_board_R = matlab.graphics.axis.Axes.empty();
     

@@ -51,7 +51,7 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
     p_cb_ws = alg.p_cb_w(calib_config);
     
     % Get number of boards
-    num_boards = length(p_cb_pss.L);
+    num_boards = numel(p_cb_pss.L);
     
     % Supply initial parameter vector. p has a length of 22 + 6*M, where M 
     % is the number of calibration boards. There are 16 intrinsic 
@@ -204,7 +204,7 @@ function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,
 end
 
 function res = calc_res(p,p_cb_ws,p_cb_pss) 
-    res = zeros(4*length(p_cb_pss.L)*size(p_cb_ws,1),1);   
+    res = zeros(4*numel(p_cb_pss.L)*size(p_cb_ws,1),1);   
  
     % Get intrinsic parameters
     % left
@@ -219,10 +219,10 @@ function res = calc_res(p,p_cb_ws,p_cb_pss)
     distortion_R = p(13:16)';
 
     % Get R_s and t_s; only need to do this once per iteration
-    R_s = alg.euler2rot(p(16+6*length(p_cb_pss.L)+1:16+6*length(p_cb_pss.L)+3));
-    t_s = p(16+6*length(p_cb_pss.L)+4:16+6*length(p_cb_pss.L)+6);
+    R_s = alg.euler2rot(p(16+6*numel(p_cb_pss.L)+1:16+6*numel(p_cb_pss.L)+3));
+    t_s = p(16+6*numel(p_cb_pss.L)+4:16+6*numel(p_cb_pss.L)+6);
 
-    for i = 1:length(p_cb_pss.L)
+    for i = 1:numel(p_cb_pss.L)
         % Get rotation and translation for the left board
         R_L = alg.euler2rot(p(16+6*(i-1)+1:16+6*(i-1)+3));
         t_L = p(16+6*(i-1)+4:16+6*(i-1)+6);
@@ -259,7 +259,7 @@ end
 
 function delta_p = calc_delta_p(p,p_cb_ws,p_cb_pss,update_idx,lambda)
     % Initialize jacobian
-    jacob = sparse(4*length(p_cb_pss.L)*size(p_cb_ws,1),length(p));
+    jacob = sparse(4*numel(p_cb_pss.L)*size(p_cb_ws,1),numel(p));
     
     % Get intrinsic parameters
     % left
@@ -274,11 +274,11 @@ function delta_p = calc_delta_p(p,p_cb_ws,p_cb_pss,update_idx,lambda)
     distortion_R = p(13:16)';
 
     % Get R_s and t_s; only need to do this once per iteration
-    R_s = alg.euler2rot(p(16+6*length(p_cb_pss.L)+1:16+6*length(p_cb_pss.L)+3));
-    t_s = p(16+6*length(p_cb_pss.L)+4:16+6*length(p_cb_pss.L)+6);
+    R_s = alg.euler2rot(p(16+6*numel(p_cb_pss.L)+1:16+6*numel(p_cb_pss.L)+3));
+    t_s = p(16+6*numel(p_cb_pss.L)+4:16+6*numel(p_cb_pss.L)+6);
 
     % Fill jacobian and residuals per board
-    for i = 1:length(p_cb_pss.L)
+    for i = 1:numel(p_cb_pss.L)
         % Fill jacobian for left board -----------------------------------%
         % This is basically the same for single board calibration since
         % the left board is independent
@@ -340,7 +340,7 @@ function delta_p = calc_delta_p(p,p_cb_ws,p_cb_pss,update_idx,lambda)
         dR_s_deuler_s = alg.dR_deuler(alg.rot2euler(R_s));
         dRt_s_dm_s = blkdiag(dR_s_deuler_s,eye(3));
         dRt_R_dm_s = dRt_R_dRt_s*dRt_s_dm_s;
-        jacob(((i-1)*4+2)*size(p_cb_ws,1)+1:i*4*size(p_cb_ws,1),16+length(p_cb_pss.L)*6+1:16+(length(p_cb_pss.L)+1)*6) = ...
+        jacob(((i-1)*4+2)*size(p_cb_ws,1)+1:i*4*size(p_cb_ws,1),16+numel(p_cb_pss.L)*6+1:16+(numel(p_cb_pss.L)+1)*6) = ...
             alg.dp_m_dextrinsic(A_R, ...
                                 distortion_R, ...
                                 R_R, ...

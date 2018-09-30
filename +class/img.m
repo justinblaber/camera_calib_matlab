@@ -19,13 +19,13 @@ classdef img < handle
             end   
             
             % Set images
-            for i = 1:length(paths)
+            for i = 1:numel(paths)
                 imgs(i) = class.img(paths{i});
             end
                                 
             % Make sure all imgs exist, have valid imfinfos, and valid
             % colortypes
-            for i = 1:length(imgs)                        
+            for i = 1:numel(imgs)                        
                 imgs(i).validate_exist();             
                 imgs(i).validate_imfinfo();
                 imgs(i).validate_colortype();
@@ -33,7 +33,7 @@ classdef img < handle
                            
             % Make sure all images are the same size
             img_size = [imgs(1).get_height() imgs(1).get_width()];
-            for i = 2:length(imgs)
+            for i = 2:numel(imgs)
                 if ~isequal(img_size,[imgs(i).get_height() imgs(i).get_width()])
                     error(['Expected all images to be the same size, but ' ...
                            'image: ' imgs(i).get_path() ' has size of [' ...
@@ -54,7 +54,7 @@ classdef img < handle
         
         function validate_imfinfo(obj)
             img_info = imfinfo(obj.get_path()); 
-            if length(img_info) ~= 1
+            if numel(img_info) ~= 1
                 error(['Image: ' obj.get_path() ' does not contain a ' ...
                        'single image. Only single image formats are ' ...
                        'supported.']);

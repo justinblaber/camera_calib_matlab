@@ -21,7 +21,7 @@ function plot_stereo_extrinsic(rotations,translations,R_s,t_s,colors,alphas,cali
     % of the left camera
     height_offset = (calib_config.height_fp-calib_config.num_targets_height*calib_config.target_spacing)/2;
     width_offset = (calib_config.width_fp-calib_config.num_targets_width*calib_config.target_spacing)/2;
-    for i = 1:length(rotations.L)    
+    for i = 1:numel(rotations.L)    
         % Get affine xform
         xform = [rotations.L{i} translations.L{i}; zeros(1,3) 1];
 

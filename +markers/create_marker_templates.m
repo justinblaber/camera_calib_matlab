@@ -21,7 +21,7 @@ theta_samples(end) = [];
 % Cycle over markers and create/save polar patch templates
 marker_templates_path = fullfile(markers_dir_path,'marker_templates.txt');
 fclose(fopen(marker_templates_path,'w')); % Creates/clears file
-for i = 1:length(marker_config.marker_paths)
+for i = 1:numel(marker_config.marker_paths)
     % Read marker
     marker = imread(marker_config.marker_paths{i});
     marker = rgb2gray(im2double(marker));
@@ -32,7 +32,7 @@ for i = 1:length(marker_config.marker_paths)
     
     % Get polar patch
     polar_patch = alg.array_interp(marker,[x(:) y(:)],'cubic'); 
-    polar_patch = reshape(polar_patch,length(theta_samples),[]); 
+    polar_patch = reshape(polar_patch,numel(theta_samples),[]); 
     
     % Plot sampling points
     a = subplot(4,2,2*(i-1)+1,'parent',f);

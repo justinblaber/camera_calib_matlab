@@ -26,6 +26,6 @@ function array = apply_inv_p_p_d_array(array_d,f_p_p_d,A,d,opts)
     p_p_d = alg.apply_p_p_d_f(f_p_p_d,[x_p(:) y_p(:)],A,d);
     
     % Resample
-    array = alg.interp_array(array_d,p_p_d,opts.undistort_array_interp);
+    array = alg.interp_array(array_d,p_p_d,opts.apply_inv_p_p_d_array_interp);
     array = reshape(array,size(array_d));
 end

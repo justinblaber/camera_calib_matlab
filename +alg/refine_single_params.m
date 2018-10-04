@@ -1,4 +1,4 @@
-function [A,distortion,rotations,translations] = refine_single_params(A,distortion,rotations,translations,p_cb_pss,type,opts)
+function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,optimization_type,opts,cov_cb_p_dss)
     % This will compute nonlinear refinement of intrinsic and extrinsic
     % camera parameters.
         
@@ -6,7 +6,7 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
     p_cb_ws = alg.p_cb_w(opts);
     
     % Get number of boards
-    num_boards = numel(p_cb_pss);
+    num_boards = numel(p_cb_p_dss);
     
     % Supply initial parameter vector. p has a length of 8 + 6*M, where M 
     % is the number of calibration boards. There are 8 intrinsic 
@@ -23,17 +23,17 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
     p(2) = A(2,2);
     p(3) = A(1,3);
     p(4) = A(2,3);
-    p(5:8) = distortion;
+    p(5:8) = d;
     
     % Cycle over rotations and translations and store in params vector
     for i = 1:num_boards
-        p(8+6*(i-1)+1:8+6*(i-1)+3) = alg.rot2euler(rotations{i});
-        p(8+6*(i-1)+4:8+6*(i-1)+6) = translations{i};        
+        p(8+6*(i-1)+1:8+6*(i-1)+3) = alg.rot2euler(Rs{i});
+        p(8+6*(i-1)+4:8+6*(i-1)+6) = ts{i};        
     end
            
     % Determine which parameters to update based on type
     update_idx = false(num_params,1);
-    switch type
+    switch optimization_type
         case 'intrinsic'
             % Only update camera matrix
             update_idx(1:8) = true;
@@ -44,7 +44,7 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
             % Attempt to calibrate everything
             update_idx(1:end) = true;
         otherwise
-            error(['Input type of: "' type '" was not recognized']);
+            error(['Input type of: "' optimization_type '" was not recognized']);
     end
     
     % For single images, remove principle point from optimization
@@ -56,7 +56,7 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
     % Initialize lambda
     lambda = opts.refine_param_lambda_init;
     % Get initial mean squared error
-    mse = mean(calc_res(p,p_cb_ws,p_cb_pss).^2)*2;
+    mse = mean(calc_res(p,p_cb_ws,p_cb_p_dss).^2)*2;
     for it = 1:opts.refine_param_it_cutoff                                  
         % Store previous p and mse  
         p_prev = p;
@@ -65,13 +65,13 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
         % Compute delta_p
         delta_p = calc_delta_p(p_prev, ...
                                p_cb_ws, ...
-                               p_cb_pss, ...
+                               p_cb_p_dss, ...
                                update_idx, ...
                                lambda);
         
         % update params and mse
         p(update_idx) = p_prev(update_idx) + delta_p;
-        mse = mean(calc_res(p,p_cb_ws,p_cb_pss).^2)*2;
+        mse = mean(calc_res(p,p_cb_ws,p_cb_p_dss).^2)*2;
         
         % If mse decreases, decrease lambda and store results; if mse
         % increases, then increase lambda until mse descreases
@@ -95,19 +95,19 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
                 % Compute delta_p
                 delta_p = calc_delta_p(p_prev, ...
                                        p_cb_ws, ...
-                                       p_cb_pss, ...
+                                       p_cb_p_dss, ...
                                        update_idx, ...
                                        lambda);
             
                 % update params and mse
                 p(update_idx) = p_prev(update_idx) + delta_p;
-                mse = mean(calc_res(p,p_cb_ws,p_cb_pss).^2)*2;
+                mse = mean(calc_res(p,p_cb_ws,p_cb_p_dss).^2)*2;
             end            
         end
                        
         % Exit if change in distance is small
         diff_norm = norm(delta_p);         
-        if strcmp(type,'full')
+        if strcmp(optimization_type,'full')
             disp(['Iteration #: ' sprintf('%3u',it) '; ' ...
                   'MSE: ' sprintf('%12.10f',mse) '; ' ...
                   'Norm of delta_p: ' sprintf('%12.10f',diff_norm) '; ' ...
@@ -125,12 +125,12 @@ function [A,distortion,rotations,translations] = refine_single_params(A,distorti
     A = [p(1) 0    p(3);
          0    p(2) p(4);
          0    0    1];
-    distortion = p(5:8);  
-    rotations = {};
-    translations = {};
+    d = p(5:8);  
+    Rs = {};
+    ts = {};
     for i = 1:num_boards
-        rotations{i} = alg.euler2rot(p(8+6*(i-1)+1:8+6*(i-1)+3)); %#ok<AGROW>
-        translations{i} = p(8+6*(i-1)+4:8+6*(i-1)+6); %#ok<AGROW>
+        Rs{i} = alg.euler2rot(p(8+6*(i-1)+1:8+6*(i-1)+3)); %#ok<AGROW>
+        ts{i} = p(8+6*(i-1)+4:8+6*(i-1)+6); %#ok<AGROW>
     end
 end
 

@@ -1,4 +1,4 @@
-function p_p = apply_inv_p_p_d_f(f_p_p_d,f_dp_p_d_dp_p_bar,p_p_init,p_p_d,A,d,opts)
+function p_p = apply_inv_p_p_d_f(f_p_p_d,f_dp_p_d_dx_p_bar,f_dp_p_d_dy_p_bar,p_p_init,p_p_d,A,d,opts)
     % Computes inverse of distortion function given function handles of 
     % distortion function and its derivatives.
     %
@@ -6,8 +6,10 @@ function p_p = apply_inv_p_p_d_f(f_p_p_d,f_dp_p_d_dp_p_bar,p_p_init,p_p_d,A,d,op
     %   f_p_p_d - function handle; describes mapping between ideal 
     %       pixel coordinates (with principle point subtracted) and 
     %       distorted pixel coordinates.
-    %   f_dp_p_d_dp_p_bar - function handle; derivative of f_p_p_d wrt
-    %       p_p_bar
+    %   f_dp_p_d_dx_p_bar - function handle; derivative of f_p_p_d wrt
+    %       x_p_bar
+    %   f_dp_p_d_dy_p_bar - function handle; derivative of f_p_p_d wrt
+    %       y_p_bar
     %   p_p_init - array; Nx2 array of initial guess of ideal points
     %   p_p_d - array; Nx2 array of distorted points
     %   A - array; 3x3 array containing:
@@ -17,9 +19,9 @@ function p_p = apply_inv_p_p_d_f(f_p_p_d,f_dp_p_d_dp_p_bar,p_p_init,p_p_d,A,d,op
     %   d - array; Mx1 array of distortion coefficients corresponding to
     %       input symbolic function
     %   opts - struct;
-    %       .inv_p_p_d_it_cutoff - int; number of iterations performed
-    %           for inverse distortion refinement
-    %       .inv_p_p_d_norm_cutoff - scalar; cutoff for norm of 
+    %       .apply_inv_p_p_d_it_cutoff - int; max number of iterations 
+    %           performed for inverse distortion refinement
+    %       .apply_inv_p_p_d_norm_cutoff - scalar; cutoff for norm of 
     %           difference of parameter vector for inverse distortion
     %           refinement
     % 
@@ -28,7 +30,8 @@ function p_p = apply_inv_p_p_d_f(f_p_p_d,f_dp_p_d_dp_p_bar,p_p_init,p_p_d,A,d,op
 
     % Validate function handles arguments
     util.validate_p_p_d_f_args(f_p_p_d);
-    util.validate_p_p_d_f_args(f_dp_p_d_dp_p_bar);  
+    util.validate_p_p_d_f_args(f_dp_p_d_dx_p_bar);  
+    util.validate_p_p_d_f_args(f_dp_p_d_dy_p_bar);  
  
     % Validate camera matrix
     if A(1,1) ~= A(2,2) || A(1,2) ~= 0 || A(2,1) ~= 0
@@ -48,27 +51,30 @@ function p_p = apply_inv_p_p_d_f(f_p_p_d,f_dp_p_d_dp_p_bar,p_p_init,p_p_d,A,d,op
     x_p_bar_init = p_p_init(:,1) - x_o;
     y_p_bar_init = p_p_init(:,2) - y_o;
 
-    % Initialize jacobian, residuals, and parameter vector
+    % Initialize parameter vector    
     num_points = size(p_p_init,1);
-    jacob = zeros(num_points*2, num_points*2);
-    res = zeros(num_points*2,1);
     p = reshape([x_p_bar_init y_p_bar_init]',[],1);
-    for it = 1:opts.inv_p_p_d_it_cutoff
+    for it = 1:opts.apply_inv_p_p_d_it_cutoff
+        % Get p_p_bar from p
+        p_p_bar = reshape(p,2,[])';
+        
         % Compute jacobian and residual
-        for i = 1:size(p_p_d,1)
-            % Jacobian    
-            jacob(2*i-1:2*i,2*i-1:2*i) = f_dp_p_d_dp_p_bar(p(2*i-1),p(2*i),alpha,x_o,y_o,d_cell{:}); 
-
-            % Residual
-            res(2*i-1:2*i) = f_p_p_d(p(2*i-1),p(2*i),alpha,x_o,y_o,d_cell{:}) - p_p_d(i,:);
-        end
+        dx_p_d_dp_p_bar = f_dp_p_d_dx_p_bar(p_p_bar(:,1),p_p_bar(:,2),alpha,x_o,y_o,d_cell{:});
+        dy_p_d_dp_p_bar = f_dp_p_d_dy_p_bar(p_p_bar(:,1),p_p_bar(:,2),alpha,x_o,y_o,d_cell{:});
+        
+        % Jacobian - this is probably bottle neck
+        jacob_cell = mat2cell(sparse(reshape(vertcat(dx_p_d_dp_p_bar',dy_p_d_dp_p_bar'),2,[])),2,2*ones(1,num_points));
+        jacob = blkdiag(jacob_cell{:});
+        
+        % Residual 
+        res = reshape(f_p_p_d(p_p_bar(:,1),p_p_bar(:,2),alpha,x_o,y_o,d_cell{:})',[],1) - reshape(p_p_d',[],1);
 
         % Get and store update
         delta_p = -lscov(jacob,res);
         p = p + delta_p;
 
         % Exit if change in distance is small
-        if norm(delta_p) < opts.inv_p_p_d_norm_cutoff
+        if norm(delta_p) < opts.apply_inv_p_p_d_norm_cutoff
             break
         end
     end

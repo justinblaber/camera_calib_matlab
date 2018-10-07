@@ -49,42 +49,42 @@ function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
     array_grad_mag = (array_grad_mag-min(array_grad_mag(:)))./(max(array_grad_mag(:))-min(array_grad_mag(:)));
         
     % Create initial parameter vector
-    h = [1;
-         opts.refine_checker_edges_h2_init;
-    	 atan(-l1(1)/l1(2));
-         atan(-l2(1)/l2(2));
-         p(1);
-         p(2)];
+    params = [1;
+              opts.refine_checker_edges_h2_init;
+              atan(-l1(1)/l1(2));
+              atan(-l2(1)/l2(2));
+              p(1);
+              p(2)];
     
     % Perform iterations until convergence
     for it = 1:opts.refine_checker_edges_it_cutoff  
         % Get gauss newton parameters
-        [hess, grad] = get_gauss_newton_params(h, ...
+        [hess, grad] = get_gauss_newton_params(params, ...
                                                array_grad_mag, ...
                                                x, ...
                                                y, ...
                                                cov);
 
         % Get and store update
-        delta_h = -lscov(hess,grad);
-        h = h + delta_h;        
+        delta_params = -lscov(hess,grad);
+        params = params + delta_params;        
          
         % Exit if change in distance is small
-        if norm(delta_h) < opts.refine_checker_edges_norm_cutoff
+        if norm(delta_params) < opts.refine_checker_edges_norm_cutoff
             break
         end        
     end
         
     % Get center point
-    p = h(5:6)';    
+    p = params(5:6)';    
 
     % Get covariance of center point
-    [hess, ~, r] = get_gauss_newton_params(h, ...
+    [hess, ~, r] = get_gauss_newton_params(params, ...
                                            array_grad_mag, ...
                                            x, ...
                                            y, ...
                                            cov);
-    mse = r'*r/(numel(r)-numel(h));
+    mse = r'*r/(numel(r)-numel(params));
     cov_p = inv(hess)*mse; %#ok<MINV>
     cov_p = cov_p(5:6,5:6);
 end

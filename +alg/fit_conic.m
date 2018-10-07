@@ -17,22 +17,22 @@ function Aq = fit_conic(array_dx,array_dy)
     end
         
     % Get coordinates of each pixel
-    [y,x] = ndgrid(1:size(array_dx,1),1:size(array_dx,2));
-    p = [x(:) y(:)];
+    [ys,xs] = ndgrid(1:size(array_dx,1),1:size(array_dx,2));
+    ps = [xs(:) ys(:)];
 
     % Normalize coordinates; shift the origin of the coordinate system to
     % the center of the image, and then scale the axes such that the mean
     % distance to the center becomes sqrt(2); this should be "good enough".
-    T = norm_mat(p);
-    p_aug = [p ones(size(p,1),1)]';
-    p_norm = T*p_aug;
+    T = norm_mat(ps);
+    p_augs = [ps ones(size(ps,1),1)]';
+    p_norms = T*p_augs;
     
     % Get homogeneous coordinates of lines
-    l = [array_dx(:) array_dy(:) -(array_dx(:).*p_norm(1,:)' + array_dy(:).*p_norm(2,:)')];
+    ls = [array_dx(:) array_dy(:) -(array_dx(:).*p_norms(1,:)' + array_dy(:).*p_norms(2,:)')];
 
     % Form linear equations and solve for inverse conic
-    A = [l(:,1).^2 l(:,1).*l(:,2) l(:,2).^2 l(:,1).*l(:,3) l(:,2).*l(:,3)];
-    b = -l(:,3).^2;
+    A = [ls(:,1).^2 ls(:,1).*ls(:,2) ls(:,2).^2 ls(:,1).*ls(:,3) ls(:,2).*ls(:,3)];
+    b = -ls(:,3).^2;
 
     % Solve
     aq = lscov(A,b);
@@ -47,13 +47,13 @@ function Aq = fit_conic(array_dx,array_dy)
     Aq = T'*Aq*T; %#ok<MINV>
 end
 
-function T_norm = norm_mat(points)
-    points_x = points(:,1);
-    points_y = points(:,2);
-    mean_x = mean(points_x);
-    mean_y = mean(points_y);    
-    sm = sqrt(2)*size(points,1)./sum(sqrt((points_x-mean_x).^2+(points_y-mean_y).^2));
-    T_norm = [sm 0  -mean_x*sm;
-              0  sm -mean_y*sm;
-              0  0   1];
+function T_norm = norm_mat(ps)
+    xs = ps(:,1);
+    ys = ps(:,2);
+    mean_x = mean(xs);
+    mean_y = mean(ys);    
+    s_m = sqrt(2)*size(ps,1)./sum(sqrt((xs-mean_x).^2+(ys-mean_y).^2));
+    T_norm = [s_m 0   -mean_x*s_m;
+              0   s_m -mean_y*s_m;
+              0   0    1];
 end

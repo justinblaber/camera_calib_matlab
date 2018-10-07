@@ -31,12 +31,12 @@ function H_12 = homography_p2p_nonlin(p_1s,p_2s,H_12_init,opts,cov)
     
     % Perform nonlinear refinement ---------------------------------------%
     % Initialize homography parameter vector; make sure H_12(3,3) is 1
-    h = H_12_init(1:8)'./H_12_init(end);
+    params = H_12_init(1:8)'./H_12_init(end);
              
     % Perform gauss newton iterations until convergence
     for it = 1:opts.homography_p2p_it_cutoff
         % Form homography from vector
-        H_12 = reshape([h; 1],3,3);
+        H_12 = reshape([params; 1],3,3);
         
         % Compute jacobian
         jacob = alg.dp_dh_p2p(H_12,p_1s);
@@ -47,18 +47,18 @@ function H_12 = homography_p2p_nonlin(p_1s,p_2s,H_12_init,opts,cov)
 
         % Get and store update
         if ~exist('cov','var')
-            delta_h = -lscov(jacob,res);
+            delta_params = -lscov(jacob,res);
         else
-            delta_h = -lscov(jacob,res,cov);
+            delta_params = -lscov(jacob,res,cov);
         end        
-        h = h + delta_h;
+        params = params + delta_params;
         
         % Exit if change in distance is small
-        if norm(delta_h) < opts.homography_p2p_norm_cutoff
+        if norm(delta_params) < opts.homography_p2p_norm_cutoff
             break
         end
     end    
     
     % Store final homography
-    H_12 = reshape([h; 1],3,3);
+    H_12 = reshape([params; 1],3,3);
 end

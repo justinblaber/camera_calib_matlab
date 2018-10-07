@@ -1,8 +1,9 @@
-function calib = single_calib_four_points_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
-    % Performs camera calibration using "distortion refinement" method.
+function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
+    % Performs camera calibration using "four point distortion
+    % refinement" method.
     
     disp('---');
-    disp('Performing single calibration with distortion refinement...');
+    disp('Performing single calibration with four point distortion refinement method...');
         
     % If intrinsics are passed in, don't optimize for them
     if exist('intrin','var')
@@ -18,14 +19,15 @@ function calib = single_calib_four_points_dr(img_cbs,p_fp_p_dss,calib_config,int
     % Get the calibration board points and the four point box on the 
     % calibration board in world coordinates.
     [p_cb_ws, p_fp_ws] = alg.p_cb_w(calib_config);
+        
+    % Get function handle for distortion function   
+    f_xfm_p_bar2p_d = matlabFunction(calib_config.xfm_p_bar2p_d_sym);
     
-    % Get function handles for distortion function and its derivatives    
-    f_p_p_d = matlabFunction(calib_config.sym_p_p_d);
-    f_dp_p_d_dx_p_bar = matlabFunction(alg.diff_vars(calib_config.sym_p_p_d,'x_p_bar'));  
-    f_dp_p_d_dy_p_bar = matlabFunction(alg.diff_vars(calib_config.sym_p_p_d,'y_p_bar'));  
-    
-    % Set number of distortion arguments
-    num_args_distortion = nargin(f_p_p_d) - 5;
+    % Get function handles for distortion function partial derivatives
+    args_xfm_p_bar2p_d = arrayfun(@char,argnames(calib_config.xfm_p_bar2p_d_sym),'UniformOutput',false);
+    for i = 1:length(args_xfm_p_bar2p_d)
+        f_dxfm_p_bar2p_d_dargs.(args_xfm_p_bar2p_d{i}) = matlabFunction(diff(calib_config.xfm_p_bar2p_d_sym,args_xfm_p_bar2p_d{i}));
+    end
     
     % Perform distortion refinement iterations, which iteratively applies
     % distortion correction to images to help refine target point locations
@@ -42,14 +44,14 @@ function calib = single_calib_four_points_dr(img_cbs,p_fp_p_dss,calib_config,int
                 if exist('A','var') && exist('d','var')
                     % Apply inverse distortion to "four points" if
                     % intrinsics are already passed in
-                    p_fp_ps = alg.apply_inv_p_p_d_f(f_p_p_d, ...
-                                                    f_dp_p_d_dx_p_bar, ...
-                                                    f_dp_p_d_dy_p_bar, ...
-                                                    p_fp_p_dss{i}, ... % Use distorted points for initial guess
-                                                    p_fp_p_dss{i}, ...
-                                                    A, ...
-                                                    d, ...
-                                                    calib_config);
+                    p_fp_ps = alg.xfm_p_d2p(f_xfm_p_bar2p_d, ...
+                                            f_dxfm_p_bar2p_d_dargs.x_p_bar, ...
+                                            f_dxfm_p_bar2p_d_dargs.y_p_bar, ...
+                                            p_fp_p_dss{i}, ... % Use distorted points for initial guess
+                                            p_fp_p_dss{i}, ...
+                                            A, ...
+                                            d, ...
+                                            calib_config);
                 else
                     % Assume small distortion if intrinsics aren't
                     % initially provided
@@ -72,12 +74,12 @@ function calib = single_calib_four_points_dr(img_cbs,p_fp_p_dss,calib_config,int
             % Get undistorted calibration board image array and the 
             % transform from world to pixel coordinates.
             if exist('A','var') && exist('d','var')
-                % "undo" distortion on image
-                array_cb = alg.apply_inv_p_p_d_array(img_cbs(i).get_array_gs(), ...
-                                                     f_p_p_d, ...
-                                                     A, ...
-                                                     d, ...
-                                                     calib_config);
+                % undistort array
+                array_cb = alg.undistort_array(img_cbs(i).get_array_gs(), ...
+                                               f_xfm_p_bar2p_d, ...
+                                               A, ...
+                                               d, ...
+                                               calib_config);
             else
                 % If intrinsics arent available, assume distortion is small
                 array_cb = img_cbs(i).get_array_gs();
@@ -151,7 +153,7 @@ function calib = single_calib_four_points_dr(img_cbs,p_fp_p_dss,calib_config,int
             
             % Get initial distortion parameters
             if ~exist('d','var')
-                d = zeros(num_args_distortion,1);
+                d = zeros(util.num_p_p_d_d_args_f(f_xfm_p_bar2p_d),1);
             end
         end
         
@@ -159,7 +161,7 @@ function calib = single_calib_four_points_dr(img_cbs,p_fp_p_dss,calib_config,int
                 
         % Update points
         for i = 1:numel(p_cb_pss)
-            p_cb_p_dss{i} = alg.apply_p_p_d_f(f_p_p_d,p_cb_pss{i},A,d); %#ok<AGROW>
+            p_cb_p_dss{i} = alg.apply_p_p_d_f(f_xfm_p_bar2p_d,p_cb_pss{i},A,d); %#ok<AGROW>
         end
         
         % Update covariances
@@ -170,15 +172,15 @@ function calib = single_calib_four_points_dr(img_cbs,p_fp_p_dss,calib_config,int
                 cov_cb_p_dss{i}{j,1} = []; %#ok<AGROW>
                 if idx_valids{i}(j)
                     % Use taylor series to approximate covariance of
-                    % distorted coordinates
-                    % From: http://www.stat.cmu.edu/~hseltman/files/ratio.pdf
+                    % distorted coordinates; from: 
+                    %   http://www.stat.cmu.edu/~hseltman/files/ratio.pdf
                     % Note that only covariances from x_p and y_p are used
                     p_cb_p = p_cb_pss{i}(j,:);
                     cov_cb_p = cov_cb_pss{i}{j};
                     
                     % Get derivatives
-                    dp_p_d_dp_p_bar = vertcat(alg.apply_p_p_d_f(f_dp_p_d_dx_p_bar,p_cb_p,A,d), ...
-                                              alg.apply_p_p_d_f(f_dp_p_d_dy_p_bar,p_cb_p,A,d));
+                    dp_p_d_dp_p_bar = vertcat(alg.apply_p_p_d_f(f_dxfm_p_bar2p_d_dargs.x_p_bar,p_cb_p,A,d), ...
+                                              alg.apply_p_p_d_f(f_dxfm_p_bar2p_d_dargs.y_p_bar,p_cb_p,A,d));
                     
                     % Update covariances
                     var_x_p_d = dp_p_d_dp_p_bar(1,1)^2*cov_cb_p(1,1) + ...
@@ -199,26 +201,26 @@ function calib = single_calib_four_points_dr(img_cbs,p_fp_p_dss,calib_config,int
             end  
         end
         
-        % Perform nonlinear refinement of all parameters -----------------%     
+        % Perform nonlinear refinement of parameters ---------------------%     
         
         disp('---');
         disp('Refining single parameters...');
                 
         if calib_config.apply_covariance_optimization
-            [A,d,Rs,ts] = alg.refine_single_params(A, ... 
-                                                   d, ...
-                                                   Rs, ...
-                                                   ts, ...
+            [A,d,Rs,ts] = alg.refine_single_params(A, d, Rs, ts, ...
                                                    p_cb_p_dss, ...
-                                                   optimization_type, ...
+                                                   idx_valids, ...  
+                                                   f_xfm_p_bar2p_d, ...
+                                                   f_dxfm_p_bar2p_d_dargs, ...
+                                                   optimization_type, ...  
                                                    calib_config);
         else
-            [A,d,Rs,ts] = alg.refine_single_params(A, ... 
-                                                   d, ...
-                                                   Rs, ...
-                                                   ts, ...
+            [A,d,Rs,ts] = alg.refine_single_params(A, d, Rs, ts, ...
                                                    p_cb_p_dss, ...
-                                                   optimization_type, ...
+                                                   idx_valids, ...
+                                                   f_xfm_p_bar2p_d, ...
+                                                   f_dxfm_p_bar2p_d_dargs, ...       
+                                                   optimization_type, ...                                        
                                                    calib_config, ...
                                                    cov_cb_p_dss);
         end

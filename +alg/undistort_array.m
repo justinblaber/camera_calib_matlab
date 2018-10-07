@@ -1,6 +1,5 @@
-function array = apply_inv_p_p_d_array(array_d,f_p_p_d,A,d,opts)
-    % Undoes distortion on image array given a function handle to
-    % distortion function and intrinsic parameters.
+function array = undistort_array(array_d,xfm_p_bar2p_d,A,d,opts)
+    % Undistorts array.
     %
     % Inputs:
     %   array_d - array; array containing distorted image
@@ -19,13 +18,18 @@ function array = apply_inv_p_p_d_array(array_d,f_p_p_d,A,d,opts)
     % Outputs:
     %   array - array; array containing undistorted image
 
-    % Get array coordinates
-    [y_p, x_p] = ndgrid(1:size(array_d,1),1:size(array_d,2));
+    % Get ideal pixel coordinates
+    [y_ps, x_ps] = ndgrid(1:size(array_d,1),1:size(array_d,2));
     
-    % Apply transform to coordinates
-    p_p_d = alg.apply_p_p_d_f(f_p_p_d,[x_p(:) y_p(:)],A,d);
+    % Transform coordinates from ideal pixels to distorted pixels
+    p_p_ds = alg.xfm_p2p_d(xfm_p_bar2p_d, ...
+                           [x_ps(:) y_ps(:)], ...
+                           A, ...
+                           d);
     
     % Resample
-    array = alg.interp_array(array_d,p_p_d,opts.apply_inv_p_p_d_array_interp);
+    array = alg.interp_array(array_d, ...
+                             p_p_ds, ...
+                             opts.undistort_array_interp);
     array = reshape(array,size(array_d));
 end

@@ -1,4 +1,4 @@
-function bb = array_bb(array)
+function bb = bb_array(array)
     % Returns bounding box of array
     % 
     % Inputs:

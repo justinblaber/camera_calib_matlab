@@ -1,4 +1,4 @@
-function grad = array_grad(array,direc)
+function grad = grad_array(array,direc)
     % Computes gradient of input array along the direction specified by 
     % direc.
     %

@@ -13,7 +13,7 @@ function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_
     num_boards = numel(p_cb_p_dss);
     
     % Get number of distortion params    
-    num_params_d = nargin(f_p_p_bar2p_p_d) - 5;
+    num_params_d = nargin(f_p_p_bar2p_p_d) - 2;
     
     % Get initial parameter vector. params has a length of:
     %   3 + M + 6*N
@@ -175,7 +175,7 @@ end
 
 function res = calc_res(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_p_p_bar2p_p_d)   
     % Get number of distortion params    
-    num_params_d = nargin(f_p_p_bar2p_p_d) - 5;
+    num_params_d = nargin(f_p_p_bar2p_p_d) - 2;
     
     % Get intrinsic parameters
     A = [params(1) 0         params(2);
@@ -210,7 +210,7 @@ end
 
 function delta_params = calc_delta_params(params,p_ws,p_p_dss,idx_valids,f_dp_p_dh,f_dp_p_d_dargs,idx_update,lambda)
     % Get number of distortion params    
-    num_params_d = nargin(f_dp_p_d_dargs{1}) - 5;
+    num_params_d = nargin(f_dp_p_d_dargs{1}) - 2;
         
     % Get intrinsic parameters
     A = [params(1) 0         params(2);
@@ -234,6 +234,8 @@ function delta_params = calc_delta_params(params,p_ws,p_p_dss,idx_valids,f_dp_p_
         % alpha
         dh_dalpha = [R(1,1); R(2,1); 0; R(1,2); R(2,2); 0; t(1); t(2); 0];
                 
+        dp_p_dh = f_dp_p_dh(p_ws,H);
+        
         jacob((i-1)*2*size(p_ws,1)+1:i*2*size(p_ws,1),1:8) = ...
             alg.dp_m_dintrinsic(A,d,R,t,p_ws); %#ok<SPRIX>
 

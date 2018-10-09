@@ -13,14 +13,14 @@ classdef img < handle
             % objects.
                                 
             % Initialize imgs
-            imgs = class.img.empty();         
+            imgs = util.img.empty();         
             if isempty(paths)
                 return
             end   
             
             % Set images
             for i = 1:numel(paths)
-                imgs(i) = class.img(paths{i});
+                imgs(i) = util.img(paths{i});
             end
                                 
             % Make sure all imgs exist, have valid imfinfos, and valid

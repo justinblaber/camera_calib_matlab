@@ -1,14 +1,14 @@
-function p_2s = apply_homography_c2e(H_12,p_1s,r_1)
+function p_2s = apply_homography_c2e(p_1s,H_12,r_1)
     % This will apply a homography assuming points in perspective "1"
     % are centers of circles while points in perspective "2" are centers
     % of ellipses. Outputs are normalized so the 3rd coordinate is 1 
     % (and is omitted).
     %
     % Inputs:
-    %   H_12 - array; 3x3 homography which transforms the points from
-    %       perspective "1" to "2".
     %   p_1s - array; Nx2 array of points in perspective "1"; centers of
     %       circles
+    %   H_12 - array; 3x3 homography which transforms the points from
+    %       perspective "1" to "2".
     %   r_1 - scalar; radius of circle in perspective "1"
     %
     % Outputs:

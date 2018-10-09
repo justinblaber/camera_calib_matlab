@@ -8,6 +8,8 @@ function H_12 = homography_c2e_nonlin(p_1s,p_2s,H_12_init,opts,cov)
     %       circles
     %   p_2s - array; Nx2 array of points in perspective "2"; centers of
     %       ellipses
+    %   H_12_init - array; 3x3 initial guess of homography which transforms
+    %       the points from perspective "1" to "2".
     %   opts - struct; 
     %       .homography_c2e_it_cutoff - int; number of iterations performed
     %           for "c2e" nonlinear homography refinement
@@ -45,11 +47,11 @@ function H_12 = homography_c2e_nonlin(p_1s,p_2s,H_12_init,opts,cov)
         H_12 = reshape([params; 1],3,3);
         
         % Compute jacobian
-        jacob = alg.dp_dh_c2e(H_12,p_1s,r_1);
+        jacob = alg.dp_dh_c2e(p_1s,H_12,r_1);
         jacob = jacob(:,1:end-1); % Remove last column since H_12(3,3) is constant
                 
         % Get residual 
-        res = reshape((alg.apply_homography_c2e(H_12,p_1s,r_1) - p_2s)',2*num_points,1);
+        res = reshape((alg.apply_homography_c2e(p_1s,H_12,r_1) - p_2s)',2*num_points,1);
 
         % Get and store update
         if ~exist('cov','var')

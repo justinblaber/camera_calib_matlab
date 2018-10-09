@@ -1,10 +1,10 @@
-function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points(array_cb,f_xfm_w2p,opts,idx_init)
+function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points(array_cb,f_p_w2p_p,opts,idx_init)
     % Performs refinement of center of checker targets on a calibration
     % board image array.
     %
     % Inputs:
     %   array_cb - array; MxN array
-    %   f_xfm_w2p - function handle; function which transforms world
+    %   f_p_w2p_p - function handle; function which transforms world
     %   	coordinates to pixel coordinates
     %   opts - struct;
     %       .height_fp - scalar; height of the "four point" box
@@ -50,8 +50,8 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points(array_cb
     p_cb_ws = alg.p_cb_w(opts);
     
     % Get array gradients
-    array_dx = alg.array_grad(array_cb,'x');
-    array_dy = alg.array_grad(array_cb,'y');
+    array_dx = alg.grad_array(array_cb,'x');
+    array_dy = alg.grad_array(array_cb,'y');
 
     % Cycle over points and refine them; also keep track of which indices
     % are "valid"
@@ -67,11 +67,11 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points(array_cb
         p_cb_w = p_cb_ws(i,:);
         
         % Convert point to pixel coordinates to get initial guess
-        p_cb_p_init = f_xfm_w2p(p_cb_w);
+        p_cb_p_init = f_p_w2p_p(p_cb_w);
         
         % Get half window of sub array
         hw_p = get_half_window(p_cb_w, ...
-                               f_xfm_w2p, ...
+                               f_p_w2p_p, ...
                                opts);
         
         % Perform initial refinement with "opencv" checker detection. This
@@ -90,7 +90,7 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points(array_cb
         % Perform final "edges" refinement
         [p_cb_p_edges, cov_cb_p_edges, bb_p_sub_edges] = edges(p_cb_p_opencv, ...
                                                                p_cb_w, ...
-                                                               f_xfm_w2p, ...
+                                                               f_p_w2p_p, ...
                                                                array_dx, ...
                                                                array_dy, ...
                                                                hw_p, ...
@@ -107,7 +107,7 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points(array_cb
     end    
 end
 
-function hw_p = get_half_window(p_w,f_xfm_w2p,opts)
+function hw_p = get_half_window(p_w,f_p_w2p_p,opts)
     % Get box around point in world coordinates
     % Note:
     %    p1 - l2 - p3
@@ -121,7 +121,7 @@ function hw_p = get_half_window(p_w,f_xfm_w2p,opts)
              p_w(1)+opts.target_spacing p_w(2)+opts.target_spacing];
 
     % Apply xform to go from world coordinates to pixel coordinates
-    box_p = f_xfm_w2p(box_w);
+    box_p = f_p_w2p_p(box_w);
 
     % Form lines in pixel coordinates
     l1_p = alg.points2line(box_p(1,:),box_p(2,:));
@@ -131,7 +131,7 @@ function hw_p = get_half_window(p_w,f_xfm_w2p,opts)
 
     % Get shortest distance from lines to target point in pixel
     % coordinates
-    p_p = f_xfm_w2p(p_w);        
+    p_p = f_p_w2p_p(p_w);        
     d1_p = alg.point_line_distance(p_p,l1_p);
     d2_p = alg.point_line_distance(p_p,l2_p);
     d3_p = alg.point_line_distance(p_p,l3_p);
@@ -196,7 +196,7 @@ function p_p = opencv(p_p_init,array_dx,array_dy,hw_p,opts)
     end
 end
 
-function [p_p, cov_p, bb_p_sub] = edges(p_p_init,p_w,f_xfm_w2p,array_dx,array_dy,hw_p,opts)
+function [p_p, cov_p, bb_p_sub] = edges(p_p_init,p_w,f_p_w2p_p,array_dx,array_dy,hw_p,opts)
     % Initialize
     p_p = p_p_init;
     
@@ -233,7 +233,7 @@ function [p_p, cov_p, bb_p_sub] = edges(p_p_init,p_w,f_xfm_w2p,array_dx,array_dy
                  p_w(1)+opts.target_spacing p_w(2)];
 
     % Apply xform to go from world coordinates to pixel coordinates
-    diamond_p = f_xfm_w2p(diamond_w);            
+    diamond_p = f_p_w2p_p(diamond_w);            
 
     % Get points in sub array coordinates
     diamond_p_sub = diamond_p - bb_p_sub(1,:) + 1;

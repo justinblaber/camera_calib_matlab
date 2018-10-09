@@ -1,10 +1,10 @@
-function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_p_d,f_p_p_d_dargs,optimization_type,opts,cov_cb_p_dss)
+function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_w2p_p,f_dp_p_dh,f_p_p_bar2p_p_d,f_dp_p_d_dargs,optimization_type,opts,cov_cb_p_dss)
     % This will compute nonlinear refinement of intrinsic and extrinsic
     % camera parameters.
             
     % Validate inputs
     util.validate_A(A);
-    util.validate_p_p_d_args_f(f_p_p_d);    
+    util.validate_f_p_p_bar2p_p_d(f_p_p_bar2p_p_d);
     
     % Get board points in world coordinates
     p_cb_ws = alg.p_cb_w(opts);
@@ -13,15 +13,15 @@ function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_
     num_boards = numel(p_cb_p_dss);
     
     % Get number of distortion params    
-    num_params_d = util.num_p_p_d_d_args_f(f_p_p_d);
+    num_params_d = nargin(f_p_p_bar2p_p_d) - 5;
     
     % Get initial parameter vector. params has a length of:
-    %   3 + N + 6*M
-    % Where N is the number of distortion parameters and M is the number
+    %   3 + M + 6*N
+    % Where M is the number of distortion parameters and N is the number
     % of calibration boards. params has the form of: 
-    %   [alpha, x_o, y_o, d_1, ... d_N, ...
+    %   [alpha, x_o, y_o, d_1, ... d_M, ...
     %    theta_x1, theta_y1, theta_z1, t_x1, t_y1, t_z1, ... 
-    %    theta_xM, theta_yM, theta_zM, t_xM, t_yM, t_zM]
+    %    theta_xN, theta_yN, theta_zN, t_xN, t_yN, t_zN]
     num_params = 3 + num_params_d + 6*num_boards;
     params = zeros(num_params,1);
     
@@ -64,12 +64,12 @@ function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_
     % Initialize lambda
     lambda = opts.refine_param_lambda_init;
     % Get initial mean squared error
-    mse = mean(calc_res(params, ...
-                        p_cb_ws, ...
-                        p_cb_p_dss, ...
-                        idx_valids, ...
-                        f_p_p_d, ...
-                        opts).^2)*2;
+    mse = calc_mse(params, ...
+                   p_cb_ws, ...
+                   p_cb_p_dss, ...
+                   idx_valids, ...
+                   f_p_w2p_p, ...
+                   f_p_p_bar2p_p_d);
     for it = 1:opts.refine_param_it_cutoff                                  
         % Store previous p and mse  
         params_prev = params;
@@ -79,17 +79,20 @@ function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_
         delta_params = calc_delta_params(params_prev, ...
                                          p_cb_ws, ...
                                          p_cb_p_dss, ...
+                                         idx_valids, ...
+                                         f_dp_p_dh, ...
+                                         f_dp_p_d_dargs, ...
                                          idx_update, ...
                                          lambda);
         
         % update params and mse
         params(idx_update) = params_prev(idx_update) + delta_params;
-        mse = mean(calc_res(params, ...
-                            p_cb_ws, ...
-                            p_cb_p_dss, ...
-                            idx_valids, ...
-                            f_p_p_d, ...
-                            opts).^2)*2;
+        mse = calc_mse(params, ...
+                       p_cb_ws, ...
+                       p_cb_p_dss, ...
+                       idx_valids, ...
+                       f_p_w2p_p, ...
+                       f_p_p_bar2p_p_d);
         
         % If mse decreases, decrease lambda and store results; if mse
         % increases, then increase lambda until mse descreases
@@ -119,12 +122,12 @@ function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_
             
                 % update params and mse
                 params(idx_update) = params_prev(idx_update) + delta_params;
-                mse = mean(calc_res(params, ...
-                                    p_cb_ws, ...
-                                    p_cb_p_dss, ...
-                                    idx_valids, ...
-                                    f_p_p_d, ...
-                                    opts).^2)*2;
+                mse = calc_mse(params, ...
+                               p_cb_ws, ...
+                               p_cb_p_dss, ...
+                               idx_valids, ...
+                               f_p_w2p_p, ...
+                               f_p_p_bar2p_p_d);
             end            
         end
                        
@@ -157,17 +160,31 @@ function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_
     end
 end
 
-function res = calc_res(params,p_ws,p_p_dss,idx_valids,f_p_p_d,opts)   
+function mse = calc_mse(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_p_p_bar2p_p_d)
+    % Calculate residuals
+    res = calc_res(params, ...
+                   p_ws, ...
+                   p_p_dss, ...
+                   idx_valids, ...
+                   f_p_w2p_p, ...
+                   f_p_p_bar2p_p_d);
+               
+    % Get MSE
+    mse = mean(res.^2)*2;
+end
+
+function res = calc_res(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_p_p_bar2p_p_d)   
     % Get number of distortion params    
-    num_params_d = util.num_p_p_d_d_args_f(f_p_p_d);
+    num_params_d = nargin(f_p_p_bar2p_p_d) - 5;
     
     % Get intrinsic parameters
     A = [params(1) 0         params(2);
          0         params(1) params(3);
          0         0         1];
-    d = params(4:3+num_params_d)';
+    d = params(4:3+num_params_d);
     
-    res = [];
+    % Get res
+    res = zeros(2*sum(cellfun(@sum,idx_valids)),1);
     for i = 1:numel(p_p_dss)
         % Get rotation and translation for this board
         R = alg.euler2rot(params(3 + num_params_d + 6*(i-1) + 1: ...
@@ -175,42 +192,58 @@ function res = calc_res(params,p_ws,p_p_dss,idx_valids,f_p_p_d,opts)
         t = params(3 + num_params_d + 6*(i-1) + 4: ...
                    3 + num_params_d + 6*(i-1) + 6);
                
-        % Compute distortion model points to compute residuals
-        p_p_d_ms = alg.p_p_d_m(A,d,R,t,f_p_p_d,p_ws,opts);
+        % Get homography
+        H = A*[R(:,1) R(:,2) t];
+        
+        % Get ideal pixel points
+        p_ps = f_p_w2p_p(p_ws,H);
+        
+        % Get distortion model points
+        p_p_d_ms = alg.p_p2p_p_d(p_ps,f_p_p_bar2p_p_d,A,d);
             
         % Store residuals - take valid indices into account
-        res = vertcat(res, p_p_d_ms(idx_valids{i},1)-p_p_dss{i}(idx_valids{i},1), ...
-                           p_p_d_ms(idx_valids{i},2)-p_p_dss{i}(idx_valids{i},2)); %#ok<AGROW>
+        res(2*sum(cellfun(@sum,idx_valids(1:i-1)))+1:2*sum(cellfun(@sum,idx_valids(1:i)))) = ...
+            reshape(vertcat((p_p_d_ms(idx_valids{i},1)-p_p_dss{i}(idx_valids{i},1))', ...
+                            (p_p_d_ms(idx_valids{i},2)-p_p_dss{i}(idx_valids{i},2))'),[],1);
     end
 end
 
-function delta_params = calc_delta_params(params,p_cb_ws,p_cb_pss,update_idx,lambda)
-    % Initialize jacobian
-    jacob = sparse(2*numel(p_cb_pss)*size(p_cb_ws,1),numel(params));
-    
+function delta_params = calc_delta_params(params,p_ws,p_p_dss,idx_valids,f_dp_p_dh,f_dp_p_d_dargs,idx_update,lambda)
+    % Get number of distortion params    
+    num_params_d = nargin(f_dp_p_d_dargs{1}) - 5;
+        
     % Get intrinsic parameters
-    A = [params(1) 0         params(3);
-         0         params(2) params(4);
+    A = [params(1) 0         params(2);
+         0         params(1) params(3);
          0         0         1];
-    d = params(5:8)';
+    d = params(4:3+num_params_d);
 
-    % Fill jacobian and residuals per board
-    for i = 1:numel(p_cb_pss)
+    % Get jacobian
+    jacob = sparse(2*sum(cellfun(@sum,idx_valids)),numel(params));
+    for i = 1:numel(p_p_dss)
         % Get rotation and translation for this board
-        R = alg.euler2rot(params(8+6*(i-1)+1:8+6*(i-1)+3));
-        t = params(8+6*(i-1)+4:8+6*(i-1)+6);
-
-        % Intrinsic params
-        jacob((i-1)*2*size(p_cb_ws,1)+1:i*2*size(p_cb_ws,1),1:8) = ...
-            alg.dp_m_dintrinsic(A,d,R,t,p_cb_ws); %#ok<SPRIX>
+        R = alg.euler2rot(params(3 + num_params_d + 6*(i-1) + 1: ...
+                                 3 + num_params_d + 6*(i-1) + 3));
+        t = params(3 + num_params_d + 6*(i-1) + 4: ...
+                   3 + num_params_d + 6*(i-1) + 6);
+               
+        % Get homography
+        H = A*[R(:,1) R(:,2) t];
+        
+        % Intrinsic params -----------------------------------------------%
+        % alpha
+        dh_dalpha = [R(1,1); R(2,1); 0; R(1,2); R(2,2); 0; t(1); t(2); 0];
+                
+        jacob((i-1)*2*size(p_ws,1)+1:i*2*size(p_ws,1),1:8) = ...
+            alg.dp_m_dintrinsic(A,d,R,t,p_ws); %#ok<SPRIX>
 
         % Extrinsic params
         dR_deuler = alg.dR_deuler(alg.rot2euler(R));
         dRt_dm = blkdiag(dR_deuler(1:6,:),eye(3));
-        jacob((i-1)*2*size(p_cb_ws,1)+1:i*2*size(p_cb_ws,1),8+(i-1)*6+1:8+i*6) = ...
-            alg.dp_m_dextrinsic(A,d,R,t,dRt_dm,p_cb_ws); %#ok<SPRIX>
+        jacob((i-1)*2*size(p_ws,1)+1:i*2*size(p_ws,1),8+(i-1)*6+1:8+i*6) = ...
+            alg.dp_m_dextrinsic(A,d,R,t,dRt_dm,p_ws); %#ok<SPRIX>
     end  
 
     % Get change in params using Levenberg–Marquardt update     
-    delta_params = -lscov(jacob(:,update_idx)'*jacob(:,update_idx)+lambda*eye(sum(update_idx)),jacob(:,update_idx)'*calc_res(params,p_cb_ws,p_cb_pss));        
+    delta_params = -lscov(jacob(:,idx_update)'*jacob(:,idx_update)+lambda*eye(sum(idx_update)),jacob(:,idx_update)'*calc_res(params,p_ws,p_p_dss));        
 end

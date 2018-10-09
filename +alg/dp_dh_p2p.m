@@ -1,12 +1,12 @@
-function jacob = dp_dh_p2p(H_12,p_1s)
+function jacob = dp_dh_p2p(p_1s,H_12)
     % This will compute the jacobian of the points in perspective "2" with 
     % respect to the input homography and evaluated at points in 
     % perspective "1" directly.
     %
     % Inputs:
+    %   p_1s - array; Nx2 array of points in perspective "1"
     %   H_12 - array; 3x3 homography which transforms the points from
     %       perspective "1" to "2".
-    %   p_1s - array; Nx2 array of points in perspective "1"
     %
     % Outputs:
     %   jacob - array; 2*Nx9 array. 

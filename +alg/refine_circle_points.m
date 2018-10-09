@@ -1,10 +1,10 @@
-function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points(array_cb,f_xfm_w2p,opts,idx_init)
+function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points(array_cb,f_p_w2p_p,opts,idx_init)
     % Performs refinement of center of circle targets on a calibration
     % board image array.
     %
     % Inputs:
     %   array_cb - array; MxN array
-    %   f_xfm_w2p - function handle; function which transforms world
+    %   f_p_w2p_p - function handle; function which transforms world
     %   	coordinates to pixel coordinates
     %   opts - struct;
     %       .height_fp - scalar; height of the "four point" box
@@ -46,8 +46,8 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points(array_cb,
     p_cb_ws = alg.p_cb_w(opts);
     
     % Get array gradients
-    array_dx = alg.array_grad(array_cb,'x');
-    array_dy = alg.array_grad(array_cb,'y');
+    array_dx = alg.grad_array(array_cb,'x');
+    array_dy = alg.grad_array(array_cb,'y');
 
     % Cycle over points and refine them; also keep track of which indices
     % are "valid"
@@ -63,11 +63,11 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points(array_cb,
         p_cb_w = p_cb_ws(i,:);
         
         % Convert point to pixel coordinates to get initial guess
-        p_cb_p_init = f_xfm_w2p(p_cb_w);
+        p_cb_p_init = f_p_w2p_p(p_cb_w);
         
         % Get boundary in pixel coordinates centered around point
         boundary_p_center = get_boundary(p_cb_w, ...
-                                         f_xfm_w2p, ...
+                                         f_p_w2p_p, ...
                                          opts);
         
         % Perform initial refinement with "dual conic" ellipse detection.
@@ -101,7 +101,7 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points(array_cb,
     end    
 end
 
-function boundary_p_center = get_boundary(p_w,f_xfm_w2p,opts)
+function boundary_p_center = get_boundary(p_w,f_p_w2p_p,opts)
     % Get boundary around point in world coordinates
     % Note:
     %    p1 ----- p4
@@ -115,10 +115,10 @@ function boundary_p_center = get_boundary(p_w,f_xfm_w2p,opts)
                   p_w(1)+opts.target_spacing/2 p_w(2)-opts.target_spacing/2];
 
     % Apply xform to go from world coordinates to pixel coordinates
-    boundary_p = f_xfm_w2p(boundary_w);
+    boundary_p = f_p_w2p_p(boundary_w);
     
     % Subtract center point
-    p_p = f_xfm_w2p(p_w);
+    p_p = f_p_w2p_p(p_w);
     boundary_p_center = boundary_p - p_p;
 end
 

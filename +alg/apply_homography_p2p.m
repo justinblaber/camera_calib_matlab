@@ -1,10 +1,10 @@
-function p_2s = apply_homography_p2p(H_12,p_1s)
+function p_2s = apply_homography_p2p(p_1s,H_12)
     % This will apply a homography directly to input points. Outputs are
     % normalized so the 3rd coordinate is 1 (and is omitted).
     %
     % Inputs:
-    %   H_12 - array; 3x3 homography
     %   p_1s - array; Nx2 array of points in perspective "1"
+    %   H_12 - array; 3x3 homography
     %
     % Outputs:
     %   p_2s - array; Nx2 array of points in perspective "2"

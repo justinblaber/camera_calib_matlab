@@ -1,11 +1,10 @@
-function array = undistort_array(array_d,f_p_p_bar2p_p_d,A,d,opts)
+function array = undistort_array(array_d,f_p_p2p_p_d,A,d,opts)
     % Undistorts array.
     %
     % Inputs:
     %   array_d - array; array containing distorted image
-    %   f_p_p_bar2p_p_d - function handle; describes mapping between ideal 
-    %       pixel coordinates (with principle point subtracted) and 
-    %       distorted pixel coordinates.
+    %   f_p_p2p_p_d - function handle; describes the mapping between 
+    %       pixel coordinates and distorted pixel coordinates.
     %   A - array; 3x3 array containing:
     %       [alpha    0       x_o;
     %        0        alpha   y_o;
@@ -18,15 +17,15 @@ function array = undistort_array(array_d,f_p_p_bar2p_p_d,A,d,opts)
     %   array - array; array containing undistorted image
 
     % Validate inputs
-    util.validate_f_p_p_bar2p_p_d(f_p_p_bar2p_p_d);
+    util.validate_f_p_p2p_p_d(f_p_p2p_p_d);
     util.validate_A(A); 
     
-    % Get ideal pixel coordinates
+    % Get pixel coordinates
     [y_ps, x_ps] = ndgrid(1:size(array_d,1),1:size(array_d,2));
     
-    % Transform coordinates from ideal pixels to distorted pixels
+    % Transform coordinates from pixels to distorted pixels
     p_p_ds = alg.p_p2p_p_d([x_ps(:) y_ps(:)], ...
-                           f_p_p_bar2p_p_d, ...                           
+                           f_p_p2p_p_d, ...                           
                            A, ...
                            d);
     

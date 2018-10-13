@@ -1,4 +1,4 @@
-function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points(array_cb,f_p_w2p_p,opts,idx_init)
+function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points(array_cb,f_p_w2p_p,opts,idx_valid_init)
     % Performs refinement of center of circle targets on a calibration
     % board image array.
     %
@@ -21,8 +21,8 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points(array_cb,
     %       .refine_ellipse_edges_norm_cutoff - scalar; cutoff for the 
     %           difference in norm of the parameter vector for "edges" 
     %           ellipse refinement
-    %       idx_init - array; logical indices which indicate which target 
-    %           points are valid 
+    %   idx_valid_init - array; logical indices which indicate which target 
+    %       points are valid 
     %
     % Outputs:
     %   p_cb_ps - array; Px2 array of optimized subpixel ellipse points in 
@@ -38,8 +38,8 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points(array_cb,
     %       .boundary_p - array; 4x2 array of boundary points used in 
     %           "edges" method
     
-    if ~exist('idx_init','var')
-        idx_init = true(opts.num_targets_height*opts.num_targets_width,1);
+    if ~exist('idx_valid_init','var')
+        idx_valid_init = true(opts.num_targets_height*opts.num_targets_width,1);
     end
     
     % Get board points in world coordinates
@@ -55,7 +55,7 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points(array_cb,
     cov_cb_ps = cell(size(p_cb_ws,1),1);
     idx_valid = false(size(p_cb_ws,1),1);
     for i = 1:size(p_cb_ws,1)
-        if ~idx_init(i)
+        if ~idx_valid_init(i)
             continue
         end
         

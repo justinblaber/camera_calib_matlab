@@ -132,10 +132,12 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','refine_checker_norm_cutoff'             ,'required',false,'default',0.05                           ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','refine_checker_default_window_factor'   ,'required',false,'default',2/3                            ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','refine_checker_window_min_size'         ,'required',false,'default',10                             ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','refine_param_it_cutoff'                 ,'required',false,'default',200                            ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','refine_param_norm_cutoff'               ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','refine_param_lambda_init'               ,'required',false,'default',0.01                           ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','refine_param_lambda_factor'             ,'required',false,'default',10                             ,'validation_fun',@validate_pos_num);    
+    
+    field_info(end+1) = struct('field','refine_single_params_it_cutoff'         ,'required',false,'default',200                            ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','refine_single_params_norm_cutoff'       ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','refine_single_params_lambda_init'       ,'required',false,'default',0.01                           ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','refine_single_params_lambda_factor'     ,'required',false,'default',10                             ,'validation_fun',@validate_pos_num);    
+    
     field_info(end+1) = struct('field','four_point_detect_scaled_array_min_size','required',false,'default',480                            ,'validation_fun',@validate_pos_int);    
     field_info(end+1) = struct('field','blob_detect_r_range1'                   ,'required',false,'default',0.5                            ,'validation_fun',@validate_pos_num);
     field_info(end+1) = struct('field','blob_detect_r_range2'                   ,'required',false,'default',realmax                        ,'validation_fun',@validate_pos_num);

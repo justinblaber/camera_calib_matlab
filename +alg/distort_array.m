@@ -20,7 +20,7 @@ function array_d = distort_array(array,f_p_p2p_p_d,f_dp_p_d_dx_p,f_dp_p_d_dy_p,A
     %           for transformation from distorted pixel coordinates to 
     %           pixel coordinates.
     %       .p_p_d2p_p_norm_cutoff - scalar; cutoff for norm of difference
-    %           of parameter vector for for transformation from distorted 
+    %           of parameter vector for transformation from distorted 
     %           pixel coordinates to pixel coordinates.
     %       .distort_array_interp - string; type of interpolation to use
     % 

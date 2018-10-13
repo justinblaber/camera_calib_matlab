@@ -29,7 +29,6 @@ function H_12 = homography_p2p_nonlin(p_1s,p_2s,H_12_init,opts,cov)
     % Number of points
     num_points = size(p_1s,1);
     
-    % Perform nonlinear refinement ---------------------------------------%
     % Initialize homography parameter vector; make sure H_12(3,3) is 1
     params = H_12_init(1:8)'./H_12_init(end);
              

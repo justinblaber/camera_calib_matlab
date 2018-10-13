@@ -1,4 +1,4 @@
-function jacob = dR_deuler(euler)
+function jacob = dr_deuler(euler)
     % Returns jacobian of rotation wrt euler angles. Assumes X-Y-Z rotation 
     % sequence.
     %
@@ -21,8 +21,8 @@ function jacob = dR_deuler(euler)
     %       dr23
     %       dr33
        
-    % TODO: Add checks for degenerate cases, although these will basically
-    % never happen with real data.
+    % TODO: Add checks for degenerate cases, although these shouldn't
+    % really happen with real data... I think... 
     
     c_x = cos(euler(1));
     c_y = cos(euler(2));

@@ -25,7 +25,7 @@ function p_ps = p_p_d2p_p(p_p_ds,p_p_inits,f_p_p2p_p_d,f_dp_p_d_dx_p,f_dp_p_d_dy
     % Outputs:
     %   p_ps - array; Nx2 array of pixel points
     
-    % Initialize parameter vector    
+    % Initialize parameter vector
     params = reshape(p_p_inits',[],1);
     for it = 1:opts.p_p_d2p_p_it_cutoff
         % Get p_ps from params

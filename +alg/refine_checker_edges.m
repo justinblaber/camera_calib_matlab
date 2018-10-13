@@ -29,9 +29,9 @@ function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
     s = length(array_dx);
     
     % Get coordinates of pixels
-    [y,x] = ndgrid(1:s,1:s);
-    x = x(:);
-    y = y(:);
+    [ys,xs] = ndgrid(1:s,1:s);
+    xs = xs(:);
+    ys = ys(:);
     
     % Get covariance matrix of gaussian kernel
     sigma = (s-1)/4;
@@ -61,8 +61,8 @@ function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
         % Get gauss newton parameters
         [hess, grad] = get_gauss_newton_params(params, ...
                                                array_grad_mag, ...
-                                               x, ...
-                                               y, ...
+                                               xs, ...
+                                               ys, ...
                                                cov);
 
         % Get and store update
@@ -79,43 +79,43 @@ function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
     p = params(5:6)';    
 
     % Get covariance of center point
-    [hess, ~, r] = get_gauss_newton_params(params, ...
-                                           array_grad_mag, ...
-                                           x, ...
-                                           y, ...
-                                           cov);
-    mse = r'*r/(numel(r)-numel(params));
+    [hess, ~, res] = get_gauss_newton_params(params, ...
+                                             array_grad_mag, ...
+                                             xs, ...
+                                             ys, ...
+                                             cov);
+    mse = res'*res/(numel(res)-numel(params));
     cov_p = inv(hess)*mse; %#ok<MINV>
     cov_p = cov_p(5:6,5:6);
 end
 
-function [hess, grad, r] = get_gauss_newton_params(h,array_grad_mag,x,y,cov)
+function [hess, grad, res] = get_gauss_newton_params(params,array_grad_mag,xs,ys,cov)
     % Get center point
-    p = h(5:6)';
+    p = params(5:6)';
 
     % Get gaussian mask
-    kernel_gauss = mvnpdf([x y], p, cov);
+    kernel_gauss = mvnpdf([xs ys], p, cov);
     kernel_gauss = reshape(kernel_gauss,size(array_grad_mag));
 
     % Sample edge function        
-    f = h(1)*exp(-h(2)^2*((x-h(5))*sin(h(3))-(y-h(6))*cos(h(3))).^2) + ...
-        h(1)*exp(-h(2)^2*((x-h(5))*sin(h(4))-(y-h(6))*cos(h(4))).^2) - ...
-        2*h(1)*exp(-h(2)^2*((x-h(5)).^2+(y-h(6)).^2)); 
+    f = params(1)*exp(-params(2)^2*((xs-params(5))*sin(params(3))-(ys-params(6))*cos(params(3))).^2) + ...
+        params(1)*exp(-params(2)^2*((xs-params(5))*sin(params(4))-(ys-params(6))*cos(params(4))).^2) - ...
+        2*params(1)*exp(-params(2)^2*((xs-params(5)).^2+(ys-params(6)).^2)); 
 
     % Get residuals
-    r = f-array_grad_mag(:);
-    r = r.*kernel_gauss(:); % Apply weights
+    res = f-array_grad_mag(:);
+    res = res.*kernel_gauss(:); % Apply weights
 
     % Get gradient of edge function
-    df_dh = [(exp(-h(2)^2*(cos(h(3))*(h(6) - y) - sin(h(3))*(h(5) - x)).^2) - 2*exp(-h(2)^2*((h(5) - x).^2 + (h(6) - y).^2)) + exp(-h(2)^2*(cos(h(4))*(h(6) - y) - sin(h(4))*(h(5) - x)).^2))';
-             (4*h(1)*h(2)*exp(-h(2)^2*((h(5) - x).^2 + (h(6) - y).^2)).*((h(5) - x).^2 + (h(6) - y).^2) - 2*h(1)*h(2)*exp(-h(2)^2*(cos(h(3))*(h(6) - y) - sin(h(3))*(h(5) - x)).^2).*(cos(h(3))*(h(6) - y) - sin(h(3))*(h(5) - x)).^2 - 2*h(1)*h(2)*exp(-h(2)^2*(cos(h(4))*(h(6) - y) - sin(h(4))*(h(5) - x)).^2).*(cos(h(4))*(h(6) - y) - sin(h(4))*(h(5) - x)).^2)';
-             (2*h(1)*h(2)^2*exp(-h(2)^2*(cos(h(3))*(h(6) - y) - sin(h(3))*(h(5) - x)).^2).*(cos(h(3))*(h(5) - x) + sin(h(3))*(h(6) - y)).*(cos(h(3))*(h(6) - y) - sin(h(3))*(h(5) - x)))';
-             (2*h(1)*h(2)^2*exp(-h(2)^2*(cos(h(4))*(h(6) - y) - sin(h(4))*(h(5) - x)).^2).*(cos(h(4))*(h(5) - x) + sin(h(4))*(h(6) - y)).*(cos(h(4))*(h(6) - y) - sin(h(4))*(h(5) - x)))';
-             (2*h(1)*h(2)^2*exp(-h(2)^2*((h(5) - x).^2 + (h(6) - y).^2)).*(2*h(5) - 2*x) + 2*h(1)*h(2)^2*exp(-h(2)^2*(cos(h(3))*(h(6) - y) - sin(h(3))*(h(5) - x)).^2).*(sin(h(3))*(cos(h(3))*(h(6) - y) - sin(h(3))*(h(5) - x))) + 2*h(1)*h(2)^2*exp(-h(2)^2*(cos(h(4))*(h(6) - y) - sin(h(4))*(h(5) - x)).^2).*(sin(h(4))*(cos(h(4))*(h(6) - y) - sin(h(4))*(h(5) - x))))';
-             (2*h(1)*h(2)^2*exp(-h(2)^2*((h(5) - x).^2 + (h(6) - y).^2)).*(2*h(6) - 2*y) - 2*h(1)*h(2)^2*exp(-h(2)^2*(cos(h(3))*(h(6) - y) - sin(h(3))*(h(5) - x)).^2).*(cos(h(3))*(cos(h(3))*(h(6) - y) - sin(h(3))*(h(5) - x))) - 2*h(1)*h(2)^2*exp(-h(2)^2*(cos(h(4))*(h(6) - y) - sin(h(4))*(h(5) - x)).^2).*(cos(h(4))*(cos(h(4))*(h(6) - y) - sin(h(4))*(h(5) - x))))'];
-    df_dh = df_dh.*kernel_gauss(:)'; % Apply weights
+    df_dparams = [(exp(-params(2)^2*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)).^2) - 2*exp(-params(2)^2*((params(5) - xs).^2 + (params(6) - ys).^2)) + exp(-params(2)^2*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)).^2))';
+                  (4*params(1)*params(2)*exp(-params(2)^2*((params(5) - xs).^2 + (params(6) - ys).^2)).*((params(5) - xs).^2 + (params(6) - ys).^2) - 2*params(1)*params(2)*exp(-params(2)^2*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)).^2).*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)).^2 - 2*params(1)*params(2)*exp(-params(2)^2*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)).^2).*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)).^2)';
+                  (2*params(1)*params(2)^2*exp(-params(2)^2*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)).^2).*(cos(params(3))*(params(5) - xs) + sin(params(3))*(params(6) - ys)).*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)))';
+                  (2*params(1)*params(2)^2*exp(-params(2)^2*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)).^2).*(cos(params(4))*(params(5) - xs) + sin(params(4))*(params(6) - ys)).*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)))';
+                  (2*params(1)*params(2)^2*exp(-params(2)^2*((params(5) - xs).^2 + (params(6) - ys).^2)).*(2*params(5) - 2*xs) + 2*params(1)*params(2)^2*exp(-params(2)^2*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)).^2).*(sin(params(3))*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs))) + 2*params(1)*params(2)^2*exp(-params(2)^2*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)).^2).*(sin(params(4))*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs))))';
+                  (2*params(1)*params(2)^2*exp(-params(2)^2*((params(5) - xs).^2 + (params(6) - ys).^2)).*(2*params(6) - 2*ys) - 2*params(1)*params(2)^2*exp(-params(2)^2*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)).^2).*(cos(params(3))*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs))) - 2*params(1)*params(2)^2*exp(-params(2)^2*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)).^2).*(cos(params(4))*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs))))'];
+    df_dparams = df_dparams.*kernel_gauss(:)'; % Apply weights
 
     % Get cost function gradient and hessian
-    grad = 2*sum(r'.*df_dh,2);
-    hess = 2*(df_dh*df_dh');
+    grad = 2*sum(res'.*df_dparams,2);
+    hess = 2*(df_dparams*df_dparams');
 end

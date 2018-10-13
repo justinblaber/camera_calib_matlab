@@ -10,14 +10,11 @@ function [R, t] = init_extrinsic_params(H,A)
     %       [alpha 0     x_o;
     %        0     alpha y_o;
     %        0     0     1]
-    %   p_cb_ps - array; Nx2 array of calibration board points in pixel
-    %       coordinates.
     %
     % Outputs:
     %   R - array; 3x3 rotation matrix
     %   t - array; 3x1 translation vector
     
-    % Get initial guess --------------------------------------------------%
     % Remove intrinsics from homography
     H_bar = A^-1*H;
     

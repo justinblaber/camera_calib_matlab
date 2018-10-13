@@ -17,7 +17,7 @@ function [p_cb_ws, p_fp_ws] = p_cb_w(opts)
     %       coordinates
     %   p_fp_ws - array; 4x2 array of the four point box in world
     %       coordinates
-        
+    
     % Get board points
     height_w = (opts.num_targets_height - 1)*opts.target_spacing;
     width_w = (opts.num_targets_width - 1)*opts.target_spacing;           

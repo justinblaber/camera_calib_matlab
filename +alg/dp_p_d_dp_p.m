@@ -28,7 +28,7 @@ function jacob = dp_p_d_dp_p(p_ps,f_dp_p_d_dx_p,f_dp_p_d_dy_p,A,d)
     % Get camera matrix components
     alpha = A(1,1);
     x_o = A(1,3);
-    y_o = A(2,3);   
+    y_o = A(2,3);
     
     % Convert d to cell - used to pass distortion arguments into function
     % handle

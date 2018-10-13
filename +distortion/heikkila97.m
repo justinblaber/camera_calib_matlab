@@ -25,8 +25,8 @@ function sym_p_p2p_p_d = heikkila97()
     y_p_bar = y_p - y_o;    
     
     % Apply radial distortion
-    x_p_r_bar = x_p_bar.*(1 + k1.*(x_p_bar.^2 + y_p_bar.^2) + k2.*(x_p_bar.^2+y_p_bar.^2).^2);
-    y_p_r_bar = y_p_bar.*(1 + k1.*(x_p_bar.^2 + y_p_bar.^2) + k2.*(x_p_bar.^2+y_p_bar.^2).^2);
+    x_p_r_bar = x_p_bar.*(1 + k1*(x_p_bar.^2 + y_p_bar.^2) + k2*(x_p_bar.^2+y_p_bar.^2).^2);
+    y_p_r_bar = y_p_bar.*(1 + k1*(x_p_bar.^2 + y_p_bar.^2) + k2*(x_p_bar.^2+y_p_bar.^2).^2);
     
     % Define symbolic function
     sym_p_p2p_p_d(x_p,y_p,a,x_o,y_o,k1,k2,p1,p2) = ...

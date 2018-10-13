@@ -19,9 +19,9 @@ function [p, cov_p] = refine_checker_opencv(array_dx,array_dy,p)
     s = length(array_dx);
     
     % Get coordinates of pixels
-    [y,x] = ndgrid(1:s,1:s);
-    x = x(:);
-    y = y(:);
+    [ys,xs] = ndgrid(1:s,1:s);
+    xs = xs(:);
+    ys = ys(:);
     
     % Get covariance matrix of gaussian kernel
     sigma = (s-1)/4;
@@ -29,12 +29,12 @@ function [p, cov_p] = refine_checker_opencv(array_dx,array_dy,p)
            0       sigma^2];
         
     % Get gaussian mask
-    kernel_gauss = mvnpdf([x y], p, cov);
+    kernel_gauss = mvnpdf([xs ys], p, cov);
     kernel_gauss = reshape(kernel_gauss,[s s]);
 
     % Form linear system
     A = [array_dx(:) array_dy(:)];
-    b = array_dx(:).*x + array_dy(:).*y;
+    b = array_dx(:).*xs + array_dy(:).*ys;
 
     % Solve for center point and center point covariance using gaussian
     % kernel as weights

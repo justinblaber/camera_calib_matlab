@@ -1,4 +1,4 @@
-function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points(array_cb,f_p_w2p_p,opts,idx_init)
+function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points(array_cb,f_p_w2p_p,opts,idx_valid_init)
     % Performs refinement of center of checker targets on a calibration
     % board image array.
     %
@@ -30,7 +30,7 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points(array_cb
     %       .refine_checker_edges_norm_cutoff - scalar; cutoff for the 
     %           difference in norm of the parameter vector for "edges" 
     %           checker refinement
-    %   idx_init - array; logical indices which indicate which target 
+    %   idx_valid_init - array; logical indices which indicate which target 
     %       points are valid 
     %
     % Outputs:
@@ -42,8 +42,8 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points(array_cb
     %   debug - cell array; Px1 cell array of bounding boxes of the
     %       refinement windows
     
-    if ~exist('idx_init','var')
-        idx_init = true(opts.num_targets_height*opts.num_targets_width,1);
+    if ~exist('idx_valid_init','var')
+        idx_valid_init = true(opts.num_targets_height*opts.num_targets_width,1);
     end
     
     % Get board points in world coordinates
@@ -59,7 +59,7 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points(array_cb
     cov_cb_ps = cell(size(p_cb_ws,1),1);
     idx_valid = false(size(p_cb_ws,1),1);
     for i = 1:size(p_cb_ws,1)
-        if ~idx_init(i)
+        if ~idx_valid_init(i)
             continue
         end
         
@@ -180,7 +180,7 @@ function p_p = opencv(p_p_init,array_dx,array_dy,hw_p,opts)
         % Cache previous point
         p_p_prev = p_p;
 
-        % Get refined point; note that coordinates will be WRT sub_array.
+        % Get refined point; note that coordinates will be WRT sub array.
         p_p_sub = alg.refine_checker_opencv(sub_array_dx, ...
                                             sub_array_dy, ...
                                             p_p - bb_p_sub(1,:) + 1);

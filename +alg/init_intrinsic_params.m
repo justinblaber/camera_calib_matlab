@@ -1,7 +1,6 @@
 function A = init_intrinsic_params(Hs,width,height)
     % This will initialize the intrinsic parameters of a given set of 
-    % homographies. This assumes a single alpha and that the principle
-    % point is at the center of the image. 
+    % homographies.
     %
     % This was taken from Bouguet's calibration toolbox. It gives pretty
     % good results from the tests I've done.
@@ -16,10 +15,6 @@ function A = init_intrinsic_params(Hs,width,height)
     %       [alpha    0       x_o;
     %        0        alpha   y_o;
     %        0        0       1]
-    %
-    %       alpha - positive scalar; alpha = f*k
-    %       x_o - scalar; x component of image center
-    %       y_o - scalar; y component of image center
         
     % Set principle point
     x_o = (width+1)/2;

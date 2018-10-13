@@ -19,7 +19,6 @@ function H_12 = homography_p2p_lin(p_1s,p_2s)
     % Number of points
     num_points = size(p_1s,1);
     
-    % Get linear guess ---------------------------------------------------%    
     % Perform normalization first
     T_1 = norm_mat(p_1s);
     p_1_augs = [p_1s ones(num_points,1)]';

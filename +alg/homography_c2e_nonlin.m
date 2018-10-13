@@ -37,7 +37,6 @@ function H_12 = homography_c2e_nonlin(p_1s,p_2s,H_12_init,opts,cov)
     % Get radius of circle in perspective "1" coordinates
     r_1 = opts.circle_radius;
     
-    % Perform nonlinear refinement ---------------------------------------%
     % Initialize homography parameter vector; make sure H_12(3,3) is 1
     params = H_12_init(1:8)'./H_12_init(end);
     

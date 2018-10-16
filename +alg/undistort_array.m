@@ -15,10 +15,6 @@ function array = undistort_array(array_d,f_p_p2p_p_d,A,d,opts)
     % 
     % Outputs:
     %   array - array; array containing undistorted image
-
-    % Validate inputs
-    util.validate_f_p_p2p_p_d(f_p_p2p_p_d);
-    util.validate_A(A); 
     
     % Get pixel coordinates
     [y_ps, x_ps] = ndgrid(1:size(array_d,1),1:size(array_d,2));

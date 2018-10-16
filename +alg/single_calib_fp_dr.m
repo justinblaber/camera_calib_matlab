@@ -284,11 +284,13 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
     calib.intrin.A = A;
     calib.intrin.d = d;
     for i = 1:num_boards
-        calib.extrin(i).cb_img = img_cbs(i);
-        calib.extrin(i).rotation = Rs{i};
-        calib.extrin(i).translation = ts{i};
-        calib.extrin(i).four_points_p = p_fp_p_dss{i};
-        calib.extrin(i).board_points_p = p_cb_pss{i};
-        calib.extrin(i).debug.homography_refine = homographies_refine{i};
+        calib.extrin(i).img_cb = img_cbs(i);
+        calib.extrin(i).R = Rs{i};
+        calib.extrin(i).t = ts{i};
+        calib.extrin(i).p_fp_p_ds = p_fp_p_dss{i};
+        calib.extrin(i).p_cb_ps = p_cb_pss{i};
+        calib.extrin(i).cov_cb_ps = cov_cb_pss{i};
+        calib.extrin(i).idx_valid = idx_valids{i};
+        calib.extrin(i).debug = debugs{i};
     end
 end

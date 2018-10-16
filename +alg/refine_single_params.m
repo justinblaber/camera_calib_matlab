@@ -1,11 +1,7 @@
 function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_w2p_p,f_dp_p_dh,f_p_p2p_p_d,f_dp_p_d_dargs,optimization_type,opts,cov_cb_p_dss)
     % This will compute nonlinear refinement of intrinsic and extrinsic
     % camera parameters.
-    
-    % Validate inputs
-    util.validate_A(A);
-    util.validate_f_p_p2p_p_d(f_p_p2p_p_d);
-    
+        
     % Get board points in world coordinates
     p_cb_ws = alg.p_cb_w(opts);
     
@@ -60,20 +56,34 @@ function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_
         idx_update(2:3) = false;
     end  
     
+    % Get "weight matrix"    
+    if exist('cov_cb_p_dss','var')
+        % Do GLS
+        % Get "weight" matrix (inverse of covariance)
+        cov = vertcat(cov_cb_p_dss{:}); % Concat
+        cov = cov(vertcat(idx_valids{:})); % Apply valid indices
+        cov = cellfun(@sparse,cov,'UniformOutput',false); % Make sparse
+        cov = blkdiag(cov{:}); % Finish sparse array
+        W = inv(cov); % This might be slow...
+    else
+        W = speye(2*sum(vertcat(idx_valids{:})));
+    end
+    
     % Perform Levenberg–Marquardt iteration(s)    
     % Initialize lambda
     lambda = opts.refine_single_params_lambda_init;
     % Get initial mean squared error
-    mse = calc_mse(params, ...
-                   p_cb_ws, ...
-                   p_cb_p_dss, ...
-                   idx_valids, ...
-                   f_p_w2p_p, ...
-                   f_p_p2p_p_d);
+    cost = calc_cost(params, ...
+                     p_cb_ws, ...
+                     p_cb_p_dss, ...
+                     idx_valids, ...
+                     f_p_w2p_p, ...
+                     f_p_p2p_p_d, ...
+                     W);
     for it = 1:opts.refine_single_params_it_cutoff                                  
-        % Store previous p and mse  
+        % Store previous p and cost  
         params_prev = params;
-        mse_prev = mse;
+        cost_prev = cost;
                 
         % Compute delta_params
         delta_params = calc_delta_params(params_prev, ...
@@ -85,24 +95,26 @@ function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_
                                          f_p_p2p_p_d, ...
                                          f_dp_p_d_dargs, ...
                                          idx_update, ...
-                                         lambda);
+                                         lambda, ...
+                                         W);
         
-        % update params and mse
+        % update params and cost
         params(idx_update) = params_prev(idx_update) + delta_params;
-        mse = calc_mse(params, ...
-                       p_cb_ws, ...
-                       p_cb_p_dss, ...
-                       idx_valids, ...
-                       f_p_w2p_p, ...
-                       f_p_p2p_p_d);
+        cost = calc_cost(params, ...
+                         p_cb_ws, ...
+                         p_cb_p_dss, ...
+                         idx_valids, ...
+                         f_p_w2p_p, ...
+                         f_p_p2p_p_d, ...
+                         W);
         
-        % If mse decreases, decrease lambda and store results; if mse
-        % increases, then increase lambda until mse descreases
-        if mse < mse_prev
+        % If cost decreases, decrease lambda and store results; if cost
+        % increases, then increase lambda until cost descreases
+        if cost < cost_prev
             % Decrease lambda and continue to next iteration
             lambda = lambda/opts.refine_single_params_lambda_factor;            
         else
-            while mse >= mse_prev
+            while cost >= cost_prev
                 % Increase lambda and recompute params
                 lambda = opts.refine_single_params_lambda_factor*lambda;      
                 
@@ -110,7 +122,7 @@ function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_
                     % This will already be a very, very small step, so just
                     % exit
                     delta_params(:) = 0;
-                    mse = mse_prev;
+                    cost = cost_prev;
                     params = params_prev;
                     break
                 end
@@ -125,25 +137,38 @@ function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_
                                                  f_p_p2p_p_d, ...
                                                  f_dp_p_d_dargs, ...
                                                  idx_update, ...
-                                                 lambda);
+                                                 lambda, ...
+                                                 W);
             
-                % update params and mse
+                % update params and cost
                 params(idx_update) = params_prev(idx_update) + delta_params;
-                mse = calc_mse(params, ...
-                               p_cb_ws, ...
-                               p_cb_p_dss, ...
-                               idx_valids, ...
-                               f_p_w2p_p, ...
-                               f_p_p2p_p_d);
+                cost = calc_cost(params, ...
+                                 p_cb_ws, ...
+                                 p_cb_p_dss, ...
+                                 idx_valids, ...
+                                 f_p_w2p_p, ...
+                                 f_p_p2p_p_d, ...
+                                 W);
             end            
         end
                        
         % Exit if change in distance is small
         diff_norm = norm(delta_params);         
         if strcmp(optimization_type,'full')
+            % Also get mean residual distance as a useful metric
+            res = calc_res(params, ...
+                           p_cb_ws, ...
+                           p_cb_p_dss, ...
+                           idx_valids, ...
+                           f_p_w2p_p, ...
+                           f_p_p2p_p_d);
+            res = reshape(res,2,[])';
+            d_res_mean = mean(sqrt(res(:,1).^2 + res(:,2).^2));
+            
             disp(['Iteration #: ' sprintf('%3u',it) '; ' ...
-                  'MSE: ' sprintf('%12.10f',mse) '; ' ...
+                  'Mean residual distance: ' sprintf('%12.10f',d_res_mean) '; ' ...
                   'Norm of delta_p: ' sprintf('%12.10f',diff_norm) '; ' ...
+                  'Cost: ' sprintf('%12.10f',cost) '; ' ...
                   'lambda: ' sprintf('%12.10f',lambda)]);
         end        
         if diff_norm < opts.refine_single_params_norm_cutoff
@@ -155,19 +180,19 @@ function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_
     end
         
     % Get outputs from params 
-    A = [params(1) 0         params(3);
-         0         params(2) params(4);
+    A = [params(1) 0         params(2);
+         0         params(1) params(3);
          0         0         1];
-    d = params(5:8);  
-    Rs = {};
-    ts = {};
+    d = params(4:3 + num_params_d);
     for i = 1:num_boards
-        Rs{i} = alg.euler2rot(params(8+6*(i-1)+1:8+6*(i-1)+3)); %#ok<AGROW>
-        ts{i} = params(8+6*(i-1)+4:8+6*(i-1)+6); %#ok<AGROW>
+        Rs{i} = alg.euler2rot(params(3 + num_params_d + 6*(i-1) + 1: ...
+                                     3 + num_params_d + 6*(i-1) + 3));
+        ts{i} = params(3 + num_params_d + 6*(i-1) + 4: ...
+                       3 + num_params_d + 6*(i-1) + 6);
     end
 end
 
-function mse = calc_mse(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_p_p2p_p_d)
+function cost = calc_cost(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_p_p2p_p_d,W)
     % Calculate residuals
     res = calc_res(params, ...
                    p_ws, ...
@@ -176,8 +201,8 @@ function mse = calc_mse(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_p_p2p_p_d)
                    f_p_w2p_p, ...
                    f_p_p2p_p_d);
                
-    % Get MSE
-    mse = mean(res.^2)*2;
+    % Get cost
+    cost = res'*W*res;
 end
 
 function res = calc_res(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_p_p2p_p_d)   
@@ -215,7 +240,7 @@ function res = calc_res(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_p_p2p_p_d)
     end
 end
 
-function delta_params = calc_delta_params(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_dp_p_dh,f_p_p2p_p_d,f_dp_p_d_dargs,idx_update,lambda)
+function delta_params = calc_delta_params(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_dp_p_dh,f_p_p2p_p_d,f_dp_p_d_dargs,idx_update,lambda,W)
     % Get number of distortion params    
     num_params_d = nargin(f_dp_p_d_dargs{1}) - 5;
         
@@ -244,7 +269,16 @@ function delta_params = calc_delta_params(params,p_ws,p_p_dss,idx_valids,f_p_w2p
         jacob(2*sum(cellfun(@sum,idx_valids(1:i-1)))+1:2*sum(cellfun(@sum,idx_valids(1:i))),3 + num_params_d + 6*(i-1) + 1:3 + num_params_d + 6*(i-1) + 6) = ...
             alg.dp_p_d_dextrinsic(p_ws(idx_valids{i},:),f_p_w2p_p,f_dp_p_dh,R,t,f_dp_p_d_dargs,A,d,drt_dm); %#ok<SPRIX>
     end  
-
+    
+    % Get gradient    
+    grad = jacob(:,idx_update)'*W*calc_res(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_p_p2p_p_d);
+    
+    % Get hessian
+    hess = jacob(:,idx_update)'*W*jacob(:,idx_update);
+    
+    % Add Levenberg–Marquardt damping
+    hess = hess + lambda*eye(sum(idx_update));
+    
     % Get change in params using Levenberg–Marquardt update     
-    delta_params = -lscov(jacob(:,idx_update)'*jacob(:,idx_update)+lambda*eye(sum(idx_update)),jacob(:,idx_update)'*calc_res(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_p_p2p_p_d));        
+    delta_params = -lscov(hess,grad);        
 end

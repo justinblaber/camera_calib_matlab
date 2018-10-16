@@ -20,16 +20,21 @@ function sym_p_p2p_p_d = heikkila97()
     % Declare symbolic function
     syms sym_p_p2p_p_d(x_p,y_p,a,x_o,y_o,k1,k2,p1,p2)
     
-    % Remove principle point
-    x_p_bar = x_p - x_o;
-    y_p_bar = y_p - y_o;    
+    % Convert to normalized coordinates - this makes jacobian better
+    % conditioned
+    x_n = (x_p - x_o)/a;
+    y_n = (y_p - y_o)/a;    
     
     % Apply radial distortion
-    x_p_r_bar = x_p_bar.*(1 + k1*(x_p_bar.^2 + y_p_bar.^2) + k2*(x_p_bar.^2+y_p_bar.^2).^2);
-    y_p_r_bar = y_p_bar.*(1 + k1*(x_p_bar.^2 + y_p_bar.^2) + k2*(x_p_bar.^2+y_p_bar.^2).^2);
+    x_n_r = x_n.*(1 + k1*(x_n.^2 + y_n.^2) + k2*(x_n.^2+y_n.^2).^2);
+    y_n_r = y_n.*(1 + k1*(x_n.^2 + y_n.^2) + k2*(x_n.^2+y_n.^2).^2);
+    
+    % Distorted normalized points
+    x_n_d = x_n_r + 2*p1*x_n.*y_n + p2*(3*x_n.^2 + y_n.^2);
+    y_n_d = y_n_r + p1*(x_n.^2 + 3*y_n.^2) + 2*p2*x_n.*y_n;
     
     % Define symbolic function
     sym_p_p2p_p_d(x_p,y_p,a,x_o,y_o,k1,k2,p1,p2) = ...
-        [x_p_r_bar + 2*p1*x_p_bar.*y_p_bar + p2*(3*x_p_bar.^2 + y_p_bar.^2) + x_o, ...
-         y_p_r_bar + p1*(x_p_bar.^2 + 3*y_p_bar.^2) + 2*p2*x_p_bar.*y_p_bar + y_o];
+        [a*x_n_d + x_o, ...
+         a*y_n_d + y_o];
 end

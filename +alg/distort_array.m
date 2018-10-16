@@ -26,12 +26,6 @@ function array_d = distort_array(array,f_p_p2p_p_d,f_dp_p_d_dx_p,f_dp_p_d_dy_p,A
     % 
     % Outputs:
     %   array_d - array; array containing distorted image
-
-    % Validate inputs
-    util.validate_f_p_p2p_p_d(f_p_p2p_p_d);
-    util.validate_f_p_p2p_p_d(f_dp_p_d_dx_p);
-    util.validate_f_p_p2p_p_d(f_dp_p_d_dy_p);
-    util.validate_A(A); 
     
     % Get distorted pixel coordinates
     [y_p_ds, x_p_ds] = ndgrid(1:size(array,1),1:size(array,2));

@@ -1,4 +1,4 @@
-function jacob = dp_p_d_darg(p_ps,f_dp_p_d_darg,A,d)
+function jacob = dp_p_d_darg(p_ps,f_dp_p_d_darg,a,d)
     % This will compute the jacobian of distorted pixel points wrt one of
     % its arguments.
     %
@@ -6,10 +6,8 @@ function jacob = dp_p_d_darg(p_ps,f_dp_p_d_darg,A,d)
     %   p_ps - array; Nx2 array of pixel points
     %   f_dp_p_d_darg - function handle; derivative of p_p2p_p_d wrt an
     %       argument
-    %   A - array; 3x3 array containing:
-    %       [alpha    0       x_o;
-    %        0        alpha   y_o;
-    %        0        0       1]
+    %   a - array; 3x1 array containing:
+    %       [alpha; x_o; y_o]
     %   d - array; Mx1 array of distortion coefficients
     % 
     % Outputs:
@@ -28,7 +26,7 @@ function jacob = dp_p_d_darg(p_ps,f_dp_p_d_darg,A,d)
     % Compute partial derivatives
     jacob = alg.p_p2p_p_d(p_ps, ...
                           f_dp_p_d_darg, ...
-                          A, ...
+                          a, ...
                           d);
     
     % If derivative is a constant, sometimes the output is a single value;

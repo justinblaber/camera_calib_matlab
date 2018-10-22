@@ -17,9 +17,9 @@ function test_dp_dh_p2p
         H_12_delta(i) = H_12(i) + delta;
 
         % Finite difference approximation
-        dp_dh(:,i) = reshape(((alg.apply_homography_p2p(H_12_delta,p_1s) - alg.apply_homography_p2p(H_12,p_1s))./delta)',[],1);
+        dp_dh(:,i) = reshape(((alg.apply_homography_p2p(p_1s,H_12_delta) - alg.apply_homography_p2p(p_1s,H_12))./delta)',[],1);
     end
     
     % Compared finite difference to analytic value
-    assert(all(all(abs(dp_dh - alg.dp_dh_p2p(H_12,p_1s)) < 1e-5)));                     
+    assert(all(all(abs(dp_dh - alg.dp_dh_p2p(p_1s,H_12)) < 1e-5)));                     
 end

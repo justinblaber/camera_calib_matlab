@@ -6,10 +6,7 @@ function [R, t] = init_extrinsic_params(H,A)
     %   H - array; 3x3 homography array. Note that homography(3,3) should
     %       be positive, which guarantees t(3) (translation in the z 
     %       direction) is positive.
-    %   A - array; 3x3 array containing:
-    %       [alpha 0     x_o;
-    %        0     alpha y_o;
-    %        0     0     1]
+    %   A - array; 3x3 camera matrix
     %
     % Outputs:
     %   R - array; 3x3 rotation matrix

@@ -2,10 +2,7 @@ function jacob = dh_drt(A)
     % This will compute the jacobian of the homography wrt "rt".
     %
     % Inputs:
-    %   A - array; 3x3 array containing:
-    %       [alpha    0       x_o;
-    %        0        alpha   y_o;
-    %        0        0       1]
+    %   A - array; 3x3 camera matrix
     %
     % Outputs:
     %   jacob - array; 9x12 array. 

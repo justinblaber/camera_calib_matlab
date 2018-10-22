@@ -1,42 +1,68 @@
-function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_w2p_p,f_dp_p_dh,f_p_p2p_p_d,f_dp_p_d_dargs,optimization_type,opts,cov_cb_p_dss)
+function [params,cov_params] = refine_single_params(params,p_cb_p_dss,idx_valids,f_p_w2p_p,f_dp_p_dh,f_p_p2p_p_d,f_dp_p_d_dargs,optimization_type,opts,cov_cb_p_dss)
     % This will compute nonlinear refinement of intrinsic and extrinsic
     % camera parameters.
-        
+    %
+    % Inputs:
+    %   params - array; (3+M+6*N)x1 array, where M is the number of 
+    %       distortion parameters and N is the number of calibration 
+    %       boards. Contains: 
+    %           [alpha; x_o; y_o; d_1; ... d_M; ...
+    %            theta_x1; theta_y1; theta_z1; t_x1; t_y1; t_z1; ... 
+    %            theta_xN; theta_yN; theta_zN; t_xN; t_yN; t_zN]
+    %   p_cb_p_dss - cell; Nx1 cell array of calibration board points in
+    %       distorted pixel coordinates
+    %   idx_valids - cell; Nx1 cell array of "valid" calibration board
+    %       points
+    %   f_p_w2p_p - function handle; function which transforms world
+    %   	coordinates to pixel coordinates
+    %   f_dp_p_dh - function handle; derivative of p_w2p_p wrt homography
+    %       parameters.
+    %   f_p_p2p_p_d - function handle; describes the mapping between 
+    %       pixel coordinates and distorted pixel coordinates.
+    %   f_dp_p_d_dargs - function handle; derivative of p_p2p_p_d wrt its
+    %       input arguments.
+    %   optimization_type - string; describes type of optimization
+    %   opts - struct; 
+    %       .height_fp - scalar; height of the "four point" box
+    %       .width_fp - scalar; width of the "four point" box
+    %       .num_targets_height - int; number of targets in the "height"
+    %           dimension
+    %       .num_targets_width - int; number of targets in the "width"
+    %           dimension
+    %       .target_spacing - scalar; space between targets
+    %       .refine_single_params_lambda_init - scalar; initial lambda for 
+    %           Levenberg-Marquardt method
+    %       .refine_single_params_lambda_factor - scalar; scaling factor 
+    %           for lambda
+    %       .refine_single_params_it_cutoff - int; max number of iterations
+    %           performed for refinement of camera parameters
+    %       .refine_single_params_norm_cutoff - scalar; cutoff for norm of
+    %           difference of parameter vector for refinement of camera
+    %           parameters.
+    %   cov_cb_p_dss - cell; optional Nx1 cell array of covariances of
+    %       calibration board points in distorted pixel coordinates.
+    %
+    % Outputs:
+    %   params - array; (3+M+6*N)x1 array, where M is the number of 
+    %       distortion parameters and N is the number of calibration 
+    %       boards. Contains: 
+    %           [alpha; x_o; y_o; d_1; ... d_M; ...
+    %            theta_x1; theta_y1; theta_z1; t_x1; t_y1; t_z1; ... 
+    %            theta_xN; theta_yN; theta_zN; t_xN; t_yN; t_zN]
+    %   cov_params; (3+M+6*N)x(3+M+6*N) array of covariances of intrinsic
+    %       and extrinsic parameters
+    
     % Get board points in world coordinates
     p_cb_ws = alg.p_cb_w(opts);
     
     % Get number of boards
     num_boards = numel(p_cb_p_dss);
     
-    % Get number of distortion params    
-    num_params_d = nargin(f_p_p2p_p_d) - 5;
-    
-    % Get initial parameter vector. params has a length of:
-    %   3 + M + 6*N
-    % Where M is the number of distortion parameters and N is the number
-    % of calibration boards. params has the form of: 
-    %   [alpha, x_o, y_o, d_1, ... d_M, ...
-    %    theta_x1, theta_y1, theta_z1, t_x1, t_y1, t_z1, ... 
-    %    theta_xN, theta_yN, theta_zN, t_xN, t_yN, t_zN]
-    num_params = 3 + num_params_d + 6*num_boards;
-    params = zeros(num_params,1);
-    
-    % Do intrinsic parameters first
-    params(1) = A(1,1); % alpha
-    params(2) = A(1,3); % x_o
-    params(3) = A(2,3); % y_o
-    params(4:3+num_params_d) = d;
-    
-    % Cycle over extrinsics and store in params vector
-    for i = 1:num_boards
-        params(3 + num_params_d + 6*(i-1) + 1: ...
-               3 + num_params_d + 6*(i-1) + 3) = alg.rot2euler(Rs{i});
-        params(3 + num_params_d + 6*(i-1) + 4: ...
-               3 + num_params_d + 6*(i-1) + 6) = ts{i};        
-    end
+    % Get number of distortion params
+    num_params_d = alg.num_params_d(f_p_p2p_p_d);
     
     % Determine which parameters to update based on type
-    idx_update = false(num_params,1);
+    idx_update = false(size(params));
     switch optimization_type
         case 'intrinsic'
             % Only update camera matrix and distortion params
@@ -56,35 +82,39 @@ function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_
         idx_update(2:3) = false;
     end  
     
-    % Get "weight matrix"    
+    % Get "weight matrix"
     if exist('cov_cb_p_dss','var')
-        % Do GLS
+        % Do generalized least squares
         % Get "weight" matrix (inverse of covariance)
         cov = vertcat(cov_cb_p_dss{:}); % Concat
         cov = cov(vertcat(idx_valids{:})); % Apply valid indices
         cov = cellfun(@sparse,cov,'UniformOutput',false); % Make sparse
-        cov = blkdiag(cov{:}); % Finish sparse array
+        cov = blkdiag(cov{:}); % Create full covariance matrix
         W = inv(cov); % This might be slow...
     else
+        % Identity weight matrix is just simple least squares
         W = speye(2*sum(vertcat(idx_valids{:})));
     end
     
-    % Perform Levenberg–Marquardt iteration(s)    
+    % Perform Levenberg–Marquardt iteration(s)
     % Initialize lambda
     lambda = opts.refine_single_params_lambda_init;
-    % Get initial mean squared error
+    % Get initial cost
     cost = calc_cost(params, ...
                      p_cb_ws, ...
                      p_cb_p_dss, ...
                      idx_valids, ...
                      f_p_w2p_p, ...
+                     f_dp_p_dh, ...
                      f_p_p2p_p_d, ...
+                     f_dp_p_d_dargs, ...
+                     idx_update, ...
                      W);
-    for it = 1:opts.refine_single_params_it_cutoff                                  
-        % Store previous p and cost  
+    for it = 1:opts.refine_single_params_it_cutoff
+        % Store previous params and cost
         params_prev = params;
         cost_prev = cost;
-                
+        
         % Compute delta_params
         delta_params = calc_delta_params(params_prev, ...
                                          p_cb_ws, ...
@@ -99,26 +129,29 @@ function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_
                                          W);
         
         % update params and cost
-        params(idx_update) = params_prev(idx_update) + delta_params;
+        params(idx_update) = params_prev(idx_update) + delta_params;        
         cost = calc_cost(params, ...
                          p_cb_ws, ...
                          p_cb_p_dss, ...
                          idx_valids, ...
                          f_p_w2p_p, ...
+                         f_dp_p_dh, ...
                          f_p_p2p_p_d, ...
+                         f_dp_p_d_dargs, ...
+                         idx_update, ...
                          W);
         
         % If cost decreases, decrease lambda and store results; if cost
-        % increases, then increase lambda until cost descreases
+        % increases, then increase lambda until cost decreases
         if cost < cost_prev
             % Decrease lambda and continue to next iteration
-            lambda = lambda/opts.refine_single_params_lambda_factor;            
+            lambda = lambda/opts.refine_single_params_lambda_factor;
         else
             while cost >= cost_prev
                 % Increase lambda and recompute params
                 lambda = opts.refine_single_params_lambda_factor*lambda;      
                 
-                if isinf(lambda)
+                if lambda >= realmax('single')
                     % This will already be a very, very small step, so just
                     % exit
                     delta_params(:) = 0;
@@ -127,7 +160,7 @@ function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_
                     break
                 end
                 
-                % Compute delta_p
+                % Compute delta_params
                 delta_params = calc_delta_params(params_prev, ...
                                                  p_cb_ws, ...
                                                  p_cb_p_dss, ...
@@ -139,38 +172,43 @@ function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_
                                                  idx_update, ...
                                                  lambda, ...
                                                  W);
-            
+
                 % update params and cost
-                params(idx_update) = params_prev(idx_update) + delta_params;
+                params(idx_update) = params_prev(idx_update) + delta_params;   
                 cost = calc_cost(params, ...
                                  p_cb_ws, ...
                                  p_cb_p_dss, ...
                                  idx_valids, ...
                                  f_p_w2p_p, ...
+                                 f_dp_p_dh, ...
                                  f_p_p2p_p_d, ...
+                                 f_dp_p_d_dargs, ...
+                                 idx_update, ...
                                  W);
             end            
         end
                        
         % Exit if change in distance is small
-        diff_norm = norm(delta_params);         
-        if strcmp(optimization_type,'full')
-            % Also get mean residual distance as a useful metric
-            res = calc_res(params, ...
-                           p_cb_ws, ...
-                           p_cb_p_dss, ...
-                           idx_valids, ...
-                           f_p_w2p_p, ...
-                           f_p_p2p_p_d);
-            res = reshape(res,2,[])';
-            d_res_mean = mean(sqrt(res(:,1).^2 + res(:,2).^2));
-            
-            disp(['Iteration #: ' sprintf('%3u',it) '; ' ...
-                  'Mean residual distance: ' sprintf('%12.10f',d_res_mean) '; ' ...
-                  'Norm of delta_p: ' sprintf('%12.10f',diff_norm) '; ' ...
-                  'Cost: ' sprintf('%12.10f',cost) '; ' ...
-                  'lambda: ' sprintf('%12.10f',lambda)]);
-        end        
+        diff_norm = norm(delta_params);
+        
+        % Print iteration stats
+        [~, res] = calc_gauss_newton_params(params, ...
+                                            p_cb_ws, ...
+                                            p_cb_p_dss, ...
+                                            idx_valids, ...
+                                            f_p_w2p_p, ...
+                                            f_dp_p_dh, ...
+                                            f_p_p2p_p_d, ...
+                                            f_dp_p_d_dargs, ...
+                                            idx_update);
+        res = reshape(res,2,[])'; % get in [x y] format
+        d_res_mean = mean(sqrt(res(:,1).^2 + res(:,2).^2));
+        disp(['Iteration #: ' sprintf('%3u',it) '; ' ...
+              'Mean residual distance: ' sprintf('%12.10f',d_res_mean) '; ' ...
+              'Norm of delta_p: ' sprintf('%12.10f',diff_norm) '; ' ...
+              'Cost: ' sprintf('%12.10f',cost) '; ' ...
+              'lambda: ' sprintf('%12.10f',lambda)]);
+        
         if diff_norm < opts.refine_single_params_norm_cutoff
             break
         end
@@ -178,107 +216,104 @@ function [A,d,Rs,ts] = refine_single_params(A,d,Rs,ts,p_cb_p_dss,idx_valids,f_p_
     if it == opts.refine_single_params_it_cutoff
         warning('iterations hit cutoff before converging!!!');
     end
-        
-    % Get outputs from params 
-    A = [params(1) 0         params(2);
-         0         params(1) params(3);
-         0         0         1];
-    d = params(4:3 + num_params_d);
-    for i = 1:num_boards
-        Rs{i} = alg.euler2rot(params(3 + num_params_d + 6*(i-1) + 1: ...
-                                     3 + num_params_d + 6*(i-1) + 3));
-        ts{i} = params(3 + num_params_d + 6*(i-1) + 4: ...
-                       3 + num_params_d + 6*(i-1) + 6);
-    end
+            
+    % Get covariance of parameters
+    [jacob, res] = calc_gauss_newton_params(params, ...
+                                            p_cb_ws, ...
+                                            p_cb_p_dss, ...
+                                            idx_valids, ...
+                                            f_p_w2p_p, ...
+                                            f_dp_p_dh, ...
+                                            f_p_p2p_p_d, ...
+                                            f_dp_p_d_dargs, ...
+                                            idx_update);
+    [~,~,~,cov_params] = lscov(jacob,res,W);
 end
 
-function cost = calc_cost(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_p_p2p_p_d,W)
-    % Calculate residuals
-    res = calc_res(params, ...
-                   p_ws, ...
-                   p_p_dss, ...
-                   idx_valids, ...
-                   f_p_w2p_p, ...
-                   f_p_p2p_p_d);
-               
-    % Get cost
+function delta_params = calc_delta_params(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_dp_p_dh,f_p_p2p_p_d,f_dp_p_d_dargs,idx_update,lambda,W)
+    % Get gauss newton params
+    [jacob, res] = calc_gauss_newton_params(params, ...
+                                            p_ws, ...
+                                            p_p_dss, ...
+                                            idx_valids, ...
+                                            f_p_w2p_p, ...
+                                            f_dp_p_dh, ...
+                                            f_p_p2p_p_d, ...
+                                            f_dp_p_d_dargs, ...
+                                            idx_update);
+
+    % Get gradient    
+    grad = jacob'*W*res;
+    
+    % Get hessian
+    hess = jacob'*W*jacob;
+    
+    % Add Levenberg–Marquardt damping
+    hess = hess + lambda*eye(sum(idx_update));
+          
+    % Get change in params
+    delta_params = -lscov(hess,grad);
+end
+
+function cost = calc_cost(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_dp_p_dh,f_p_p2p_p_d,f_dp_p_d_dargs,idx_update,W)               
+    % Get residuals
+    [~, res] = calc_gauss_newton_params(params, ...
+                                        p_ws, ...
+                                        p_p_dss, ...
+                                        idx_valids, ...
+                                        f_p_w2p_p, ...
+                                        f_dp_p_dh, ...
+                                        f_p_p2p_p_d, ...
+                                        f_dp_p_d_dargs, ...
+                                        idx_update);
+    
+    % Apply weights
     cost = res'*W*res;
 end
 
-function res = calc_res(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_p_p2p_p_d)   
+function [jacob, res] = calc_gauss_newton_params(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_dp_p_dh,f_p_p2p_p_d,f_dp_p_d_dargs,idx_update)
     % Get number of distortion params    
-    num_params_d = nargin(f_p_p2p_p_d) - 5;
-    
+    num_params_d = alg.num_params_d(f_p_p2p_p_d);
+        
     % Get intrinsic parameters
-    A = [params(1) 0         params(2);
-         0         params(1) params(3);
-         0         0         1];
-    d = params(4:3 + num_params_d);
-    
-    % Get residuals
-    res = zeros(2*sum(cellfun(@sum,idx_valids)),1);
+    a = params(1:3);
+    d = params(4:3+num_params_d);
+
+    % Get residuals and jacobian
+    res = zeros(2*sum(vertcat(idx_valids{:})),1);
+    jacob = sparse(2*sum(vertcat(idx_valids{:})),numel(params));
     for i = 1:numel(p_p_dss)
         % Get rotation and translation for this board
         R = alg.euler2rot(params(3 + num_params_d + 6*(i-1) + 1: ...
                                  3 + num_params_d + 6*(i-1) + 3));
         t = params(3 + num_params_d + 6*(i-1) + 4: ...
                    3 + num_params_d + 6*(i-1) + 6);
-               
+        
         % Get homography
-        H = A*[R(:,1) R(:,2) t];
+        H = alg.a2A(a)*[R(:,1) R(:,2) t];
         
         % Get pixel points
         p_ps = f_p_w2p_p(p_ws,H);
         
         % Get distorted pixel points
-        p_p_d_ms = alg.p_p2p_p_d(p_ps,f_p_p2p_p_d,A,d);
+        p_p_d_ms = alg.p_p2p_p_d(p_ps,f_p_p2p_p_d,a,d);
             
         % Store residuals - take valid indices into account
-        res(2*sum(cellfun(@sum,idx_valids(1:i-1)))+1:2*sum(cellfun(@sum,idx_valids(1:i)))) = ...
+        res(2*sum(vertcat(idx_valids{1:i-1}))+1:2*sum(vertcat(idx_valids{1:i}))) = ...
             reshape(vertcat((p_p_d_ms(idx_valids{i},1)-p_p_dss{i}(idx_valids{i},1))', ...
                             (p_p_d_ms(idx_valids{i},2)-p_p_dss{i}(idx_valids{i},2))'),[],1);
-    end
-end
-
-function delta_params = calc_delta_params(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_dp_p_dh,f_p_p2p_p_d,f_dp_p_d_dargs,idx_update,lambda,W)
-    % Get number of distortion params    
-    num_params_d = nargin(f_dp_p_d_dargs{1}) - 5;
-        
-    % Get intrinsic parameters
-    A = [params(1) 0         params(2);
-         0         params(1) params(3);
-         0         0         1];
-    d = params(4:3+num_params_d);
-
-    % Get jacobian
-    jacob = sparse(2*sum(cellfun(@sum,idx_valids)),numel(params));
-    for i = 1:numel(p_p_dss)
-        % Get rotation and translation for this board
-        R = alg.euler2rot(params(3 + num_params_d + 6*(i-1) + 1: ...
-                                 3 + num_params_d + 6*(i-1) + 3));
-        t = params(3 + num_params_d + 6*(i-1) + 4: ...
-                   3 + num_params_d + 6*(i-1) + 6);
-        
+               
         % Intrinsics
-        jacob(2*sum(cellfun(@sum,idx_valids(1:i-1)))+1:2*sum(cellfun(@sum,idx_valids(1:i))),1:3 + num_params_d) = ...
-            alg.dp_p_d_dintrinsic(p_ws(idx_valids{i},:),f_p_w2p_p,f_dp_p_dh,R,t,f_dp_p_d_dargs,A,d); %#ok<SPRIX>
+        jacob(2*sum(vertcat(idx_valids{1:i-1}))+1:2*sum(vertcat(idx_valids{1:i})),1:3 + num_params_d) = ...
+            alg.dp_p_d_dintrinsic(p_ws(idx_valids{i},:),f_p_w2p_p,f_dp_p_dh,R,t,f_dp_p_d_dargs,a,d); %#ok<SPRIX>
 
         % Extrinsics
         dr_deuler = alg.dr_deuler(alg.rot2euler(R));
         drt_dm = blkdiag(dr_deuler,eye(3));
-        jacob(2*sum(cellfun(@sum,idx_valids(1:i-1)))+1:2*sum(cellfun(@sum,idx_valids(1:i))),3 + num_params_d + 6*(i-1) + 1:3 + num_params_d + 6*(i-1) + 6) = ...
-            alg.dp_p_d_dextrinsic(p_ws(idx_valids{i},:),f_p_w2p_p,f_dp_p_dh,R,t,f_dp_p_d_dargs,A,d,drt_dm); %#ok<SPRIX>
+        jacob(2*sum(vertcat(idx_valids{1:i-1}))+1:2*sum(vertcat(idx_valids{1:i})),3 + num_params_d + 6*(i-1) + 1:3 + num_params_d + 6*(i-1) + 6) = ...
+            alg.dp_p_d_dextrinsic(p_ws(idx_valids{i},:),f_p_w2p_p,f_dp_p_dh,R,t,f_dp_p_d_dargs,a,d,drt_dm); %#ok<SPRIX>
     end  
     
-    % Get gradient    
-    grad = jacob(:,idx_update)'*W*calc_res(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_p_p2p_p_d);
-    
-    % Get hessian
-    hess = jacob(:,idx_update)'*W*jacob(:,idx_update);
-    
-    % Add Levenberg–Marquardt damping
-    hess = hess + lambda*eye(sum(idx_update));
-    
-    % Get change in params using Levenberg–Marquardt update     
-    delta_params = -lscov(hess,grad);        
+    % Only update specified parameters
+    jacob = jacob(:,idx_update);    
 end

@@ -6,8 +6,21 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
     disp('Performing single calibration with four point distortion refinement method...');
         
     % If intrinsics are passed in, don't optimize for them
+    args_p_p2p_p_d = argnames(calib_config.sym_p_p2p_p_d);
+    num_params_d = alg.num_params_d(calib_config.sym_p_p2p_p_d);
     if exist('intrin','var')
-        A = intrin.A;
+        % Validate A - assumes single focal length and no skew
+        if intrin.A(1,1) ~= intrin.A(2,2) || any(intrin.A([2 3 4 6]))         
+            error('Invalid initial camera matrix!')
+        end
+            
+        % Validate d - make sure length of d is correct
+        if size(intrin.d,1) ~= num_params_d || ...
+           size(intrin.d,2) ~= 1  
+            error('Invalid initial distortion vector!')
+        end
+        
+        a = alg.A2a(intrin.A);
         d = intrin.d;
         optimization_type = 'extrinsic';
         distortion_refinement_it_cutoff = 1;
@@ -27,8 +40,7 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
     f_p_p2p_p_d = matlabFunction(calib_config.sym_p_p2p_p_d);
     
     % Get function handles for distortion function partial derivatives
-    args_p_p2p_p_d = argnames(calib_config.sym_p_p2p_p_d);
-    for i = 1:length(args_p_p2p_p_d)
+    for i = 1:numel(args_p_p2p_p_d)
         % Differentiate
         f_dp_p_d_dargs{i} = diff(calib_config.sym_p_p2p_p_d, ...
                                  args_p_p2p_p_d(i)); %#ok<AGROW>
@@ -36,9 +48,6 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
         f_dp_p_d_dargs{i} = matlabFunction(f_dp_p_d_dargs{i}); %#ok<AGROW>
     end    
         
-    % Get number of distortion params    
-    num_params_d = nargin(f_p_p2p_p_d) - 5;
-    
     % Perform distortion refinement iterations, which iteratively applies
     % distortion correction to images to help refine target point locations
     for it = 1:distortion_refinement_it_cutoff
@@ -51,7 +60,7 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
         if it == 1
             for i = 1:num_boards
                 % Get four point box in pixel coordinates
-                if exist('A','var') && exist('d','var')
+                if exist('a','var') && exist('d','var')
                     % If intrinsics are passed in, then undistort four
                     % point box
                     p_fp_ps = alg.p_p_d2p_p(p_fp_p_dss{i}, ...
@@ -59,7 +68,7 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
                                             f_p_p2p_p_d, ...
                                             f_dp_p_d_dargs{1}, ... % x_p
                                             f_dp_p_d_dargs{2}, ... % y_p                                            
-                                            A, ...
+                                            a, ...
                                             d, ...
                                             calib_config);
                 else
@@ -82,11 +91,11 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
 
             % Get undistorted calibration board image array and the 
             % transform from world to pixel coordinates.
-            if exist('A','var') && exist('d','var')
+            if exist('a','var') && exist('d','var')
                 % undistort array
                 array_cb = alg.undistort_array(img_cbs(i).get_array_gs(), ...
                                                f_p_p2p_p_d, ...
-                                               A, ...
+                                               a, ...
                                                d, ...
                                                calib_config);
             else
@@ -151,15 +160,15 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
             end    
 
             % Get initial guess for camera matrix
-            if ~exist('A','var')
-                A = alg.init_intrinsic_params(H_w2ps, ...
-                                              img_cbs(1).get_width(), ...
-                                              img_cbs(1).get_height()); 
+            if ~exist('a','var')
+                a = alg.A2a(alg.init_intrinsic_params(H_w2ps, ...
+                                                      img_cbs(1).get_width(), ...
+                                                      img_cbs(1).get_height())); 
             end
 
             % Get initial guess for extrinsics    
             for i = 1:num_boards
-                [Rs{i}, ts{i}] = alg.init_extrinsic_params(H_w2ps{i}, A); %#ok<AGROW>
+                [Rs{i}, ts{i}] = alg.init_extrinsic_params(H_w2ps{i}, alg.a2A(a)); %#ok<AGROW>
             end
             
             % Get initial distortion parameters
@@ -174,7 +183,7 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
         for i = 1:num_boards
             p_cb_p_dss{i} = alg.p_p2p_p_d(p_cb_pss{i}, ...
                                           f_p_p2p_p_d, ...                                          
-                                          A, ...
+                                          a, ...
                                           d); %#ok<AGROW>
         end
         
@@ -189,36 +198,21 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
                     % distorted coordinates; from: 
                     %
                     %   http://www.stat.cmu.edu/~hseltman/files/ratio.pdf
+                    %   https://en.wikipedia.org/wiki/Propagation_of_uncertainty#Non-linear_combinations
                     %
                     % Note that only covariances from x_p and y_p are used
                     p_cb_p = p_cb_pss{i}(j,:);
                     cov_cb_p = cov_cb_pss{i}{j};
                     
-                    % Get derivatives
-                    dp_p_d_dp_p = alg.dp_p_d_dp_p(p_cb_p, ...
-                                                  f_dp_p_d_dargs{1}, ... % x_p
-                                                  f_dp_p_d_dargs{2}, ... % y_p
-                                                  A, ...
-                                                  d);
-                    dp_p_d_dp_p = full(dp_p_d_dp_p); % dp_p_d_dp_p is sparse
+                    % Get Jacobian
+                    dp_p_d_dp_p = full(alg.dp_p_d_dp_p(p_cb_p, ...
+                                                       f_dp_p_d_dargs{1}, ... % x_p
+                                                       f_dp_p_d_dargs{2}, ... % y_p
+                                                       a, ...
+                                                       d));
                     
-                    % Update covariances
-                    var_x_p_d = dp_p_d_dp_p(1,1)^2*cov_cb_p(1,1) + ...
-                                2*dp_p_d_dp_p(1,1)*dp_p_d_dp_p(1,2)*cov_cb_p(1,2) + ...
-                                dp_p_d_dp_p(1,2)^2*cov_cb_p(2,2);
-                            
-                    var_y_p_d = dp_p_d_dp_p(2,1)^2*cov_cb_p(1,1) + ...
-                                2*dp_p_d_dp_p(2,1)*dp_p_d_dp_p(2,2)*cov_cb_p(1,2) + ...
-                                dp_p_d_dp_p(2,2)^2*cov_cb_p(2,2);
-                            
-                    cov_x_p_d_y_p_d = dp_p_d_dp_p(1,1)*dp_p_d_dp_p(2,1)*cov_cb_p(1,1) + ...
-                                      dp_p_d_dp_p(1,1)*dp_p_d_dp_p(2,2)*cov_cb_p(1,2) + ... 
-                                      dp_p_d_dp_p(1,2)*dp_p_d_dp_p(2,1)*cov_cb_p(1,2) + ...
-                                      dp_p_d_dp_p(1,2)*dp_p_d_dp_p(2,2)*cov_cb_p(2,2);
-                                  
-                    % Store covariance
-                    cov_cb_p_dss{i}{j} = [var_x_p_d       cov_x_p_d_y_p_d;
-                                          cov_x_p_d_y_p_d var_y_p_d]; %#ok<AGROW>
+                    % Update covariance
+                    cov_cb_p_dss{i}{j} = dp_p_d_dp_p*cov_cb_p*dp_p_d_dp_p'; %#ok<AGROW>
                 end
             end  
         end
@@ -243,45 +237,70 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
                 error(['Unknown target type: "' calib_config.target_type '"']);
         end
         
-        if calib_config.apply_covariance_optimization
-            [A,d,Rs,ts] = alg.refine_single_params(A, d, Rs, ts, ...
-                                                   p_cb_p_dss, ...
-                                                   idx_valids, ...
-                                                   f_p_w2p_p, ...
-                                                   f_dp_p_dh, ...
-                                                   f_p_p2p_p_d, ...
-                                                   f_dp_p_d_dargs, ...       
-                                                   optimization_type, ...                                        
-                                                   calib_config, ...
-                                                   cov_cb_p_dss);
-        else
-            [A,d,Rs,ts] = alg.refine_single_params(A, d, Rs, ts, ...
-                                                   p_cb_p_dss, ...
-                                                   idx_valids, ...  
-                                                   f_p_w2p_p, ...
-                                                   f_dp_p_dh, ...
-                                                   f_p_p2p_p_d, ...
-                                                   f_dp_p_d_dargs, ...
-                                                   optimization_type, ...  
-                                                   calib_config);
+        % Gather params
+        num_params = 3 + num_params_d + 6*num_boards;
+        params = zeros(num_params,1);
+        % Intrinsics
+        params(1:3) = a;
+        params(4:3+num_params_d) = d;
+        % Extrinsics
+        for i = 1:num_boards
+            params(3 + num_params_d + 6*(i-1) + 1: ...
+                   3 + num_params_d + 6*(i-1) + 3) = alg.rot2euler(Rs{i});
+            params(3 + num_params_d + 6*(i-1) + 4: ...
+                   3 + num_params_d + 6*(i-1) + 6) = ts{i};        
         end
-                                           
+        
+        % Refine params
+        if calib_config.apply_covariance_optimization
+            [params,cov_params] = alg.refine_single_params(params, ...
+                                                           p_cb_p_dss, ...
+                                                           idx_valids, ...
+                                                           f_p_w2p_p, ...
+                                                           f_dp_p_dh, ...
+                                                           f_p_p2p_p_d, ...
+                                                           f_dp_p_d_dargs, ...       
+                                                           optimization_type, ...                                        
+                                                           calib_config, ...
+                                                           cov_cb_p_dss);
+        else
+            [params,cov_params] = alg.refine_single_params(params, ...
+                                                           p_cb_p_dss, ...
+                                                           idx_valids, ...  
+                                                           f_p_w2p_p, ...
+                                                           f_dp_p_dh, ...
+                                                           f_p_p2p_p_d, ...
+                                                           f_dp_p_d_dargs, ...
+                                                           optimization_type, ...  
+                                                           calib_config);
+        end
+        
+        % Parse params
+        a = params(1:3);
+        d = params(4:3 + num_params_d);
+        for i = 1:num_boards
+            Rs{i} = alg.euler2rot(params(3 + num_params_d + 6*(i-1) + 1: ...
+                                         3 + num_params_d + 6*(i-1) + 3));
+            ts{i} = params(3 + num_params_d + 6*(i-1) + 4: ...
+                           3 + num_params_d + 6*(i-1) + 6);
+        end    
+         
         disp('---');
         disp('Refined camera matrix: ');
-        disp(A);   
+        disp(alg.a2A(a));   
         disp('Refined distortions: ');
         disp(d');  
                                            
         % Update homographies --------------------------------------------%
         
         for i = 1:num_boards
-            H_w2ps{i} = A*[Rs{i}(:,1) Rs{i}(:,2) ts{i}]; 
+            H_w2ps{i} = alg.a2A(a)*[Rs{i}(:,1) Rs{i}(:,2) ts{i}]; 
         end
     end
     
     % Package outputs ----------------------------------------------------%
     calib.config = calib_config;
-    calib.intrin.A = A;
+    calib.intrin.A = alg.a2A(a);
     calib.intrin.d = d;
     for i = 1:num_boards
         calib.extrin(i).img_cb = img_cbs(i);
@@ -293,4 +312,6 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
         calib.extrin(i).idx_valid = idx_valids{i};
         calib.extrin(i).debug = debugs{i};
     end
+    calib.params = params;
+    calib.cov_params = cov_params;
 end

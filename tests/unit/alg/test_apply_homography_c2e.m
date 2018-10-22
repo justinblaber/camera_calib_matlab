@@ -48,5 +48,5 @@ function test_apply_homography_c2e
 %}
        
     % Compare computed points to ground truth
-    assert(all(all(abs(alg.apply_homography_c2e(H_12,p_1s,r_1) - p_2s) < eps('single'))));
+    assert(all(all(abs(alg.apply_homography_c2e(p_1s,H_12,r_1) - p_2s) < eps('single'))));
 end

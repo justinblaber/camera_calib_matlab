@@ -66,9 +66,9 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points(array_cb,
         p_cb_p_init = f_p_w2p_p(p_cb_w);
         
         % Get boundary in pixel coordinates centered around point
-        boundary_p_center = get_boundary(p_cb_w, ...
-                                         f_p_w2p_p, ...
-                                         opts);
+        boundary_p_center = calc_boundary(p_cb_w, ...
+                                          f_p_w2p_p, ...
+                                          opts);
         
         % Perform initial refinement with "dual conic" ellipse detection.
         e_cb_p_dualconic = dualconic(p_cb_p_init, ...
@@ -101,7 +101,7 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points(array_cb,
     end    
 end
 
-function boundary_p_center = get_boundary(p_w,f_p_w2p_p,opts)
+function boundary_p_center = calc_boundary(p_w,f_p_w2p_p,opts)
     % Get boundary around point in world coordinates
     % Note:
     %    p1 ----- p4
@@ -122,7 +122,7 @@ function boundary_p_center = get_boundary(p_w,f_p_w2p_p,opts)
     boundary_p_center = boundary_p - p_p;
 end
 
-function [bb_p, mask] = get_bb_and_mask(p_p, boundary_p_center)
+function [bb_p, mask] = calc_bb_and_mask(p_p, boundary_p_center)
     % Get boundary in pixel coordinates
     boundary_p = boundary_p_center + p_p;
     
@@ -139,7 +139,7 @@ end
 
 function e_p = dualconic(p_p_init,array_dx,array_dy,boundary_p_center)    
     % Get bounding box and mask of sub array
-    [bb_p_sub, mask_sub_array] = get_bb_and_mask(p_p_init, boundary_p_center);
+    [bb_p_sub, mask_sub_array] = calc_bb_and_mask(p_p_init, boundary_p_center);
 
     % Check bounds
     if bb_p_sub(1,1) < 1 || bb_p_sub(2,1) > size(array_dx,2) || ...
@@ -170,7 +170,7 @@ end
 
 function [e_p, cov_p, bb_p_sub] = edges(e_p_init,array_dx,array_dy,boundary_p_center,opts)
     % Get bounding box and mask of sub arrays
-    [bb_p_sub, mask_sub_array] = get_bb_and_mask(e_p_init(1:2)', boundary_p_center);
+    [bb_p_sub, mask_sub_array] = calc_bb_and_mask(e_p_init(1:2)', boundary_p_center);
 
     % Check bounds
     if bb_p_sub(1,1) < 1 || bb_p_sub(2,1) > size(array_dx,2) || ...

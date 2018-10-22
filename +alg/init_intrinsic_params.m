@@ -11,10 +11,7 @@ function A = init_intrinsic_params(Hs,width,height)
     %   height - scalar; height of the calibration board image
     %
     % Outputs:
-    %   A - array; 3x3 array containing:
-    %       [alpha    0       x_o;
-    %        0        alpha   y_o;
-    %        0        0       1]
+    %   A - array; 3x3 camera matrix
         
     % Set principle point
     x_o = (width+1)/2;

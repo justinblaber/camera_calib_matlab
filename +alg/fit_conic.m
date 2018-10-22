@@ -16,6 +16,11 @@ function Aq = fit_conic(array_dx,array_dy)
         error('Input gradient arrays must be equal in size');
     end
         
+    % Remove any NaNs from array gradient - setting gradient to zero
+    % effectively sets the "weight" to zero
+    array_dx(isnan(array_dx)) = 0;
+    array_dy(isnan(array_dy)) = 0;
+        
     % Get coordinates of each pixel
     [ys,xs] = ndgrid(1:size(array_dx,1),1:size(array_dx,2));
     ps = [xs(:) ys(:)];

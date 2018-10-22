@@ -25,6 +25,13 @@ function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
         error('Input gradient arrays must be square and equal in size');
     end
     
+    % Initialize weights
+    W_init = double(~isnan(array_dx) & ~isnan(array_dy));
+    
+    % Remove any NaNs from array gradient
+    array_dx(isnan(array_dx)) = 0;
+    array_dy(isnan(array_dy)) = 0;
+    
     % Get size
     s = length(array_dx);
     
@@ -33,13 +40,13 @@ function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
     xs = xs(:);
     ys = ys(:);
     
-    % Get covariance matrix of gaussian kernel
-    sigma = (s-1)/4;
-    cov = [sigma^2 0; ...
-           0       sigma^2];
+    % Set gaussian kernel parameters
+    sigma_gauss = (s-1)/4;
+    cov_gauss = [sigma_gauss^2 0; ...
+                 0             sigma_gauss^2];
     
     % Initial guess for center point
-    p = alg.line_line_intersect(l1, l2);    
+    p_init = alg.line_line_intersect(l1, l2);    
             
     % Get gradient magnitude - I found that using squared magnitude is
     % better because it tends to supress smaller gradients due to noise
@@ -53,20 +60,25 @@ function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
               opts.refine_checker_edges_h2_init;
               atan(-l1(1)/l1(2));
               atan(-l2(1)/l2(2));
-              p(1);
-              p(2)];
+              p_init(1);
+              p_init(2)];
     
     % Perform iterations until convergence
     for it = 1:opts.refine_checker_edges_it_cutoff  
         % Get gauss newton parameters
-        [hess, grad] = get_gauss_newton_params(params, ...
-                                               array_grad_mag, ...
-                                               xs, ...
-                                               ys, ...
-                                               cov);
+        [jacob, res] = calc_gauss_newton_params(params, ...
+                                                array_grad_mag, ...
+                                                xs, ...
+                                                ys);
+                                            
+        % Update weights
+        kernel_gauss = mvnpdf([xs ys], params(5:6)', cov_gauss);
+        kernel_gauss = reshape(kernel_gauss,[s s]);
+        kernel_gauss = (kernel_gauss-min(kernel_gauss(:)))./(max(kernel_gauss(:))-min(kernel_gauss(:)));
+        W = kernel_gauss.*W_init;
 
         % Get and store update
-        delta_params = -lscov(hess,grad);
+        delta_params = -lscov(jacob,res,W(:));
         params = params + delta_params;        
          
         % Exit if change in distance is small
@@ -77,26 +89,25 @@ function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
         
     % Get center point
     p = params(5:6)';    
-
+    
     % Get covariance of center point
-    [hess, ~, res] = get_gauss_newton_params(params, ...
-                                             array_grad_mag, ...
-                                             xs, ...
-                                             ys, ...
-                                             cov);
-    mse = res'*res/(numel(res)-numel(params));
-    cov_p = inv(hess)*mse; %#ok<MINV>
-    cov_p = cov_p(5:6,5:6);
+    [jacob, res] = calc_gauss_newton_params(params, ...
+                                            array_grad_mag, ...
+                                            xs, ...
+                                            ys);
+                             
+    % Update weights
+    kernel_gauss = mvnpdf([xs ys], params(5:6)', cov_gauss);
+    kernel_gauss = reshape(kernel_gauss,[s s]);
+    kernel_gauss = (kernel_gauss-min(kernel_gauss(:)))./(max(kernel_gauss(:))-min(kernel_gauss(:)));
+    W = kernel_gauss.*W_init;
+    
+    % Get covaraince
+    [~,~,~,cov_params] = lscov(jacob,res,W(:));
+    cov_p = cov_params(5:6,5:6);
 end
 
-function [hess, grad, res] = get_gauss_newton_params(params,array_grad_mag,xs,ys,cov)
-    % Get center point
-    p = params(5:6)';
-
-    % Get gaussian mask
-    kernel_gauss = mvnpdf([xs ys], p, cov);
-    kernel_gauss = reshape(kernel_gauss,size(array_grad_mag));
-
+function [jacob, res] = calc_gauss_newton_params(params,array_grad_mag,xs,ys)
     % Sample edge function        
     f = params(1)*exp(-params(2)^2*((xs-params(5))*sin(params(3))-(ys-params(6))*cos(params(3))).^2) + ...
         params(1)*exp(-params(2)^2*((xs-params(5))*sin(params(4))-(ys-params(6))*cos(params(4))).^2) - ...
@@ -104,18 +115,12 @@ function [hess, grad, res] = get_gauss_newton_params(params,array_grad_mag,xs,ys
 
     % Get residuals
     res = f-array_grad_mag(:);
-    res = res.*kernel_gauss(:); % Apply weights
 
-    % Get gradient of edge function
-    df_dparams = [(exp(-params(2)^2*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)).^2) - 2*exp(-params(2)^2*((params(5) - xs).^2 + (params(6) - ys).^2)) + exp(-params(2)^2*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)).^2))';
-                  (4*params(1)*params(2)*exp(-params(2)^2*((params(5) - xs).^2 + (params(6) - ys).^2)).*((params(5) - xs).^2 + (params(6) - ys).^2) - 2*params(1)*params(2)*exp(-params(2)^2*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)).^2).*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)).^2 - 2*params(1)*params(2)*exp(-params(2)^2*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)).^2).*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)).^2)';
-                  (2*params(1)*params(2)^2*exp(-params(2)^2*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)).^2).*(cos(params(3))*(params(5) - xs) + sin(params(3))*(params(6) - ys)).*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)))';
-                  (2*params(1)*params(2)^2*exp(-params(2)^2*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)).^2).*(cos(params(4))*(params(5) - xs) + sin(params(4))*(params(6) - ys)).*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)))';
-                  (2*params(1)*params(2)^2*exp(-params(2)^2*((params(5) - xs).^2 + (params(6) - ys).^2)).*(2*params(5) - 2*xs) + 2*params(1)*params(2)^2*exp(-params(2)^2*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)).^2).*(sin(params(3))*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs))) + 2*params(1)*params(2)^2*exp(-params(2)^2*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)).^2).*(sin(params(4))*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs))))';
-                  (2*params(1)*params(2)^2*exp(-params(2)^2*((params(5) - xs).^2 + (params(6) - ys).^2)).*(2*params(6) - 2*ys) - 2*params(1)*params(2)^2*exp(-params(2)^2*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)).^2).*(cos(params(3))*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs))) - 2*params(1)*params(2)^2*exp(-params(2)^2*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)).^2).*(cos(params(4))*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs))))'];
-    df_dparams = df_dparams.*kernel_gauss(:)'; % Apply weights
-
-    % Get cost function gradient and hessian
-    grad = 2*sum(res'.*df_dparams,2);
-    hess = 2*(df_dparams*df_dparams');
+    % Get jacobian of edge function
+    jacob = [exp(-params(2)^2*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)).^2) - 2*exp(-params(2)^2*((params(5) - xs).^2 + (params(6) - ys).^2)) + exp(-params(2)^2*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)).^2), ...
+             4*params(1)*params(2)*exp(-params(2)^2*((params(5) - xs).^2 + (params(6) - ys).^2)).*((params(5) - xs).^2 + (params(6) - ys).^2) - 2*params(1)*params(2)*exp(-params(2)^2*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)).^2).*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)).^2 - 2*params(1)*params(2)*exp(-params(2)^2*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)).^2).*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)).^2, ...
+             2*params(1)*params(2)^2*exp(-params(2)^2*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)).^2).*(cos(params(3))*(params(5) - xs) + sin(params(3))*(params(6) - ys)).*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)), ...
+             2*params(1)*params(2)^2*exp(-params(2)^2*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)).^2).*(cos(params(4))*(params(5) - xs) + sin(params(4))*(params(6) - ys)).*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)), ...
+             2*params(1)*params(2)^2*exp(-params(2)^2*((params(5) - xs).^2 + (params(6) - ys).^2)).*(2*params(5) - 2*xs) + 2*params(1)*params(2)^2*exp(-params(2)^2*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)).^2).*(sin(params(3))*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs))) + 2*params(1)*params(2)^2*exp(-params(2)^2*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)).^2).*(sin(params(4))*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs))), ...
+             2*params(1)*params(2)^2*exp(-params(2)^2*((params(5) - xs).^2 + (params(6) - ys).^2)).*(2*params(6) - 2*ys) - 2*params(1)*params(2)^2*exp(-params(2)^2*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs)).^2).*(cos(params(3))*(cos(params(3))*(params(6) - ys) - sin(params(3))*(params(5) - xs))) - 2*params(1)*params(2)^2*exp(-params(2)^2*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)).^2).*(cos(params(4))*(cos(params(4))*(params(6) - ys) - sin(params(4))*(params(5) - xs)))];
 end

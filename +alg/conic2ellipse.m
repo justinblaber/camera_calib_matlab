@@ -14,7 +14,7 @@ function e = conic2ellipse(Aq)
     %       e(3) = a; major axis length 
     %       e(4) = b; minor axis length
     %       e(5) = alpha; rotation of major axis
-    
+        
     % Get conic polynomial coefficients
     A = Aq(1,1);
     B = 2*Aq(1,2);
@@ -23,9 +23,10 @@ function e = conic2ellipse(Aq)
     E = 2*Aq(2,3);
     F = Aq(3,3);
     
-    % Make sure input conic is an ellipse
-    if abs(B^2-4*A*C) < eps('single') || B^2-4*A*C > 0
-        error(['Input conic: "' num2str([A B C D E F]) '" is not an ellipse.']);
+    % Return NaNs if input conic is not ellipse
+    if any(isnan(Aq(:))) || abs(B^2-4*A*C) < eps('single') || B^2-4*A*C > 0
+        e = nan(5,1);
+        return
     end
     
     % Equations from https://math.stackexchange.com/a/820896/39581

@@ -10,7 +10,6 @@ disp('Running unit tests...');
 % each function in the following directories has a corresponding unit test
 % which contains the function it is supposed to be testing.
 camera_calib_sub_dir_names = {'+alg', ...
-                              '+class', ...
                               '+util'};  
                           
 % Check to make sure all camera_calib sub directory names start with a "+" 

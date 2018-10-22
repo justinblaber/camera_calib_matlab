@@ -1,4 +1,4 @@
-function [l1, l2] = get_asymptotes(Aq)
+function [l1, l2] = asymptotes(Aq)
     % Given a conic matrix of a hyperbola, this will return the asymptotes.
     %
     % Inputs:

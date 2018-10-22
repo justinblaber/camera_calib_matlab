@@ -16,10 +16,10 @@ function [p1, p2] = line_bb_intersect(l, bb)
             0 1 -bb(2,2)];
     
     % Get intersections of line with bounding box lines
-    p_bb = [line_line_intersect(l,l_bb(1,:));
-            line_line_intersect(l,l_bb(2,:));
-            line_line_intersect(l,l_bb(3,:));
-            line_line_intersect(l,l_bb(4,:))];
+    p_bb = [alg.line_line_intersect(l,l_bb(1,:));
+            alg.line_line_intersect(l,l_bb(2,:));
+            alg.line_line_intersect(l,l_bb(3,:));
+            alg.line_line_intersect(l,l_bb(4,:))];
     
     % Get two points which are on the bounding box
     bb_idx = find(((abs(p_bb(:,1) - bb(1,1)) < eps('single') | p_bb(:,1) > bb(1,1)) & (abs(p_bb(:,1) - bb(2,1)) < eps('single') | p_bb(:,1) < bb(2,1))) & ...

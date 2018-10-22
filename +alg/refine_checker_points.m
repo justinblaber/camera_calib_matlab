@@ -70,12 +70,11 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points(array_cb
         p_cb_p_init = f_p_w2p_p(p_cb_w);
         
         % Get half window of sub array
-        hw_p = get_half_window(p_cb_w, ...
-                               f_p_w2p_p, ...
-                               opts);
+        hw_p = calc_half_window(p_cb_w, ...
+                                f_p_w2p_p, ...
+                                opts);
         
-        % Perform initial refinement with "opencv" checker detection. This
-        % method is pretty robust and reasonably accurate.
+        % Perform initial refinement with "opencv" checker detection.
         p_cb_p_opencv = opencv(p_cb_p_init, ...
                                array_dx, ...
                                array_dy, ...
@@ -107,7 +106,7 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points(array_cb
     end    
 end
 
-function hw_p = get_half_window(p_w,f_p_w2p_p,opts)
+function hw_p = calc_half_window(p_w,f_p_w2p_p,opts)
     % Get box around point in world coordinates
     % Note:
     %    p1 - l2 - p3

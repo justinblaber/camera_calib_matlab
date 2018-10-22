@@ -1,4 +1,4 @@
-function array_d = distort_array(array,f_p_p2p_p_d,f_dp_p_d_dx_p,f_dp_p_d_dy_p,A,d,opts)
+function array_d = distort_array(array,f_p_p2p_p_d,f_dp_p_d_dx_p,f_dp_p_d_dy_p,a,d,opts)
     % Distorts array. 
     %
     % Since points are optimized non-linearly, this function is pretty 
@@ -10,10 +10,8 @@ function array_d = distort_array(array,f_p_p2p_p_d,f_dp_p_d_dx_p,f_dp_p_d_dy_p,A
     %       pixel coordinates and distorted pixel coordinates.
     %   f_dp_p_d_dx_p - function handle; derivative of p_p2p_p_d wrt x_p
     %   f_dp_p_d_dy_p - function handle; derivative of p_p2p_p_d wrt y_p
-    %   A - array; 3x3 array containing:
-    %       [alpha    0       x_o;
-    %        0        alpha   y_o;
-    %        0        0       1]
+    %   a - array; 3x1 array containing:
+    %       [alpha; x_o; y_o]
     %   d - array; Mx1 array of distortion coefficients
     %   opts - struct;
     %       .p_p_d2p_p_it_cutoff - int; max number of iterations performed
@@ -37,7 +35,7 @@ function array_d = distort_array(array,f_p_p2p_p_d,f_dp_p_d_dx_p,f_dp_p_d_dy_p,A
                          f_p_p2p_p_d, ...
                          f_dp_p_d_dx_p, ...
                          f_dp_p_d_dy_p, ...                         
-                         A, ...
+                         a, ...
                          d, ...
                          opts);
     

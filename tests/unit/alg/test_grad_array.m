@@ -1,13 +1,13 @@
-function test_array_grad
+function test_grad_array
     array = [0 0 0;
              0 1 0;
              0 0 0];
 
-    assert(all(all(abs(alg.array_grad(array,'x') - [0.125000000000000                   0  -0.125000000000000;
+    assert(all(all(abs(alg.grad_array(array,'x') - [0.125000000000000                   0  -0.125000000000000;
                                                     0.250000000000000                   0  -0.250000000000000;
                                                     0.125000000000000                   0  -0.125000000000000]) < eps('single'))))
 
-    assert(all(all(abs(alg.array_grad(array,'y') - [0.125000000000000   0.250000000000000   0.125000000000000;
+    assert(all(all(abs(alg.grad_array(array,'y') - [0.125000000000000   0.250000000000000   0.125000000000000;
                                                                     0                   0                   0;
                                                    -0.125000000000000  -0.250000000000000  -0.125000000000000]) < eps('single'))))
 end

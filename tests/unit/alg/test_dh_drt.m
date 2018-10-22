@@ -32,8 +32,6 @@ function test_dh_drt
         dh_drt(:,i) = H_delta(:);
     end
     
-    dh_drt = alg.dh_drt(alg.a2A(a));
-    
     % Compared finite difference to analytic value
     assert(all(all(abs(dh_drt - alg.dh_drt(alg.a2A(a))) < 1e-5)));                     
 end

@@ -30,10 +30,10 @@ function test_apply_homography_c2e
     y_circle = r_1*sin(theta);
     
     % Apply homography to circle
-    p_ellipse = alg.apply_homography_p2p(H_12,[x_circle' y_circle']);    
+    p_ellipse = alg.apply_homography_p2p([x_circle' y_circle'],H_12);    
     
     % Get projected center
-    p_hc = alg.apply_homography_p2p(H_12,[0 0]);
+    p_hc = alg.apply_homography_p2p([0 0],H_12);
     
     % Get ellipse center
     p_ch = p_2s(1,:);

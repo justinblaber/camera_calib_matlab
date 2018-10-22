@@ -15,6 +15,7 @@ function test_conic2ellipse
     F = Aq(3,3);    
 
     array = zeros(35,38);
+    figure;
     imshow(array,[]);
     hold on;
     e1 = ezplot(@(x,y) A.*x.^2+B.*x.*y+C.*y.^2+D.*x+E.*y+F,[1 size(array,2) 1 size(array,1)]);

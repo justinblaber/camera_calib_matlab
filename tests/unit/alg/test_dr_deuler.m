@@ -15,6 +15,6 @@ function test_dr_deuler
         dr_deuler(:,i) = (r_delta-r)./delta;
     end
     
-    % Compared finite difference to analytic value
+    % Assert
     assert(all(all(abs(dr_deuler - alg.dr_deuler(euler)) < 1e-5)));                     
 end

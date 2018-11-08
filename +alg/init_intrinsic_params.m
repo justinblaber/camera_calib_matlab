@@ -54,9 +54,8 @@ function A = init_intrinsic_params(Hs,width,height)
     % collinear.
     alpha_squared = dot(b,A)/dot(b,b);
     if alpha_squared < 0
-        error(['Alpha squared is equal to: ' num2str(alpha_squared) '. ' ...
-               'This quantity must be positive. Are calibration board ' ...
-               'parameters correct?']);
+        A = nan(3);
+        return
     end    
     alpha = sqrt(alpha_squared);
     

@@ -37,7 +37,17 @@ function jacob = dp_p_d_dp_p(p_ps,f_dp_p_d_dx_p,f_dp_p_d_dy_p,a,d)
                                 a(2), ...
                                 a(3), ...
                                 d_cell{:});
-
+                            
+    % If derivative is a constant, sometimes the output is a single value;
+    % if this is the case, repmat until the size is equal to the size of
+    % p_ps.
+    if ~isequal(size(dp_p_d_dx_p),size(p_ps))
+        dp_p_d_dx_p = repmat(dp_p_d_dx_p,size(p_ps,1),1);
+    end
+    if ~isequal(size(dp_p_d_dy_p),size(p_ps))
+        dp_p_d_dy_p = repmat(dp_p_d_dy_p,size(p_ps,1),1);
+    end
+                            
     % TODO: find a better way to construct sparse diagonal jacobian,
     % as this is probably the bottleneck
 

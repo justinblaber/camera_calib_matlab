@@ -1,12 +1,45 @@
 function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
     % Performs camera calibration using "four point distortion refinement"
     % method.
+    % 
+    % Inputs:
+    %   img_cbs - util.img; Nx1 calibration board images
+    %   p_fp_p_dss - cell; Nx1 cell of four point boxes around the
+    %       calibration board images in distorted pixel coordinates.
+    %   calib_config - struct; struct returned by util.read_calib_config()
+    %   intrin - struct; optional. If passed in, intrinsics will not be
+    %       optimized.
+    %       .A - array; 3x3 camera matrix
+    %       .d - array; Mx1 array of distortion coefficients
+    % 
+    % Outputs:
+    %   calib - struct;
+    %       .config - struct; copy of input calib_config
+    %       .intrin - struct;
+    %           .A - array; 3x3 camera matrix
+    %           .d - array; Mx1 array of distortion coefficients
+    %       .extrin - struct; Nx1 struct containing extrinsics
+    %           .img_cb - util.img; calibration board image
+    %           .R - array; 3x3 rotation matrix
+    %           .t - array; 3x1 translation vector
+    %           .p_fp_p_ds - array; four point box around the
+    %               calibration board image in distorted pixel coordinates
+    %           .p_cb_p_ds - array; calibration board points in distorted
+    %               pixel coordinates
+    %           .cov_cb_p_ds - cell; covariances of calibration board 
+    %               points in distorted pixel coordinates
+    %           .idx_valid - array; valid calibration board points
+    %           .debug - cell; debugging info
+    %       .debug; struct;
+    %           .params - array; raw parameter vector returned by 
+    %               alg.refine_single_params()
+    %           .cov_params - array; covariance of parameters returned by 
+    %               alg.refine_single_params()
     
-    disp('---');
-    disp('Performing single calibration with four point distortion refinement method...');
+    util.verbose_disp('------',1,calib_config);
+    util.verbose_disp('Performing single calibration with four point distortion refinement method...',1,calib_config);
         
     % If intrinsics are passed in, don't optimize for them
-    args_p_p2p_p_d = argnames(calib_config.sym_p_p2p_p_d);
     num_params_d = alg.num_params_d(calib_config.sym_p_p2p_p_d);
     if exist('intrin','var')
         % Validate A - assumes single focal length and no skew
@@ -15,8 +48,7 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
         end
             
         % Validate d - make sure length of d is correct
-        if size(intrin.d,1) ~= num_params_d || ...
-           size(intrin.d,2) ~= 1  
+        if size(intrin.d,1) ~= num_params_d || size(intrin.d,2) ~= 1  
             error('Invalid initial distortion vector!')
         end
         
@@ -26,7 +58,11 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
         distortion_refinement_it_cutoff = 1;
     else
         optimization_type = 'full';
-        distortion_refinement_it_cutoff = calib_config.distortion_refinement_it_cutoff;
+        if num_params_d > 0
+            distortion_refinement_it_cutoff = calib_config.distortion_refinement_it_cutoff;
+        else
+            distortion_refinement_it_cutoff = 1; % Model has no distortion parameters
+        end
     end
     
     % Get the calibration board points and the four point box on the 
@@ -40,6 +76,7 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
     f_p_p2p_p_d = matlabFunction(calib_config.sym_p_p2p_p_d);
     
     % Get function handles for distortion function partial derivatives
+    args_p_p2p_p_d = argnames(calib_config.sym_p_p2p_p_d);
     for i = 1:numel(args_p_p2p_p_d)
         % Differentiate
         f_dp_p_d_dargs{i} = diff(calib_config.sym_p_p2p_p_d, ...
@@ -51,7 +88,8 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
     % Perform distortion refinement iterations, which iteratively applies
     % distortion correction to images to help refine target point locations
     for it = 1:distortion_refinement_it_cutoff
-        disp(['Performing distortion refinement iteration: ' num2str(it) '...']);
+        util.verbose_disp('---',1,calib_config);
+        util.verbose_disp(['Performing distortion refinement iteration: ' num2str(it) '...'],1,calib_config);
              
         % Get sub pixel calibration board points -------------------------%     
         
@@ -84,10 +122,10 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
         end
         
         % Get calibration board points
-        disp('---');
+        util.verbose_disp('---',2,calib_config);
         for i = 1:num_boards   
             t = tic;
-            fprintf(['Refining "' calib_config.calibration_target '" points for: ' img_cbs(i).get_path() '. ']);
+            util.verbose_fprintf(['Refining "' calib_config.target_type '" points for: ' img_cbs(i).get_path() '. '],2,calib_config);
 
             % Get undistorted calibration board image array and the 
             % transform from world to pixel coordinates.
@@ -121,7 +159,7 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
                                                                                      calib_config.target_mat(:)); %#ok<AGROW>
                                                                                           
             time = toc(t);
-            fprintf(['Time ellapsed: %f seconds.' newline],time);        
+            util.verbose_fprintf(['Time ellapsed: %f seconds.' newline],time,2,calib_config);           
         end
 
         % Get initial intrinsic and extrinsic parameters -----------------%     
@@ -219,8 +257,8 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
         
         % Perform nonlinear refinement of parameters ---------------------%     
         
-        disp('---');
-        disp('Refining single parameters...');
+        util.verbose_disp('---',3,calib_config);
+        util.verbose_disp('Refining single parameters...',3,calib_config);
         
         % Get transform that converts world points to pixel points and its
         % corresponding derivatives wrt homography
@@ -238,17 +276,17 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
         end
         
         % Gather params
-        num_params = 3 + num_params_d + 6*num_boards;
+        num_params = 3+num_params_d+6*num_boards;
         params = zeros(num_params,1);
         % Intrinsics
         params(1:3) = a;
         params(4:3+num_params_d) = d;
         % Extrinsics
         for i = 1:num_boards
-            params(3 + num_params_d + 6*(i-1) + 1: ...
-                   3 + num_params_d + 6*(i-1) + 3) = alg.rot2euler(Rs{i});
-            params(3 + num_params_d + 6*(i-1) + 4: ...
-                   3 + num_params_d + 6*(i-1) + 6) = ts{i};        
+            params(3+num_params_d+6*(i-1)+1: ...
+                   3+num_params_d+6*(i-1)+3) = alg.rot2euler(Rs{i});
+            params(3+num_params_d+6*(i-1)+4: ...
+                   3+num_params_d+6*(i-1)+6) = ts{i};        
         end
         
         % Refine params
@@ -277,19 +315,25 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
         
         % Parse params
         a = params(1:3);
-        d = params(4:3 + num_params_d);
+        d = params(4:3+num_params_d);
         for i = 1:num_boards
-            Rs{i} = alg.euler2rot(params(3 + num_params_d + 6*(i-1) + 1: ...
-                                         3 + num_params_d + 6*(i-1) + 3));
-            ts{i} = params(3 + num_params_d + 6*(i-1) + 4: ...
-                           3 + num_params_d + 6*(i-1) + 6);
+            Rs{i} = alg.euler2rot(params(3+num_params_d+6*(i-1)+1: ...
+                                         3+num_params_d+6*(i-1)+3));
+            ts{i} = params(3+num_params_d+6*(i-1)+4: ...
+                           3+num_params_d+6*(i-1)+6);
         end    
-         
-        disp('---');
-        disp('Refined camera matrix: ');
-        disp(alg.a2A(a));   
-        disp('Refined distortions: ');
-        disp(d');  
+        
+        % Print params  
+        util.verbose_disp('---',1,calib_config);
+        util.verbose_disp('Single intrinsic params (+- 3*sigma):',1,calib_config);
+        util.verbose_disp('  -Camera: ',1,calib_config);
+        print_param('alpha', 1, params, cov_params, newline, calib_config); 
+        print_param('x_o',   2, params, cov_params, newline, calib_config);
+        print_param('y_o',   3, params, cov_params, newline, calib_config);         
+        util.verbose_disp('  -Distortion: ',1,calib_config);
+        for i = 1:num_params_d
+            print_param(char(args_p_p2p_p_d(i+5)), i+3, params, cov_params, newline, calib_config);
+        end
                                            
         % Update homographies --------------------------------------------%
         
@@ -307,11 +351,15 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
         calib.extrin(i).R = Rs{i};
         calib.extrin(i).t = ts{i};
         calib.extrin(i).p_fp_p_ds = p_fp_p_dss{i};
-        calib.extrin(i).p_cb_ps = p_cb_pss{i};
-        calib.extrin(i).cov_cb_ps = cov_cb_pss{i};
+        calib.extrin(i).p_cb_p_ds = p_cb_p_dss{i};
+        calib.extrin(i).cov_cb_p_ds = cov_cb_p_dss{i};
         calib.extrin(i).idx_valid = idx_valids{i};
         calib.extrin(i).debug = debugs{i};
     end
-    calib.params = params;
-    calib.cov_params = cov_params;
+    calib.debug.params = params;
+    calib.debug.cov_params = cov_params;
+end
+
+function print_param(s_param, idx, params, cov_params, suffix, calib_config)
+    util.verbose_fprintf([pad(['    ' s_param ': '],13) sprintf('% 9.4f',params(idx)) ' +- ' sprintf('% 6.4f',3*sqrt(cov_params(idx,idx))) suffix],1,calib_config);
 end

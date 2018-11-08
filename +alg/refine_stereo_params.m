@@ -1,354 +1,405 @@
-function [A,distortion,rotations,translations,R_s,t_s] = refine_stereo_params(A,distortion,rotations,translations,p_cb_pss,R_s,t_s,type,calib_config)
+function [params,cov_params] = refine_stereo_params(params,p_cb_p_dss,idx_valids,f_p_w2p_p,f_dp_p_dh,f_p_p2p_p_d,f_dp_p_d_dargs,optimization_type,opts,cov_cb_p_dss)
     % This will compute nonlinear refinement of intrinsic and extrinsic
-    % camera parameters for both left and right cameras.
+    % camera parameters.
     %
     % Inputs:
-    %	A - struct; contains:
-    %       .L and .R - array; initial guess of camera matrix containing:
-    %           [alpha    0       x_o;
-    %            0        alpha   y_o;
-    %            0        0       1]
-    %   distortion - struct; contains:
-    %       .L and .R - array; initial guess of distortions (radial and 
-    %           tangential) stored as: 
-    %           [beta1; beta2; beta3; beta4]  
-    %   rotations - struct; contains:
-    %       .L and .R - cell; Mx1 initial guesses of rotations
-    %   translations - struct; contains:
-    %       .L and .R - cell; Mx1 initial guesses of translations
-    %   p_cb_pss - struct; contains:
-    %       .L and .R - cell; Mx1 of optimized subpixel calibration 
-    %           board points in pixel coordinates.
-    %   R_s - array; initial guess of rotation describing rotation from the 
-    %       left camera to the right camera
-    %   t_s - array; initial guess of translation describing translation 
-    %       from the left camera to the right camera
-    %   type - string; 
-    %       'full' - Attempts to do full calibration
-    %       'extrinsic' - Only rotations and translations are optimized
-    %   calib_config - struct; this is the struct returned by
-    %       util.read_calib_config()
+    %   params - array; (6+2*M+6*(N+1))x1 array, where M is the number of 
+    %       distortion parameters and N is the number of calibration 
+    %       boards. Contains: 
+    %           [alpha_L; x_L_o; y_L_o; d_L_1; ... d_L_M; ...
+    %            alpha_R; x_R_o; y_R_o; d_R_1; ... d_R_M; ...
+    %            theta_L_x1; theta_L_y1; theta_L_z1; t_L_x1; t_L_y1; t_L_z1; ...
+    %            theta_L_xN; theta_L_yN; theta_L_zN; t_L_xN; t_L_yN; t_L_zN; ... 
+    %            theta_s_x; theta_s_y; theta_s_z; t_s_x; t_s_y; t_s_z]
+    %   p_cb_p_dss - struct;
+    %       .L - cell; Nx1 cell array of calibration board points in
+    %           distorted pixel coordinates for left camera
+    %       .R - cell; Nx1 cell array of calibration board points in
+    %           distorted pixel coordinates for right camera
+    %   idx_valids - struct; 
+    %       .L - cell; Nx1 cell array of "valid" calibration board
+    %           points for left camera
+    %       .R - cell; Nx1 cell array of "valid" calibration board
+    %           points for right camera
+    %   f_p_w2p_p - function handle; function which transforms world
+    %   	coordinates to pixel coordinates
+    %   f_dp_p_dh - function handle; derivative of p_w2p_p wrt homography
+    %       parameters.
+    %   f_p_p2p_p_d - function handle; describes the mapping between 
+    %       pixel coordinates and distorted pixel coordinates.
+    %   f_dp_p_d_dargs - function handle; derivative of p_p2p_p_d wrt its
+    %       input arguments.
+    %   optimization_type - string; describes type of optimization
+    %   opts - struct; 
+    %       .height_fp - scalar; height of the "four point" box
+    %       .width_fp - scalar; width of the "four point" box
+    %       .num_targets_height - int; number of targets in the "height"
+    %           dimension
+    %       .num_targets_width - int; number of targets in the "width"
+    %           dimension
+    %       .target_spacing - scalar; space between targets
+    %       .refine_stereo_params_lambda_init - scalar; initial lambda for 
+    %           Levenberg-Marquardt method
+    %       .refine_stereo_params_lambda_factor - scalar; scaling factor 
+    %           for lambda
+    %       .refine_stereo_params_it_cutoff - int; max number of iterations
+    %           performed for refinement of camera parameters
+    %       .refine_stereo_params_norm_cutoff - scalar; cutoff for norm of
+    %           difference of parameter vector for refinement of camera
+    %           parameters.
+    %       .verbose - int; level of verbosity
+    %   cov_cb_p_dss - struct;
+    %       .L - cell; optional Nx1 cell array of covariances of
+    %           calibration board points in distorted pixel coordinates of
+    %           left camera.
+    %       .R - cell; optional Nx1 cell array of covariances of
+    %           calibration board points in distorted pixel coordinates of
+    %           left camera.
     %
     % Outputs:
-    %	A - struct; contains:
-    %       .L and .R - array; optimized camera matrix
-    %   distortion - struct; contains:
-    %       .L and .R - array; optimized distortions (radial and 
-    %           tangential) stored as: 
-    %           [beta1; beta2; beta3; beta4]  
-    %   rotations - struct; contains:
-    %       .L and .R - cell; Mx1 optimized rotations
-    %   translations - struct; contains:
-    %       .L and .R - cell; Mx1 optimized translations
-    %   R_s - array; optimized rotation describing rotation from the left 
-    %       camera to the right camera
-    %   t_s - array; optimized translation describing translation from the 
-    %       left camera to the right camera
+    %   params - array; (6+2*M+6*(N+1))x1 array, where M is the number of 
+    %       distortion parameters and N is the number of calibration 
+    %       boards. Contains: 
+    %           [alpha_L; x_L_o; y_L_o; d_L_1; ... d_L_M; ...
+    %            alpha_R; x_R_o; y_R_o; d_R_1; ... d_R_M; ...
+    %            theta_L_x1; theta_L_y1; theta_L_z1; t_L_x1; t_L_y1; t_L_z1; ...
+    %            theta_L_xN; theta_L_yN; theta_L_zN; t_L_xN; t_L_yN; t_L_zN; ... 
+    %            theta_s_x; theta_s_y; theta_s_z; t_s_x; t_s_y; t_s_z]
+    %   cov_params - array; (6+2*M+6*(N+1))x(6+2*M+6*(N+1)) array of
+    %       covariances of intrinsic and extrinsic parameters
     
-    disp('---');
-              
     % Get board points in world coordinates
-    p_cb_ws = alg.p_cb_w(calib_config);
+    p_cb_ws = alg.p_cb_w(opts);
     
     % Get number of boards
-    num_boards = numel(p_cb_pss.L);
+    num_boards = numel(p_cb_p_dss.L);
     
-    % Supply initial parameter vector. p has a length of 22 + 6*M, where M 
-    % is the number of calibration boards. There are 16 intrinsic 
-    % parameters (8 for the left camera and 8 for the right camera) and
-    % 6*M+6 extrinsic parameters total.
-    % p has form of: 
-    %   [alpha_Lx, alpha_Ly, x_Lo, y_Lo, beta_L1, beta_L2, beta_L3, beta_L4, ...
-    %    alpha_Rx, alpha_Ry, x_Ro, y_Ro, beta_R1, beta_R2, beta_R3, beta_R4, ...
-    %    theta_Lx1, theta_Ly1, theta_Lz1, t_Lx1, t_Ly1, t_Lz1, ... 
-    %    theta_LxM, theta_LyM, theta_LzM, t_LxM, t_LyM, t_LzM, ...
-    %    theta_sx, theta_sy, theta_sz, t_sx, t_sy, t_sz]
-    num_params = 22+6*num_boards;
-    p = zeros(num_params,1);
-
-    % Do intrinsic parameters first
-    % Left
-    p(1) = A.L(1,1);
-    p(2) = A.L(2,2);
-    p(3) = A.L(1,3);
-    p(4) = A.L(2,3);
-    p(5:8) = distortion.L;
-    % Right
-    p(9) = A.R(1,1);
-    p(10) = A.R(2,2);
-    p(11) = A.R(1,3);
-    p(12) = A.R(2,3);
-    p(13:16) = distortion.R;
+    % Get number of distortion params
+    num_params_d = alg.num_params_d(f_p_p2p_p_d);
     
-    % Cycle over rotations and translations and store in params vector. 
-    % Note that rotations.R and translations.R are not used.
-    for i = 1:num_boards     
-        p(16+6*(i-1)+1:16+6*(i-1)+3) = alg.rot2euler(rotations.L{i});
-        p(16+6*(i-1)+4:16+6*(i-1)+6) = translations.L{i};        
-    end
-    % Store R_s and t_s
-    p(16+6*num_boards+1:16+6*num_boards+3) = alg.rot2euler(R_s);
-    p(16+6*num_boards+4:16+6*num_boards+6) = t_s;
-       
     % Determine which parameters to update based on type
-    update_idx = false(num_params,1);
-    switch type
-        case 'full'
-            % Attempt to calibrate everything
-            update_idx(1:end) = true;            
+    idx_update = false(size(params));
+    switch optimization_type
         case 'extrinsic'
             % Only update rotations and translations
-            update_idx(17:end) = true;
+            idx_update(7+2*num_params_d:end) = true;
+        case 'full'
+            % Update everything
+            idx_update(1:end) = true;        
         otherwise
-            error(['Input type of: "' type '" was not recognized']);
+            error(['Input type of: "' optimization_type '" was not recognized']);
     end    
     
-    % For single images, remove principle points from optimization
+    % For single images, remove principle point from optimization
     if num_boards == 1
-        update_idx(3:4) = false;
-        update_idx(11:12) = false;
+        idx_update(2:3) = false;
+        idx_update(9:10) = false;
     end  
+        
+    % Get "weight matrix"
+    if exist('cov_cb_p_dss','var')
+        % Do generalized least squares
+        % Get "weight" matrix (inverse of covariance)
+        cov = vertcat(cov_cb_p_dss.L{:},cov_cb_p_dss.R{:}); % Concat
+        cov = cov(vertcat(idx_valids.L{:},idx_valids.R{:})); % Apply valid indices
+        cov = cellfun(@sparse,cov,'UniformOutput',false); % Make sparse
+        cov = blkdiag(cov{:}); % Create full covariance matrix
+        W = inv(cov); % This might be slow...
+    else
+        % Identity weight matrix is just simple least squares
+        W = speye(2*sum(vertcat(idx_valids.L{:},idx_valids.R{:})));
+    end
     
-    % Perform Levenberg–Marquardt iteration(s) 
+    % Perform Levenberg–Marquardt iteration(s)
     % Initialize lambda
-    lambda = calib_config.refine_param_lambda_init;
-    % Get initial mean squared error
-    mse = mean(calc_res(p,p_cb_ws,p_cb_pss).^2)*2;
-    for it = 1:calib_config.refine_param_it_cutoff                                    
-        % Store previous p and mse  
-        p_prev = p;
-        mse_prev = mse;
+    lambda = opts.refine_stereo_params_lambda_init;
+    % Get initial cost
+    cost = calc_cost(params, ...
+                     p_cb_ws, ...
+                     p_cb_p_dss, ...
+                     idx_valids, ...
+                     f_p_w2p_p, ...
+                     f_dp_p_dh, ...
+                     f_p_p2p_p_d, ...
+                     f_dp_p_d_dargs, ...
+                     idx_update, ...
+                     W);
+    for it = 1:opts.refine_stereo_params_it_cutoff
+        % Store previous params and cost
+        params_prev = params;
+        cost_prev = cost;
         
-        % Compute delta_p
-        delta_p = calc_delta_p(p_prev, ...
-                               p_cb_ws, ...
-                               p_cb_pss, ...
-                               update_idx, ...
-                               lambda);
-                           
-        % update params and mse
-        p(update_idx) = p_prev(update_idx) + delta_p;
-        mse = mean(calc_res(p,p_cb_ws,p_cb_pss).^2)*2;
+        % Compute delta_params
+        delta_params = calc_delta_params(params_prev, ...
+                                         p_cb_ws, ...
+                                         p_cb_p_dss, ...
+                                         idx_valids, ...
+                                         f_p_w2p_p, ...
+                                         f_dp_p_dh, ...
+                                         f_p_p2p_p_d, ...
+                                         f_dp_p_d_dargs, ...
+                                         idx_update, ...
+                                         lambda, ...
+                                         W);
         
-        % If mse decreases, decrease lambda and store results; if mse
-        % increases, then increase lambda until mse descreases
-        if mse < mse_prev
+        % update params and cost
+        params(idx_update) = params_prev(idx_update) + delta_params;        
+        cost = calc_cost(params, ...
+                         p_cb_ws, ...
+                         p_cb_p_dss, ...
+                         idx_valids, ...
+                         f_p_w2p_p, ...
+                         f_dp_p_dh, ...
+                         f_p_p2p_p_d, ...
+                         f_dp_p_d_dargs, ...
+                         idx_update, ...
+                         W);
+        
+        % If cost decreases, decrease lambda and store results; if cost
+        % increases, then increase lambda until cost decreases
+        if cost < cost_prev
             % Decrease lambda and continue to next iteration
-            lambda = lambda/calib_config.refine_param_lambda_factor;            
+            lambda = lambda/opts.refine_stereo_params_lambda_factor;
         else
-            while mse >= mse_prev
+            while cost >= cost_prev
                 % Increase lambda and recompute params
-                lambda = calib_config.refine_param_lambda_factor*lambda;      
+                lambda = opts.refine_stereo_params_lambda_factor*lambda;      
                 
-                if isinf(lambda)
+                if lambda >= realmax('single')
                     % This will already be a very, very small step, so just
                     % exit
-                    delta_p(:) = 0;
-                    mse = mse_prev;
-                    p = p_prev;
+                    delta_params(:) = 0;
+                    cost = cost_prev;
+                    params = params_prev;
                     break
                 end
                 
-                % Compute delta_p
-                delta_p = calc_delta_p(p_prev, ...
-                                       p_cb_ws, ...
-                                       p_cb_pss, ...
-                                       update_idx, ...
-                                       lambda);
-            
-                % update params and mse
-                p(update_idx) = p_prev(update_idx) + delta_p;
-                mse = mean(calc_res(p,p_cb_ws,p_cb_pss).^2)*2;
+                % Compute delta_params
+                delta_params = calc_delta_params(params_prev, ...
+                                                 p_cb_ws, ...
+                                                 p_cb_p_dss, ...
+                                                 idx_valids, ...
+                                                 f_p_w2p_p, ...
+                                                 f_dp_p_dh, ...
+                                                 f_p_p2p_p_d, ...
+                                                 f_dp_p_d_dargs, ...
+                                                 idx_update, ...
+                                                 lambda, ...
+                                                 W);
+
+                % update params and cost
+                params(idx_update) = params_prev(idx_update) + delta_params;   
+                cost = calc_cost(params, ...
+                                 p_cb_ws, ...
+                                 p_cb_p_dss, ...
+                                 idx_valids, ...
+                                 f_p_w2p_p, ...
+                                 f_dp_p_dh, ...
+                                 f_p_p2p_p_d, ...
+                                 f_dp_p_d_dargs, ...
+                                 idx_update, ...
+                                 W);
             end            
         end
-                
+                       
         % Exit if change in distance is small
-        diff_norm = norm(delta_p);   
-        disp(['Iteration #: ' sprintf('%3u',it) '; ' ...
-              'MSE: ' sprintf('%12.10f',mse) '; ' ...
-              'Norm of delta_p: ' sprintf('%12.10f',diff_norm) '; ' ...
-              'lambda: ' sprintf('%12.10f',lambda)]);
-        if diff_norm < calib_config.refine_param_norm_cutoff
+        diff_norm = norm(delta_params);
+        
+        % Print iteration stats
+        [~, res] = calc_gauss_newton_params(params, ...
+                                            p_cb_ws, ...
+                                            p_cb_p_dss, ...
+                                            idx_valids, ...
+                                            f_p_w2p_p, ...
+                                            f_dp_p_dh, ...
+                                            f_p_p2p_p_d, ...
+                                            f_dp_p_d_dargs, ...
+                                            idx_update);
+        res = reshape(res,2,[])'; % get in [x y] format
+        d_res = sqrt(res(:,1).^2 + res(:,2).^2);
+        util.verbose_disp(['It #: ' sprintf('% 3u',it) '; ' ...
+                           'Median res dist: ' sprintf('% 12.8f',median(d_res)) '; ' ...
+                           'MAD res dist: ' sprintf('% 12.8f',1.4826*median(abs(d_res - median(d_res)))) '; ' ...
+                           'Norm of delta_p: ' sprintf('% 12.8f',diff_norm) '; ' ...
+                           'Cost: ' sprintf('% 12.8f',cost) '; ' ...
+                           'lambda: ' sprintf('% 12.8f',lambda)], ...
+                           2, ...
+                           opts);
+        
+        if diff_norm < opts.refine_stereo_params_norm_cutoff
             break
         end
     end    
-    if it == calib_config.refine_param_it_cutoff
+    if it == opts.refine_stereo_params_it_cutoff
         warning('iterations hit cutoff before converging!!!');
     end
+            
+    % Get covariance of parameters
+    [jacob, res] = calc_gauss_newton_params(params, ...
+                                            p_cb_ws, ...
+                                            p_cb_p_dss, ...
+                                            idx_valids, ...
+                                            f_p_w2p_p, ...
+                                            f_dp_p_dh, ...
+                                            f_p_p2p_p_d, ...
+                                            f_dp_p_d_dargs, ...
+                                            idx_update);
+    [~,~,~,cov_params] = lscov(jacob,res,W);
+end
+
+function delta_params = calc_delta_params(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_dp_p_dh,f_p_p2p_p_d,f_dp_p_d_dargs,idx_update,lambda,W)
+    % Get gauss newton params
+    [jacob, res] = calc_gauss_newton_params(params, ...
+                                            p_ws, ...
+                                            p_p_dss, ...
+                                            idx_valids, ...
+                                            f_p_w2p_p, ...
+                                            f_dp_p_dh, ...
+                                            f_p_p2p_p_d, ...
+                                            f_dp_p_d_dargs, ...
+                                            idx_update);
+
+    % Get gradient    
+    grad = jacob'*W*res;
+    
+    % Get hessian
+    hess = jacob'*W*jacob;
+    
+    % Add Levenberg–Marquardt damping
+    hess = hess + lambda*eye(sum(idx_update));
+          
+    % Get change in params
+    delta_params = -lscov(hess,grad);
+end
+
+function cost = calc_cost(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_dp_p_dh,f_p_p2p_p_d,f_dp_p_d_dargs,idx_update,W)               
+    % Get residuals
+    [~, res] = calc_gauss_newton_params(params, ...
+                                        p_ws, ...
+                                        p_p_dss, ...
+                                        idx_valids, ...
+                                        f_p_w2p_p, ...
+                                        f_dp_p_dh, ...
+                                        f_p_p2p_p_d, ...
+                                        f_dp_p_d_dargs, ...
+                                        idx_update);
+    
+    % Apply weights
+    cost = res'*W*res;
+end
+
+function [jacob, res] = calc_gauss_newton_params(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_dp_p_dh,f_p_p2p_p_d,f_dp_p_d_dargs,idx_update)
+    % Get number of boards
+    num_boards = numel(p_p_dss.L);
+    
+    % Get number of distortion params    
+    num_params_d = alg.num_params_d(f_p_p2p_p_d);
         
-    % Get outputs from p  
-    A.L = [p(1)     0       p(3);
-           0        p(2)    p(4);
-           0        0       1];
-    A.R = [p(9)     0       p(11);
-           0        p(10)   p(12);
-           0        0       1];
-    distortion.L = p(5:8);
-    distortion.R = p(13:16); 
+    % Handle left camera -------------------------------------------------%
+    % Left extrinsics are independent
     
-    R_s = alg.euler2rot(p(16+6*num_boards+1:16+6*num_boards+3));
-    t_s = p(16+6*num_boards+4:16+6*num_boards+6);
+    % Get intrinsic parameters
+    a_L = params(1:3);
+    d_L = params(4:3+num_params_d);
     
-    rotations.L = {};
-    rotations.R = {};
-    translations.L = {};
-    translations.R = {};
+    % Get residuals and jacobian
+    res_L = zeros(2*sum(vertcat(idx_valids.L{:})),1);
+    jacob_L = sparse(2*sum(vertcat(idx_valids.L{:})),numel(params));
     for i = 1:num_boards
-        rotations.L{i} = alg.euler2rot(p(16+6*(i-1)+1:16+6*(i-1)+3));
-        translations.L{i} = p(16+6*(i-1)+4:16+6*(i-1)+6);
+        % Get rotation and translation for left board
+        R_L = alg.euler2rot(params(7+2*num_params_d+6*(i-1):9+2*num_params_d+6*(i-1)));
+        t_L = params(10+2*num_params_d+6*(i-1):12+2*num_params_d+6*(i-1));
         
-        % Recompute R_R and t_R using R_s and t_s
-        rotations.R{i} = R_s*rotations.L{i};  
-        translations.R{i} = R_s*translations.L{i} + t_s;
+        % Get homography
+        H_L = alg.a2A(a_L)*[R_L(:,1) R_L(:,2) t_L];
+        
+        % Get pixel points
+        p_p_Ls = f_p_w2p_p(p_ws,H_L);
+        
+        % Get distorted pixel points
+        p_p_d_m_Ls = alg.p_p2p_p_d(p_p_Ls,f_p_p2p_p_d,a_L,d_L);
+            
+        % Store residuals - take valid indices into account
+        res_L(2*sum(vertcat(idx_valids.L{1:i-1}))+1:2*sum(vertcat(idx_valids.L{1:i}))) = ...
+            reshape(vertcat((p_p_d_m_Ls(idx_valids.L{i},1)-p_p_dss.L{i}(idx_valids.L{i},1))', ...
+                            (p_p_d_m_Ls(idx_valids.L{i},2)-p_p_dss.L{i}(idx_valids.L{i},2))'),[],1);
+               
+        % Intrinsics
+        jacob_L(2*sum(vertcat(idx_valids.L{1:i-1}))+1:2*sum(vertcat(idx_valids.L{1:i})),1:3+num_params_d) = ...
+            alg.dp_p_d_dintrinsic(p_ws(idx_valids.L{i},:),f_p_w2p_p,f_dp_p_dh,R_L,t_L,f_dp_p_d_dargs,a_L,d_L); %#ok<SPRIX>
+
+        % Extrinsics
+        dr_L_deuler_L = alg.dr_deuler(alg.rot2euler(R_L));
+        drt_L_dm_L = blkdiag(dr_L_deuler_L,eye(3));
+        jacob_L(2*sum(vertcat(idx_valids.L{1:i-1}))+1:2*sum(vertcat(idx_valids.L{1:i})),7+2*num_params_d+6*(i-1):12+2*num_params_d+6*(i-1)) = ...
+            alg.dp_p_d_dextrinsic(p_ws(idx_valids.L{i},:),f_p_w2p_p,f_dp_p_dh,R_L,t_L,f_dp_p_d_dargs,a_L,d_L,drt_L_dm_L); %#ok<SPRIX>
     end  
-end
-
-function res = calc_res(p,p_cb_ws,p_cb_pss) 
-    res = zeros(4*numel(p_cb_pss.L)*size(p_cb_ws,1),1);   
- 
-    % Get intrinsic parameters
-    % left
-    A_L = [p(1) 0    p(3);
-           0    p(2) p(4);
-           0    0    1];
-    distortion_L = p(5:8)';
-    % right
-    A_R = [p(9) 0     p(11);
-           0    p(10) p(12);
-           0    0     1];
-    distortion_R = p(13:16)';
-
-    % Get R_s and t_s; only need to do this once per iteration
-    R_s = alg.euler2rot(p(16+6*numel(p_cb_pss.L)+1:16+6*numel(p_cb_pss.L)+3));
-    t_s = p(16+6*numel(p_cb_pss.L)+4:16+6*numel(p_cb_pss.L)+6);
-
-    for i = 1:numel(p_cb_pss.L)
-        % Get rotation and translation for the left board
-        R_L = alg.euler2rot(p(16+6*(i-1)+1:16+6*(i-1)+3));
-        t_L = p(16+6*(i-1)+4:16+6*(i-1)+6);
-
-        % Compute model points to compute residuals
-        p_m_L = alg.p_m(A_L, ...
-                        distortion_L, ...
-                        R_L, ...
-                        t_L, ...
-                        p_cb_ws);
-
-        % Store residuals
-        res((i-1)*4*size(p_cb_ws,1)+1:((i-1)*4+2)*size(p_cb_ws,1)) =  ...
-            vertcat(p_m_L(:,1)-p_cb_pss.L{i}(:,1), ...
-                    p_m_L(:,2)-p_cb_pss.L{i}(:,2)); 
         
-        % Get rotation and translation for the right board
-        R_R = R_s*R_L;         
-        t_R = R_s*t_L+t_s;
-        
-        % Compute model points to compute residuals
-        p_m_R = alg.p_m(A_R, ...
-                        distortion_R, ...
-                        R_R, ...
-                        t_R, ...
-                        p_cb_ws); 
-
-        % Store residuals
-        res(((i-1)*4+2)*size(p_cb_ws,1)+1:i*4*size(p_cb_ws,1)) =  ...
-            vertcat(p_m_R(:,1)-p_cb_pss.R{i}(:,1), ...
-                    p_m_R(:,2)-p_cb_pss.R{i}(:,2)); 
-    end  
-end
-
-function delta_p = calc_delta_p(p,p_cb_ws,p_cb_pss,update_idx,lambda)
-    % Initialize jacobian
-    jacob = sparse(4*numel(p_cb_pss.L)*size(p_cb_ws,1),numel(p));
+    % Handle right camera ------------------------------------------------%
+    % Right extrinsics depend on left extrinsics and left=>right extrinsics
     
     % Get intrinsic parameters
-    % left
-    A_L = [p(1) 0    p(3);
-           0    p(2) p(4);
-           0    0    1];
-    distortion_L = p(5:8)';
-    % right
-    A_R = [p(9) 0     p(11);
-           0    p(10) p(12);
-           0    0     1];
-    distortion_R = p(13:16)';
-
-    % Get R_s and t_s; only need to do this once per iteration
-    R_s = alg.euler2rot(p(16+6*numel(p_cb_pss.L)+1:16+6*numel(p_cb_pss.L)+3));
-    t_s = p(16+6*numel(p_cb_pss.L)+4:16+6*numel(p_cb_pss.L)+6);
-
-    % Fill jacobian and residuals per board
-    for i = 1:numel(p_cb_pss.L)
-        % Fill jacobian for left board -----------------------------------%
-        % This is basically the same for single board calibration since
-        % the left board is independent
-
-        % Get rotation and translation for the left board
-        R_L = alg.euler2rot(p(16+6*(i-1)+1:16+6*(i-1)+3));
-        t_L = p(16+6*(i-1)+4:16+6*(i-1)+6);
-
-        % Intrinsic params
-        jacob((i-1)*4*size(p_cb_ws,1)+1:((i-1)*4+2)*size(p_cb_ws,1),1:8) = ...
-            alg.dp_m_dintrinsic(A_L, ...
-                                distortion_L, ...
-                                R_L, ...
-                                t_L, ...
-                                p_cb_ws); %#ok<SPRIX>
-
-        % Extrinsic params
-        dR_L_deuler_L = alg.dR_deuler(alg.rot2euler(R_L));
-        dRt_L_dm_L = blkdiag(dR_L_deuler_L(1:6,:),eye(3));
-        jacob((i-1)*4*size(p_cb_ws,1)+1:((i-1)*4+2)*size(p_cb_ws,1),16+(i-1)*6+1:16+i*6) =  ...
-            alg.dp_m_dextrinsic(A_L, ...
-                                distortion_L, ...
-                                R_L, ...
-                                t_L, ...
-                                dRt_L_dm_L, ...
-                                p_cb_ws);  %#ok<SPRIX>
-
-        % Fill jacobian for right board ----------------------------------%
-        % Right board is dependent on left board transformation and R_s
-        % and t_s, so there are some differences here.
-
-        % Get rotation and translation for the right board
+    a_R = params(4+num_params_d:6+num_params_d);
+    d_R = params(7+num_params_d:6+2*num_params_d);
+    
+    % Get rotation and translation between left and right board
+    R_s = alg.euler2rot(params(7+2*num_params_d+6*num_boards:9+2*num_params_d+6*num_boards));
+    t_s = params(10+2*num_params_d+6*num_boards:12+2*num_params_d+6*num_boards);
+        
+    % Get residuals and jacobian
+    res_R = zeros(2*sum(vertcat(idx_valids.R{:})),1);
+    jacob_R = sparse(2*sum(vertcat(idx_valids.R{:})),numel(params));
+    for i = 1:num_boards
+        % Get rotation and translation for left board
+        R_L = alg.euler2rot(params(7+2*num_params_d+6*(i-1):9+2*num_params_d+6*(i-1)));
+        t_L = params(10+2*num_params_d+6*(i-1):12+2*num_params_d+6*(i-1));
+                        
+        % Get rotation and translation for right board
         R_R = R_s*R_L;         
         t_R = R_s*t_L+t_s;
+                
+        % Get homography
+        H_R = alg.a2A(a_R)*[R_R(:,1) R_R(:,2) t_R];
+        
+        % Get pixel points
+        p_p_Rs = f_p_w2p_p(p_ws,H_R);
+        
+        % Get distorted pixel points
+        p_p_d_m_Rs = alg.p_p2p_p_d(p_p_Rs,f_p_p2p_p_d,a_R,d_R);
+            
+        % Store residuals - take valid indices into account
+        res_R(2*sum(vertcat(idx_valids.R{1:i-1}))+1:2*sum(vertcat(idx_valids.R{1:i}))) = ...
+            reshape(vertcat((p_p_d_m_Rs(idx_valids.R{i},1)-p_p_dss.R{i}(idx_valids.R{i},1))', ...
+                            (p_p_d_m_Rs(idx_valids.R{i},2)-p_p_dss.R{i}(idx_valids.R{i},2))'),[],1);
+               
+        % Intrinsics
+        jacob_R(2*sum(vertcat(idx_valids.R{1:i-1}))+1:2*sum(vertcat(idx_valids.R{1:i})),4+num_params_d:6+2*num_params_d) = ...
+            alg.dp_p_d_dintrinsic(p_ws(idx_valids.R{i},:),f_p_w2p_p,f_dp_p_dh,R_R,t_R,f_dp_p_d_dargs,a_R,d_R); %#ok<SPRIX>
 
-        % Intrinsic params
-        jacob(((i-1)*4+2)*size(p_cb_ws,1)+1:i*4*size(p_cb_ws,1),9:16) = ...
-            alg.dp_m_dintrinsic(A_R, ...
-                                distortion_R, ...
-                                R_R, ...
-                                t_R, ...
-                                p_cb_ws); %#ok<SPRIX>
-
-        % Extrinsic params; do dRt_R_dm_L first
-        dRt_R_dRt_L = blkdiag(R_s,R_s,R_s);
-        dRt_R_dm_L = dRt_R_dRt_L*dRt_L_dm_L;
-        jacob(((i-1)*4+2)*size(p_cb_ws,1)+1:i*4*size(p_cb_ws,1),16+(i-1)*6+1:16+i*6) = ...
-            alg.dp_m_dextrinsic(A_R, ...
-                                distortion_R, ...
-                                R_R, ...
-                                t_R, ...
-                                dRt_R_dm_L, ...
-                                p_cb_ws);  %#ok<SPRIX>
-
-        % Do dRt_R_dm_s next
-        dRt_R_dRt_s = [R_L(1,1)*eye(3) R_L(2,1)*eye(3) R_L(3,1)*eye(3) zeros(3);
+        % Extrinsics - m_L
+        drt_R_drt_L = blkdiag(R_s,R_s,R_s,R_s);
+        dr_L_deuler_L = alg.dr_deuler(alg.rot2euler(R_L));
+        drt_L_dm_L = blkdiag(dr_L_deuler_L,eye(3));
+        drt_R_dm_L = drt_R_drt_L*drt_L_dm_L;
+        jacob_R(2*sum(vertcat(idx_valids.R{1:i-1}))+1:2*sum(vertcat(idx_valids.R{1:i})),7+2*num_params_d+6*(i-1):12+2*num_params_d+6*(i-1)) = ...
+            alg.dp_p_d_dextrinsic(p_ws(idx_valids.R{i},:),f_p_w2p_p,f_dp_p_dh,R_R,t_R,f_dp_p_d_dargs,a_R,d_R,drt_R_dm_L); %#ok<SPRIX>
+               
+        % Extrinsics - m_s
+        drt_R_drt_s = [R_L(1,1)*eye(3) R_L(2,1)*eye(3) R_L(3,1)*eye(3) zeros(3);
                        R_L(1,2)*eye(3) R_L(2,2)*eye(3) R_L(3,2)*eye(3) zeros(3);
+                       R_L(1,3)*eye(3) R_L(2,3)*eye(3) R_L(3,3)*eye(3) zeros(3);
                        t_L(1)*eye(3)   t_L(2)*eye(3)   t_L(3)*eye(3)   eye(3)]; 
-        dR_s_deuler_s = alg.dR_deuler(alg.rot2euler(R_s));
-        dRt_s_dm_s = blkdiag(dR_s_deuler_s,eye(3));
-        dRt_R_dm_s = dRt_R_dRt_s*dRt_s_dm_s;
-        jacob(((i-1)*4+2)*size(p_cb_ws,1)+1:i*4*size(p_cb_ws,1),16+numel(p_cb_pss.L)*6+1:16+(numel(p_cb_pss.L)+1)*6) = ...
-            alg.dp_m_dextrinsic(A_R, ...
-                                distortion_R, ...
-                                R_R, ...
-                                t_R, ...
-                                dRt_R_dm_s, ...
-                                p_cb_ws);  %#ok<SPRIX>
+        dr_s_deuler_s = alg.dr_deuler(alg.rot2euler(R_s));
+        drt_s_dm_s = blkdiag(dr_s_deuler_s,eye(3));
+        drt_R_dm_s = drt_R_drt_s*drt_s_dm_s;
+        jacob_R(2*sum(vertcat(idx_valids.R{1:i-1}))+1:2*sum(vertcat(idx_valids.R{1:i})),7+2*num_params_d+6*num_boards:12+2*num_params_d+6*num_boards) = ...
+            alg.dp_p_d_dextrinsic(p_ws(idx_valids.R{i},:),f_p_w2p_p,f_dp_p_dh,R_R,t_R,f_dp_p_d_dargs,a_R,d_R,drt_R_dm_s); %#ok<SPRIX>
     end  
-
-    % Get change in params using Levenberg–Marquardt update     
-    delta_p = -lscov(jacob(:,update_idx)'*jacob(:,update_idx)+lambda*eye(sum(update_idx)),jacob(:,update_idx)'*calc_res(p,p_cb_ws,p_cb_pss));        
+       
+    % Concat
+    res = vertcat(res_L,res_R);
+    jacob = vertcat(jacob_L,jacob_R);
+    
+    % Only update specified parameters
+    jacob = jacob(:,idx_update);    
 end

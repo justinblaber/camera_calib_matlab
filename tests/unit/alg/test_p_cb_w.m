@@ -8,7 +8,7 @@ function test_p_cb_w
     
     [p_cb_ws, p_fp_ws] = alg.p_cb_w(opts);
         
-    % Compare to ground truth
+    % Assert
     assert(isequal(p_cb_ws,[0 0;
                             0 2;
                             2 0;
@@ -16,8 +16,7 @@ function test_p_cb_w
                             4 0;
                             4 2;
                             6 0;
-                            6 2]));
-                         
+                            6 2]));                         
     assert(isequal(p_fp_ws,[-2.0 -1.5;
                             -2.0  3.5;
                              8.0 -1.5;

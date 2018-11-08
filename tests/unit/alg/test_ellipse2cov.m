@@ -7,8 +7,8 @@ function test_ellipse2cov
       
     [cov,p] = alg.ellipse2cov(e);  
                 
+    % Assert
     assert(all(all(abs(cov - [45.777115082408784  -8.032507080350960
                               -8.032507080350960  53.456229864890297]) < eps('single'))));
-    
     assert(all(all(abs(p - [23.251025401256015  18.606973065070964]) < eps('single'))));
 end

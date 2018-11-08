@@ -1,10 +1,23 @@
-function blobs = blob_detect(array,calib_config)
-    % Performs blob detection. By default this returns dark blobs.
+function blobs = blob_detect(array,opts)
+    % Performs blob detection on input array. By default this returns dark
+    % blobs.
     % 
     % Inputs:
     %   array - array; MxN array
-    %   calib_config - struct; this is the struct returned by
-    %       util.read_calib_config()
+    %   opts - struct;
+    %       .blob_detect_r_range1 - ;
+    %       .blob_detect_r_range2 - ;
+    %       .blob_detect_step - ;
+    %       .blob_detect_num_cutoff - ;
+    %       .blob_detect_LoG_cutoff - ;
+    %       .blob_detect_it_cutoff - ;
+    %       .blob_detect_norm_cutoff - ;
+    %       .blob_detect_eig_ratio_cutoff - ;
+    %       .blob_detect_centroid_it_cutoff - ;
+    %       .blob_detect_centroid_norm_cutoff - ;
+    %       .blob_detect_M_it_cutoff - ;
+    %       .blob_detect_d_cluster - ;
+    %       .blob_detect_r_cluster - ;
     %
     % Outputs:
     %   blobs - struct; contains:
@@ -12,57 +25,40 @@ function blobs = blob_detect(array,calib_config)
     %       .y - scalar; y location of blob in pixels
     %       .r - scalar; radius of blob in pixels
     %       .M - array; second moment matrix
+        
+    % Normalize array
+    array = alg.normalize_array(array);
     
-    % TODO: for the defaults, you can, instead of setting them here, set 
-    % them in a wrapper function to make this function more general...
+    % Precompute gradients
+    array_dx = alg.grad_array(array,'x');  
+    array_dy = alg.grad_array(array,'y'); 
     
-    % Set radius ranges
-    r_range1 = calib_config.blob_detect_r_range1;    
-    if calib_config.blob_detect_r_range2 == realmax % This is the flag to set default
-        % Markers should be relatively small
-        r_range2 = min(size(array))/40;
-    else
-        r_range2 = calib_config.blob_detect_r_range2;
-    end  
-    
-    % Make sure r_range2 is an integer number of steps away from r_range1
-    num_scales = ceil((r_range2-r_range1)/calib_config.blob_detect_step+1);
-    r_range2 = r_range1 + (num_scales-1)*calib_config.blob_detect_step;
+    % Get scale normalized LoG stack -------------------------------------%
+        
+    % Get number of scales
+    r_range1 = opts.blob_detect_r_range1;  
+    r_range2 = opts.blob_detect_r_range2;   
+    step = opts.blob_detect_step;
+    num_scales = ceil((r_range2-r_range1)/step) + 1;
             
-    if r_range2 <= r_range1
-        error(['r_range2: ' num2str(r_range2) ' is less than or equal to ' ...
-               'r_range1: ' num2str(r_range1) '.']);
-    end
-    
-    % Set num_cutoff
-    if calib_config.blob_detect_num_cutoff == realmax % This is the flag to set default
-        % 4 markers + ~number of targets + 500 blob cushion
-        num_cutoff = 4 + calib_config.num_targets_height*calib_config.num_targets_width + 500;            
-    else
-        num_cutoff = calib_config.blob_detect_num_cutoff;
-    end
-    
-    % Normalize array - this ensures thresholds and stuff work consistently
-    array = (array-min(array(:)))/(max(array(:))-min(array(:)));
-    
     % Create scale normalized LoG stack
     stack_LoG = zeros([size(array) num_scales]);
     for i = 1:num_scales
-        sigma = (calib_config.blob_detect_step*(i-1)+r_range1)/sqrt(2);
-        window = 2*ceil(4*sigma)+1; % Dimensions must be odd 
-        kernel_LoG = sigma^2*fspecial('log',window,sigma);    
+        r = (i-1)*step + r_range1;                                        % radius
+        sigma = r/sqrt(2);                                                % standard deviation
+        kernel_LoG = sigma^2 * fspecial('log', 2*ceil(4*sigma)+1, sigma); % scale normalized LoG kernel  
     
         % Apply LoG filter
-        stack_LoG(:,:,i) = imfilter(array,kernel_LoG,'same','replicate');
-    end    
+        stack_LoG(:,:,i) = imfilter(array, kernel_LoG, 'same', 'replicate');
+    end 
+        
+    % Get initial maxima of scale normalized LoG stack -------------------%
     
-    % Get maxima: assign, to every voxel, the maximum of its neighbors. 
-    % Then, see if voxel value is greater than this value; if this is true, 
-    % then it's a local maxima (technique is from Jonas on stackoverflow). 
-    % Note: finding maxima will return DARK blobs.
+    % Assign, to every voxel, the maximum of its neighbors. Then, see if 
+    % voxel value is greater than this value; if true, it's a local maxima.
     kernel = true(3,3,3);
     kernel(2,2,2) = false;
-    maxima = stack_LoG > imdilate(stack_LoG,kernel);
+    maxima = stack_LoG > imdilate(stack_LoG, kernel);
 
     % Clear out edge values
     maxima(  1,  :,  :) = false;
@@ -73,122 +69,113 @@ function blobs = blob_detect(array,calib_config)
     maxima(  :,  :,end) = false;
 
     % Get initial coordinates of maxima
-    maxima_idx = find(maxima);
-    [maxima_y_init,maxima_x_init,maxima_r_idx_init] = ind2sub(size(maxima),maxima_idx);
+    idx_maxima_init = find(maxima);
+    [y_maxima_init,x_maxima_init,idx_r_maxima_init] = ind2sub(size(maxima),idx_maxima_init);
     
     % Get most powerful blob responses specified by num_cutoff and
-    % log_cutoff
-    maxima_vals = stack_LoG(maxima_idx);
-    [~,maxima_sorted_idx] = sort(maxima_vals,'descend');
-    maxima_sorted_idx = maxima_sorted_idx(1:min(num_cutoff,end));
-    maxima_sorted_idx = maxima_sorted_idx(maxima_vals(maxima_sorted_idx) > calib_config.blob_detect_LoG_cutoff);
-    maxima_x_init = maxima_x_init(maxima_sorted_idx);
-    maxima_y_init = maxima_y_init(maxima_sorted_idx);
-    maxima_r_idx_init = maxima_r_idx_init(maxima_sorted_idx);
-    
-    % Perform "refinement" of blobs (subpixel location, clustering, 
-    % thresholding, etc...).   
-    blobs = struct('x',{},'y',{},'r',{},'M',{});    
-    % Precompute gradients
-    array_dx = alg.array_grad(array,'x');  
-    array_dy = alg.array_grad(array,'y');     
+    % LoG_cutoff
+    maxima_vals = stack_LoG(idx_maxima_init);
+    [~,idx_maxima_sorted] = sort(maxima_vals,'descend');
+    idx_maxima_sorted = idx_maxima_sorted(1:min(opts.blob_detect_num_cutoff,end));
+    idx_maxima_sorted = idx_maxima_sorted(maxima_vals(idx_maxima_sorted) > opts.blob_detect_LoG_cutoff);
+    x_maxima_init = x_maxima_init(idx_maxima_sorted);
+    y_maxima_init = y_maxima_init(idx_maxima_sorted);
+    idx_r_maxima_init = idx_r_maxima_init(idx_maxima_sorted);
+        
+    % Get refined maxima of scale normalized LoG stack -------------------%
+              
     % Initialize "box" to interpolate in order to compute finite difference
     % approximations to gradient/hessian and also get interpolator
-    [y_box,x_box,r_idx_box] = ndgrid(-1:1:1,-1:1:1,-1:1:1);
+    [y_box,x_box,idx_r_box] = ndgrid(-1:1:1,-1:1:1,-1:1:1);
     I_stack_LoG = griddedInterpolant({1:size(stack_LoG,1),1:size(stack_LoG,2),1:size(stack_LoG,3)}, ...
-                                      stack_LoG,'cubic','none');
-    for i = 1:numel(maxima_x_init)
-        % Grab initial values
-        maxima_x = maxima_x_init(i);
-        maxima_y = maxima_y_init(i);
-        maxima_r_idx = maxima_r_idx_init(i);
+                                      stack_LoG,'spline','none');
     
-        % Perform gauss newton iterations until convergence; during 
-        % iterations, set invalid points to NaNs
-        for it = 1:calib_config.blob_detect_it_cutoff
+    % Initialize blobs struct
+    blobs = struct('x',{},'y',{},'r',{},'M',{});    
+    for i = 1:numel(x_maxima_init)
+        % Grab initial values
+        x_maxima = x_maxima_init(i);
+        y_maxima = y_maxima_init(i);
+        idx_r_maxima = idx_r_maxima_init(i);
+        
+        % Get sub-pixel values with gauss newton method ------------------%    
+        
+        for it = 1:opts.blob_detect_it_cutoff
             % Get finite difference coordinates for interpolation
-            x_fd = x_box + maxima_x;
-            y_fd = y_box + maxima_y;
-            r_idx_fd = r_idx_box + maxima_r_idx;
+            x_fd = x_box + x_maxima;
+            y_fd = y_box + y_maxima;
+            idx_r_fd = idx_r_box + idx_r_maxima;
             
             % Check to make sure finite difference box is in range
             if any(x_fd(:) < 1 | x_fd(:) > size(stack_LoG,2) | ...
                    y_fd(:) < 1 | y_fd(:) > size(stack_LoG,1) | ...
-                   r_idx_fd(:) < 1 | r_idx_fd(:) > size(stack_LoG,3))
-                maxima_x = NaN;
-                maxima_y = NaN;
-                maxima_r_idx = NaN;
+                   idx_r_fd(:) < 1 | idx_r_fd(:) > size(stack_LoG,3))
+                x_maxima = NaN;
+                y_maxima = NaN;
+                idx_r_maxima = NaN;
                 break
             end
             
             % Interpolate
-            LoG_fd = reshape(I_stack_LoG(y_fd(:),x_fd(:),r_idx_fd(:)),3,3,3);
+            LoG_fd = reshape(I_stack_LoG(y_fd(:),x_fd(:),idx_r_fd(:)),3,3,3);
             
-            % Get gradient: [d_log/d_x d_log/d_y d_log/d_r_idx]
-            dl_dp(1) = (LoG_fd(2,3,2)-LoG_fd(2,1,2))/2;
-            dl_dp(2) = (LoG_fd(3,2,2)-LoG_fd(1,2,2))/2; 
-            dl_dp(3) = (LoG_fd(2,2,3)-LoG_fd(2,2,1))/2; 
+            % Get gradient: 
+            %   [dLoG/dx dLoG/dy dLoG/dr_idx]
+            grad = [(LoG_fd(2,3,2)-LoG_fd(2,1,2))/2;
+                    (LoG_fd(3,2,2)-LoG_fd(1,2,2))/2; 
+                    (LoG_fd(2,2,3)-LoG_fd(2,2,1))/2];
 
             % Get hessian:
-            %   [d^2_log/d_x^2         d^2_log/(d_x*d_y)     d^2_log/(d_x*d_r_idx)
-            %    d^2_log/(d_y*d_x)     d^2_log/d_y^2         d^2_log/(d_y*d_r_idx)
-            %    d^2_log/(d_r_idx*d_x) d^2_log/(d_r_idx*d_y) d^2_log/(d_r_idx^2)]                
-            ddl_ddp(1,1) = LoG_fd(2,3,2) - 2*LoG_fd(2,2,2) + LoG_fd(2,1,2);
-            ddl_ddp(1,2) = ((LoG_fd(3,3,2)-LoG_fd(1,3,2))/2 - (LoG_fd(3,1,2)-LoG_fd(1,1,2))/2)/2;
-            ddl_ddp(1,3) = ((LoG_fd(2,3,3)-LoG_fd(2,3,1))/2 - (LoG_fd(2,1,3)-LoG_fd(2,1,1))/2)/2;      
-            ddl_ddp(2,2) = LoG_fd(3,2,2) - 2*LoG_fd(2,2,2) + LoG_fd(1,2,2);
-            ddl_ddp(2,3) = ((LoG_fd(3,2,3)-LoG_fd(3,2,1))/2 - (LoG_fd(1,2,3)-LoG_fd(1,2,1))/2)/2;
-            ddl_ddp(3,3) = LoG_fd(2,2,3) - 2*LoG_fd(2,2,2) + LoG_fd(2,2,1);
+            %   [d^2LoG/dx^2         d^2LoG/(dx*dy)     d^2LoG/(dx*dr_idx)
+            %    d^2LoG/(dy*dx)     d^2LoG/dy^2         d^2LoG/(dy*dr_idx)
+            %    d^2LoG/(dr_idx*dx) d^2LoG/(dr_idx*dy)  d^2LoG/(dr_idx^2)] 
+            hess = [LoG_fd(2,3,2)-2*LoG_fd(2,2,2)+LoG_fd(2,1,2),                         ((LoG_fd(3,3,2)-LoG_fd(1,3,2))/2-(LoG_fd(3,1,2)-LoG_fd(1,1,2))/2)/2, ((LoG_fd(2,3,3)-LoG_fd(2,3,1))/2-(LoG_fd(2,1,3)-LoG_fd(2,1,1))/2)/2;
+                    ((LoG_fd(3,3,2)-LoG_fd(1,3,2))/2-(LoG_fd(3,1,2)-LoG_fd(1,1,2))/2)/2, LoG_fd(3,2,2)-2*LoG_fd(2,2,2)+LoG_fd(1,2,2),                         ((LoG_fd(3,2,3)-LoG_fd(3,2,1))/2-(LoG_fd(1,2,3)-LoG_fd(1,2,1))/2)/2;
+                    ((LoG_fd(2,3,3)-LoG_fd(2,3,1))/2-(LoG_fd(2,1,3)-LoG_fd(2,1,1))/2)/2, ((LoG_fd(3,2,3)-LoG_fd(3,2,1))/2-(LoG_fd(1,2,3)-LoG_fd(1,2,1))/2)/2, LoG_fd(2,2,3)-2*LoG_fd(2,2,2)+LoG_fd(2,2,1)];
 
-            % Fill lower half of hessian
-            ddl_ddp(2,1) = ddl_ddp(1,2);
-            ddl_ddp(3,1) = ddl_ddp(1,3);
-            ddl_ddp(3,2) = ddl_ddp(2,3);  
-
-            % Find incremental parameters
+            % Get incremental parameters
             try
-                opts.POSDEF = true; 
-                opts.SYM = true; 
-                delta_p = linsolve(-ddl_ddp,dl_dp',opts);
+                delta_params = linsolve(-hess, grad, struct('POSDEF',true,'SYM',true));
             catch
                 % This actually removes a lot of non-blob points
-                maxima_x = NaN;
-                maxima_y = NaN;
-                maxima_r_idx = NaN;
+                x_maxima = NaN;
+                y_maxima = NaN;
+                idx_r_maxima = NaN;
                 break
             end
             
-            if any(delta_p > 1)
+            if any(delta_params > 1)
                 % Limit maximum change to 1 since maxima should not move
                 % too much
-                delta_p = delta_p./max(delta_p);
+                delta_params = delta_params./max(delta_params);
             end
             
-            % Get optimized locations
-            maxima_x = maxima_x+delta_p(1);
-            maxima_y = maxima_y+delta_p(2);
-            maxima_r_idx = maxima_r_idx+delta_p(3);
+            % Update params
+            x_maxima = x_maxima + delta_params(1);
+            y_maxima = y_maxima + delta_params(2);
+            idx_r_maxima = idx_r_maxima+delta_params(3);
             
             % Exit if change in distance is small
-            diff_norm = norm(delta_p);            
-            if diff_norm < calib_config.blob_detect_norm_cutoff
+            diff_norm = norm(delta_params);            
+            if diff_norm < opts.blob_detect_norm_cutoff
                 break
             end
         end
         
-        if isnan(maxima_x) || isnan(maxima_y) || isnan(maxima_r_idx)
+        if isnan(x_maxima) || isnan(y_maxima) || isnan(idx_r_maxima)
             continue
         end
         
         % Set maxima_r
-        maxima_r = (r_range2-r_range1)/(num_scales-1)*(maxima_r_idx-1)+r_range1;
+        r_maxima = step*(idx_r_maxima-1)+r_range1;
         
+        %{
         % Next, get sub array containing blob
-        half_window = ceil(4*maxima_r);
-        sub_array_l = round(maxima_x)-half_window;
-        sub_array_r = round(maxima_x)+half_window;   
-        sub_array_t = round(maxima_y)-half_window;
-        sub_array_b = round(maxima_y)+half_window;     
+        half_window = ceil(4*r_maxima);
+        sub_array_l = round(x_maxima)-half_window;
+        sub_array_r = round(x_maxima)+half_window;   
+        sub_array_t = round(y_maxima)-half_window;
+        sub_array_b = round(y_maxima)+half_window;     
         if sub_array_l < 1 || sub_array_r > size(array,2) || ...
            sub_array_t < 1 || sub_array_b > size(array,1)
             continue
@@ -206,15 +193,15 @@ function blobs = blob_detect(array,calib_config)
                                          sub_array_dy, ...
                                          x_sub_array, ...
                                          y_sub_array, ...
-                                         maxima_x, ...
-                                         maxima_y, ...
-                                         maxima_r, ...
-                                         maxima_r, ...
-                                         maxima_r, ... 
+                                         x_maxima, ...
+                                         y_maxima, ...
+                                         r_maxima, ...
+                                         r_maxima, ...
+                                         r_maxima, ... 
                                          0);
                                                         
         % Filter out edge response
-        if isnan(eig_ratio) || eig_ratio > calib_config.blob_detect_eig_ratio_cutoff
+        if isnan(eig_ratio) || eig_ratio > opts.blob_detect_eig_ratio_cutoff
             continue
         end
                                        
@@ -223,72 +210,73 @@ function blobs = blob_detect(array,calib_config)
         % scaled between 0 and 1
         c_sub_array = -sub_array;
         c_sub_array = (c_sub_array-min(c_sub_array(:)))/(max(c_sub_array(:))-min(c_sub_array(:)));         
-        for it = 1:calib_config.blob_detect_centroid_it_cutoff
+        for it = 1:opts.blob_detect_centroid_it_cutoff
             % Store previous
-            maxima_x_prev = maxima_x;
-            maxima_y_prev = maxima_y;
+            maxima_x_prev = x_maxima;
+            maxima_y_prev = y_maxima;
         
             % Get gaussian kernel
             kernel_gauss = mvnpdf([x_sub_array(:) y_sub_array(:)], ...
-                                  [maxima_x maxima_y], ...
-                                  [maxima_r^2 0; 0 maxima_r^2]);
+                                  [x_maxima y_maxima], ...
+                                  [r_maxima^2 0; 0 r_maxima^2]);
             kernel_gauss = reshape(kernel_gauss,size(sub_array));
 
             % Get refined x and y position
             c_sub_array_weighted = c_sub_array.*kernel_gauss;
             c_sub_array_weighted_sum = sum(c_sub_array_weighted(:));
-            maxima_x = sum(sum(c_sub_array_weighted.*x_sub_array))/c_sub_array_weighted_sum;
-            maxima_y = sum(sum(c_sub_array_weighted.*y_sub_array))/c_sub_array_weighted_sum;
+            x_maxima = sum(sum(c_sub_array_weighted.*x_sub_array))/c_sub_array_weighted_sum;
+            y_maxima = sum(sum(c_sub_array_weighted.*y_sub_array))/c_sub_array_weighted_sum;
 
-            diff_norm = sqrt((maxima_x_prev-maxima_x)^2 + (maxima_y_prev-maxima_y)^2);        
-            if diff_norm < calib_config.blob_detect_centroid_norm_cutoff
+            diff_norm = sqrt((maxima_x_prev-x_maxima)^2 + (maxima_y_prev-y_maxima)^2);        
+            if diff_norm < opts.blob_detect_centroid_norm_cutoff
                 break
             end
         end
                                
         % Get iteratively refined second moment matrix.
-        r1_ellipse = maxima_r;
-        r2_ellipse = maxima_r;
+        r1_ellipse = r_maxima;
+        r2_ellipse = r_maxima;
         rot = 0;
-        for it = 1:calib_config.blob_detect_M_it_cutoff          
+        for it = 1:opts.blob_detect_M_it_cutoff          
             [eig_ratio,r1_ellipse,r2_ellipse,rot,M] = second_moment_params(sub_array_dx, ...
                                                                            sub_array_dy, ...
                                                                            x_sub_array, ...
                                                                            y_sub_array, ...
-                                                                           maxima_x, ...
-                                                                           maxima_y, ...
-                                                                           maxima_r, ...
+                                                                           x_maxima, ...
+                                                                           y_maxima, ...
+                                                                           r_maxima, ...
                                                                            r1_ellipse, ...
                                                                            r2_ellipse, ... 
                                                                            rot);   
-            if isnan(eig_ratio) || eig_ratio > calib_config.blob_detect_eig_ratio_cutoff
+            if isnan(eig_ratio) || eig_ratio > opts.blob_detect_eig_ratio_cutoff
                 break
             end
         end              
               
         % Filter out edge response again
-        if isnan(eig_ratio) || eig_ratio > calib_config.blob_detect_eig_ratio_cutoff
+        if isnan(eig_ratio) || eig_ratio > opts.blob_detect_eig_ratio_cutoff
             continue
         end
         
         % Remove any out of range idx
-        if maxima_r_idx < 1 || maxima_r_idx > num_scales || ...
-           maxima_x < 1 || maxima_x > size(array,2) || ...
-           maxima_y < 1 || maxima_y > size(array,1)
+        if idx_r_maxima < 1 || idx_r_maxima > num_scales || ...
+           x_maxima < 1 || x_maxima > size(array,2) || ...
+           y_maxima < 1 || y_maxima > size(array,1)
             continue
         end
+        %}
         
         % Before storing blob, make sure there isn't another blob near
         % this one. This is ad-hoc clustering but is typically "good enough"
-        dist_d = sqrt(([blobs.x]-maxima_x).^2 + ...
-                      ([blobs.y]-maxima_y).^2);
-        dist_r = abs([blobs.r]-maxima_r);        
-        if all(dist_d > calib_config.blob_detect_d_cluster | ...
-               dist_r > calib_config.blob_detect_r_cluster)
-            blobs(end+1).x = maxima_x; %#ok<AGROW>
-            blobs(end).y = maxima_y;
-            blobs(end).r = maxima_r;
-            blobs(end).M = M;
+        dist_d = sqrt(([blobs.x]-x_maxima).^2 + ...
+                      ([blobs.y]-y_maxima).^2);
+        dist_r = abs([blobs.r]-r_maxima);        
+        if all(dist_d > opts.blob_detect_d_cluster | ...
+               dist_r > opts.blob_detect_r_cluster)
+            blobs(end+1).x = x_maxima; %#ok<AGROW>
+            blobs(end).y = y_maxima;
+            blobs(end).r = r_maxima;
+            % blobs(end).M = M;
         end
     end
 end

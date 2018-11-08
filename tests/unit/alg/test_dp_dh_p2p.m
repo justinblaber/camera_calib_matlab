@@ -20,6 +20,6 @@ function test_dp_dh_p2p
         dp_dh(:,i) = reshape(((alg.apply_homography_p2p(p_1s,H_12_delta) - alg.apply_homography_p2p(p_1s,H_12))./delta)',[],1);
     end
     
-    % Compared finite difference to analytic value
+    % Assert
     assert(all(all(abs(dp_dh - alg.dp_dh_p2p(p_1s,H_12)) < 1e-5)));                     
 end

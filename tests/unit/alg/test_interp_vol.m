@@ -11,6 +11,7 @@ function test_interp_vol
                   0.9595    0.8491    0.7577;
                   0.6557    0.9340    0.7431];
 
+    % Assert
     assert(abs(alg.interp_vol(vol,[2 2 2],'cubic') - vol(2,2,2)) < eps('single'))
     assert(abs(alg.interp_vol(vol,[1.5 2 2.5],'cubic') - 0.522839062500000) < eps('single'))
 end

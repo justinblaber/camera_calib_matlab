@@ -8,11 +8,9 @@ function test_num_params_d
     f_test1 = matlabFunction(sym_test1);
     f_test2 = matlabFunction(sym_test2);
     
-    % Symbolic test
+    % Assert
     assert(alg.num_params_d(sym_test1) == 4)
     assert(alg.num_params_d(sym_test2) == 7)
-    
-    % Handle test
     assert(alg.num_params_d(f_test1) == 4)
     assert(alg.num_params_d(f_test2) == 7)
 end

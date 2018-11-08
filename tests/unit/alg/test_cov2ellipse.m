@@ -9,19 +9,22 @@ function test_cov2ellipse
           6.380726808930452;
           2.133246917273027];       
       
-%{
+    %{
     % Plot example
+    f = figure;
     s = [35 38];
     [y,x] = ndgrid(1:s(1),1:s(2));    
     array = mvnpdf([x(:) y(:)], ...
                    p, ...
                    cov);
     array = reshape(array,s);
-    figure;
     imshow(array,[]);
     hold on;
     external.ellipse(e(3),e(4),e(5),e(1),e(2),'g');
-%}
+    pause(1);
+    close(f);      
+    %}
           
+    % Assert
     assert(all(all(abs(alg.cov2ellipse(cov,p) - e) < eps('single'))));
 end

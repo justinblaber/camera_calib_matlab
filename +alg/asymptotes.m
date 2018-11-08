@@ -17,13 +17,15 @@ function [l1, l2] = asymptotes(Aq)
     A = Aq(1,1);
     B = 2*Aq(1,2);
     C = Aq(2,2);
-    D = 2*Aq(1,3);
-    E = 2*Aq(2,3);
-    F = Aq(3,3);
+    D = 2*Aq(1,3); %#ok<NASGU>
+    E = 2*Aq(2,3); %#ok<NASGU>
+    F = Aq(3,3); %#ok<NASGU>
     
     % Make sure input conic is a hyperbola
     if abs(B^2-4*A*C) < eps('single') || B^2-4*A*C < 0
-        error(['Input conic: "' num2str([A B C D E F]) '" is not a hyperbola.']);
+        l1 = nan(3,1);
+        l2 = nan(3,1);
+        return
     end
     
     % TODO: handle degenerate case where A is zero

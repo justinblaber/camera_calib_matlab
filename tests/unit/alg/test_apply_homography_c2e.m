@@ -17,12 +17,12 @@ function test_apply_homography_c2e
                 0          1         -p_1s(i,2);
                -p_1s(i,1) -p_1s(i,2)  p_1s(i,1)^2 + p_1s(i,2)^2 - r_1^2];
         Aqi = inv(H_12)'*Aqw*inv(H_12);
-        p_prime = inv(Aqi)*[0; 0; 1];
+        p_prime = inv(Aqi)*[0; 0; 1]; %#ok<MINV>
         p_2s(i,:) = [p_prime(1)/p_prime(3) p_prime(2)/p_prime(3)];
     end
    
-%{
-    % Plot example    
+    %{
+    % plot   
     % Get coordinates of circle
     theta = linspace(0,2*pi,100);
     theta = theta(1:end-1); % Remove duplicate last sample
@@ -38,15 +38,16 @@ function test_apply_homography_c2e
     % Get ellipse center
     p_ch = p_2s(1,:);
         
-    % plot
-    figure;
+    f = figure;
     plot(x_circle,y_circle,'rs');
     hold on;
     plot(p_ellipse(:,1),p_ellipse(:,2),'gs');
     plot(p_hc(1,1),p_hc(1,2),'rx');
     plot(p_ch(1,1),p_ch(1,2),'gx');
-%}
+    pause(1);
+    close(f);
+    %}
        
-    % Compare computed points to ground truth
+    % Assert
     assert(all(all(abs(alg.apply_homography_c2e(p_1s,H_12,r_1) - p_2s) < eps('single'))));
 end

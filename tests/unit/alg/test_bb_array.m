@@ -5,5 +5,6 @@ function test_bb_array
     
     bb = alg.bb_array(array);
     
+    % Assert
     assert(isequal(bb,alg.bb_array(array),[0.5 0.5; w-0.5 h-0.5]));
 end

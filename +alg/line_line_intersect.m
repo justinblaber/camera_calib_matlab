@@ -18,9 +18,6 @@ function p = line_line_intersect(l1,l2)
     b2 = l2(2);
     c2 = l2(3);
     
-    % TODO: handle degenerate case of a1*b2 - b1*a2 = 0, or just let it be
-    % Inf/NaN?
-
     p = [(-c1*b2 + b1*c2)/(a1*b2 - b1*a2) ...
          (-a1*c2 + c1*a2)/(a1*b2 - b1*a2)];
 end

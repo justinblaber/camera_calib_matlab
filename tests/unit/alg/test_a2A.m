@@ -5,5 +5,6 @@ function test_a2A
          0   500 200;
          0   0   1];
        
+    % Assert
     assert(isequal(alg.a2A(a),A));
 end

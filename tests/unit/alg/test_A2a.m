@@ -5,5 +5,6 @@ function test_A2a
     
     a = [500 100 200]';
        
+    % Assert
     assert(isequal(alg.A2a(A),a));
 end

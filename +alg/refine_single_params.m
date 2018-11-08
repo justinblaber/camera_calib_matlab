@@ -39,6 +39,7 @@ function [params,cov_params] = refine_single_params(params,p_cb_p_dss,idx_valids
     %       .refine_single_params_norm_cutoff - scalar; cutoff for norm of
     %           difference of parameter vector for refinement of camera
     %           parameters.
+    %       .verbose - int; level of verbosity
     %   cov_cb_p_dss - cell; optional Nx1 cell array of covariances of
     %       calibration board points in distorted pixel coordinates.
     %
@@ -49,8 +50,8 @@ function [params,cov_params] = refine_single_params(params,p_cb_p_dss,idx_valids
     %           [alpha; x_o; y_o; d_1; ... d_M; ...
     %            theta_x1; theta_y1; theta_z1; t_x1; t_y1; t_z1; ... 
     %            theta_xN; theta_yN; theta_zN; t_xN; t_yN; t_zN]
-    %   cov_params; (3+M+6*N)x(3+M+6*N) array of covariances of intrinsic
-    %       and extrinsic parameters
+    %   cov_params - array; (3+M+6*N)x(3+M+6*N) array of covariances of
+    %       intrinsic and extrinsic parameters
     
     % Get board points in world coordinates
     p_cb_ws = alg.p_cb_w(opts);
@@ -202,12 +203,15 @@ function [params,cov_params] = refine_single_params(params,p_cb_p_dss,idx_valids
                                             f_dp_p_d_dargs, ...
                                             idx_update);
         res = reshape(res,2,[])'; % get in [x y] format
-        d_res_mean = mean(sqrt(res(:,1).^2 + res(:,2).^2));
-        disp(['Iteration #: ' sprintf('%3u',it) '; ' ...
-              'Mean residual distance: ' sprintf('%12.10f',d_res_mean) '; ' ...
-              'Norm of delta_p: ' sprintf('%12.10f',diff_norm) '; ' ...
-              'Cost: ' sprintf('%12.10f',cost) '; ' ...
-              'lambda: ' sprintf('%12.10f',lambda)]);
+        d_res = sqrt(res(:,1).^2 + res(:,2).^2);
+        util.verbose_disp(['It #: ' sprintf('% 3u',it) '; ' ...
+                           'Median res dist: ' sprintf('% 12.8f',median(d_res)) '; ' ...
+                           'MAD res dist: ' sprintf('% 12.8f',1.4826*median(abs(d_res - median(d_res)))) '; ' ...
+                           'Norm of delta_p: ' sprintf('% 12.8f',diff_norm) '; ' ...
+                           'Cost: ' sprintf('% 12.8f',cost) '; ' ...
+                           'lambda: ' sprintf('% 12.8f',lambda)], ...
+                           3, ...
+                           opts);
         
         if diff_norm < opts.refine_single_params_norm_cutoff
             break
@@ -272,22 +276,25 @@ function cost = calc_cost(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_dp_p_dh,f_p
 end
 
 function [jacob, res] = calc_gauss_newton_params(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_dp_p_dh,f_p_p2p_p_d,f_dp_p_d_dargs,idx_update)
+    % Get number of boards
+    num_boards = numel(p_p_dss);
+    
     % Get number of distortion params    
     num_params_d = alg.num_params_d(f_p_p2p_p_d);
-        
+       
     % Get intrinsic parameters
     a = params(1:3);
     d = params(4:3+num_params_d);
-
+    
     % Get residuals and jacobian
     res = zeros(2*sum(vertcat(idx_valids{:})),1);
     jacob = sparse(2*sum(vertcat(idx_valids{:})),numel(params));
-    for i = 1:numel(p_p_dss)
+    for i = 1:num_boards
         % Get rotation and translation for this board
-        R = alg.euler2rot(params(3 + num_params_d + 6*(i-1) + 1: ...
-                                 3 + num_params_d + 6*(i-1) + 3));
-        t = params(3 + num_params_d + 6*(i-1) + 4: ...
-                   3 + num_params_d + 6*(i-1) + 6);
+        R = alg.euler2rot(params(3+num_params_d+6*(i-1)+1: ...
+                                 3+num_params_d+6*(i-1)+3));
+        t = params(3+num_params_d+6*(i-1)+4: ...
+                   3+num_params_d+6*(i-1)+6);
         
         % Get homography
         H = alg.a2A(a)*[R(:,1) R(:,2) t];
@@ -304,13 +311,13 @@ function [jacob, res] = calc_gauss_newton_params(params,p_ws,p_p_dss,idx_valids,
                             (p_p_d_ms(idx_valids{i},2)-p_p_dss{i}(idx_valids{i},2))'),[],1);
                
         % Intrinsics
-        jacob(2*sum(vertcat(idx_valids{1:i-1}))+1:2*sum(vertcat(idx_valids{1:i})),1:3 + num_params_d) = ...
+        jacob(2*sum(vertcat(idx_valids{1:i-1}))+1:2*sum(vertcat(idx_valids{1:i})),1:3+num_params_d) = ...
             alg.dp_p_d_dintrinsic(p_ws(idx_valids{i},:),f_p_w2p_p,f_dp_p_dh,R,t,f_dp_p_d_dargs,a,d); %#ok<SPRIX>
 
         % Extrinsics
         dr_deuler = alg.dr_deuler(alg.rot2euler(R));
         drt_dm = blkdiag(dr_deuler,eye(3));
-        jacob(2*sum(vertcat(idx_valids{1:i-1}))+1:2*sum(vertcat(idx_valids{1:i})),3 + num_params_d + 6*(i-1) + 1:3 + num_params_d + 6*(i-1) + 6) = ...
+        jacob(2*sum(vertcat(idx_valids{1:i-1}))+1:2*sum(vertcat(idx_valids{1:i})),3+num_params_d+6*(i-1)+1:3+num_params_d+6*(i-1)+6) = ...
             alg.dp_p_d_dextrinsic(p_ws(idx_valids{i},:),f_p_w2p_p,f_dp_p_dh,R,t,f_dp_p_d_dargs,a,d,drt_dm); %#ok<SPRIX>
     end  
     

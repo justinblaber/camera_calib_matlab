@@ -36,7 +36,7 @@ function [p, cov_p] = refine_checker_opencv(array_dx,array_dy,p)
                  0             sigma_gauss^2];
     kernel_gauss = mvnpdf([xs ys], p, cov_gauss);
     kernel_gauss = reshape(kernel_gauss,[s s]);
-    kernel_gauss = (kernel_gauss-min(kernel_gauss(:)))./(max(kernel_gauss(:))-min(kernel_gauss(:)));
+    kernel_gauss = alg.normalize_array(kernel_gauss);
     
     % Update weights
     W = kernel_gauss.*W_init;

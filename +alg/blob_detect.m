@@ -23,9 +23,7 @@ function blobs = blob_detect(array,opts)
     r_range2 = opts.blob_detect_r_range2;   
     step = opts.blob_detect_step;
     num_scales = ceil((r_range2-r_range1)/step) + 1;
-        
-    tic
-    
+            
     % Create scale normalized LoG stack
     stack_LoG = zeros([size(array) num_scales]);
     for i = 1:num_scales
@@ -36,10 +34,7 @@ function blobs = blob_detect(array,opts)
         % Apply LoG filter
         stack_LoG(:,:,i) = imfilter(array, kernel_LoG, 'same', 'replicate');
     end 
-    
-    toc
-    tic   
-        
+            
     % Get initial maxima of scale normalized LoG stack -------------------%
     
     % Assign, to every voxel, the maximum of its neighbors. Then, see if 
@@ -160,7 +155,7 @@ function blobs = blob_detect(array,opts)
         x = x_maxima;
         y = y_maxima;
         r = (idx_r_maxima-1)*step + r_range1;
-                  
+                                
         % Get sub array containing blob ----------------------------------%
         
         % Get bounding box
@@ -182,169 +177,135 @@ function blobs = blob_detect(array,opts)
         % Get sub_array coordinates        
         [y_sub_array,x_sub_array] = ndgrid(bb_sub_array(1,2):bb_sub_array(2,2), ...
                                            bb_sub_array(1,1):bb_sub_array(2,1));
-        
-        % For each iteration:
-        %   1) Refine x,y position with centroid analysis
-        %   2) For new, position, find optimal scale
-        %   3) Exit if point converges
-        sub_array_inv = alg.normalize_array(-sub_array);  
-        e = [x y r r 0];
-        for j = 1:5
-            % Update ellipse estimation using second moment matrix
-            e = second_moment_ellipse(sub_array_dx, ...
-                                      sub_array_dy, ...
-                                      e, ...
-                                      x_sub_array, ...
-                                      y_sub_array, ...
-                                      r);
-            if e(3)/e(4) > opts.blob_detect_eccentricity_cutoff
-                e(:) = NaN;
-                break
-            end
-
-            % Refine center position of blob using centroid analysis
-            for it = 1:opts.blob_detect_centroid_it_cutoff
-                % Store previous
-                x_prev = x;
-                y_prev = y;
-    
-                % Get weights
-                W = weight_array(e, x_sub_array,  y_sub_array);
-
-                % Get refined x and y position
-                sub_array_inv_W = sub_array_inv.*W;
-                sum_sub_array_inv_W = sum(sub_array_inv_W(:));
-                x = sum(sum(sub_array_inv_W.*x_sub_array))/sum_sub_array_inv_W;
-                y = sum(sum(sub_array_inv_W.*y_sub_array))/sum_sub_array_inv_W;
-
-                % Update e
-                e(1) = x;
-                e(2) = y;
-                e = second_moment_ellipse(sub_array_dx, ...
-                                          sub_array_dy, ...
-                                          e, ...
-                                          x_sub_array, ...
-                                          y_sub_array, ...
-                                          r);
-                if e(3)/e(4) > opts.blob_detect_eccentricity_cutoff
-                    e(:) = NaN;
-                    break
-                end
                 
-                diff_norm = sqrt((x_prev-x)^2+(y_prev-y)^2);        
-                if diff_norm < opts.blob_detect_centroid_norm_cutoff
-                    break
-                end
-            end
-            
-            if any(isnan(e))
-                break
-            end
-            
-            % Get new scale
-            idx_r = (r-r_range1)/step+1;
-            for it = 1:opts.blob_detect_it_cutoff
-                % Get finite difference coordinates for interpolation
-                x_fd = [x x x];
-                y_fd = [y y y];
-                idx_r_fd = [idx_r-1 idx_r idx_r+1];
-
-                % Check to make sure finite difference box is in range
-                if any(x_fd(:) < 1 | x_fd(:) > size(stack_LoG,2) | ...
-                       y_fd(:) < 1 | y_fd(:) > size(stack_LoG,1) | ...
-                       idx_r_fd(:) < 1 | idx_r_fd(:) > size(stack_LoG,3))
-                    idx_r = NaN;
-                    break
-                end
-
-                % Interpolate
-                LoG_fd = I_stack_LoG(y_fd(:),x_fd(:),idx_r_fd(:));
-
-                % Get gradient: 
-                %   [dLoG/didx_r]
-                grad = (LoG_fd(3)-LoG_fd(1))/2;
-
-                % Get hessian:
-                %   [d^2LoG/(didx_r^2)] 
-                hess = LoG_fd(3)-2*LoG_fd(2)+LoG_fd(1);
-
-                % Get incremental parameters
-                try
-                    delta_params = linsolve(-hess, grad, struct('POSDEF',true,'SYM',true));
-                catch
-                    % This actually removes a lot of non-blob points
-                    idx_r = NaN;
-                    break
-                end
-
-                if any(delta_params > 1)
-                    % Limit maximum change to 1 since maxima should not move
-                    % too much
-                    delta_params = delta_params./max(delta_params);
-                end
-
-                % Update params
-                idx_r = idx_r + delta_params;
-
-                % Exit if change in distance is small
-                diff_norm = norm(delta_params);            
-                if diff_norm < opts.blob_detect_norm_cutoff
-                    break
-                end
-            end
-            
-            if isnan(idx_r)
-                e(:) = NaN;
-                break
-            end
-            
-            % Get new r 
-            r = (idx_r-1)*step + r_range1;
-
-            %{
-
-            % Get iteratively refined second moment matrix -------------------%
-
-            % Initialize e for sub array
-            e_sub = [x-bb_sub_array(1,1)+1 y-bb_sub_array(1,2)+1 r r 0];
-
-            % Iterate
-            for it = 1:opts.blob_detect_M_it_cutoff          
-                % Compute second moment matrix to threshold edge response
-                e_sub = second_moment_ellipse(sub_array_dx, ...
-                                              sub_array_dy, ...
-                                              r, ...
-                                              e_sub);
-
-                % Filter out edge response
-                if e_sub(3)/e_sub(4) > opts.blob_detect_eccentricity_cutoff
-                    break
-                end
-            end              
-
-            % Filter out edge response again
-            if e_sub(3)/e_sub(4) > opts.blob_detect_eccentricity_cutoff
-                continue
-            end
-
-            % Remove any out of range idx
-            if idx_r_maxima < 1 || idx_r_maxima > num_scales || ...
-               x_maxima < 1 || x_maxima > size(array,2) || ...
-               y_maxima < 1 || y_maxima > size(array,1)
-                continue
-            end
-
-            % Store ellipse wrt full array
-            e = e_sub;
-            e(1) = e(1)+bb_sub_array(1,1)-1;
-            e(2) = e(2)+bb_sub_array(1,2)-1;
-            %}
-        end
+        % Initialize ellipse ---------------------------------------------%
         
-        if any(isnan(e))
+        e = [x y r r 0];
+        
+        % Refine ellipse with second moment matrix -----------------------%
+        
+        e = second_moment_ellipse(sub_array_dx, ...
+                                  sub_array_dy, ...
+                                  e, ...
+                                  x_sub_array, ...
+                                  y_sub_array, ...
+                                  r);
+        if e(3)/e(4) > opts.blob_detect_eccentricity_cutoff
+            continue
+        end
+
+        % Refine center position of blob using centroid analysis ---------%
+        
+        % Use inverse of sub array for centroid refinement
+        sub_array_c = alg.normalize_array(-sub_array);  
+        
+        % Iterate
+        for it = 1:opts.blob_detect_centroid_it_cutoff
+            % Store previous
+            x_prev = x;
+            y_prev = y;
+
+            % Get weights
+            W = weight_array(e,x_sub_array,y_sub_array);
+
+            % Get refined x and y position
+            sub_array_inv_W = sub_array_c.*W;
+            sum_sub_array_inv_W = sum(sub_array_inv_W(:));
+            x = sum(sum(sub_array_inv_W.*x_sub_array))/sum_sub_array_inv_W;
+            y = sum(sum(sub_array_inv_W.*y_sub_array))/sum_sub_array_inv_W;
+
+            % Update center position of ellipse
+            e(1) = x;
+            e(2) = y;
+
+            % Exit if change in distance is small
+            diff_norm = sqrt((x_prev-x)^2+(y_prev-y)^2);        
+            if diff_norm < opts.blob_detect_centroid_norm_cutoff
+                break
+            end
+        end
+             
+        % Refine scale ---------------------------------------------------%
+        
+        % Convert r into index
+        idx_r = (r-r_range1)/step+1;
+        
+        % Iterate
+        for it = 1:opts.blob_detect_it_cutoff
+            % Get finite difference coordinates for interpolation
+            x_fd = [e(1) e(1) e(1)];
+            y_fd = [e(2) e(2) e(2)];
+            idx_r_fd = [idx_r-1 idx_r idx_r+1];
+
+            % Check to make sure finite difference box is in range
+            if any(x_fd(:) < 1 | x_fd(:) > size(stack_LoG,2) | ...
+                   y_fd(:) < 1 | y_fd(:) > size(stack_LoG,1) | ...
+                   idx_r_fd(:) < 1 | idx_r_fd(:) > size(stack_LoG,3))
+                idx_r = NaN;
+                break
+            end
+
+            % Interpolate
+            LoG_fd = I_stack_LoG(y_fd(:),x_fd(:),idx_r_fd(:));
+
+            % Get gradient: 
+            %   [dLoG/didx_r]
+            grad = (LoG_fd(3)-LoG_fd(1))/2;
+
+            % Get hessian:
+            %   [d^2LoG/(didx_r^2)] 
+            hess = LoG_fd(3)-2*LoG_fd(2)+LoG_fd(1);
+
+            % Get incremental parameters
+            if hess < 0
+                delta_params = -grad/hess;
+            else
+                idx_r = NaN;
+                break
+            end
+
+            if any(delta_params > 1)
+                % Limit maximum change to 1 since maxima should not move
+                % too much
+                delta_params = 1;
+            end
+
+            % Update params
+            idx_r = idx_r + delta_params;
+
+            % Exit if change in distance is small
+            diff_norm = norm(delta_params);            
+            if diff_norm < opts.blob_detect_norm_cutoff
+                break
+            end
+        end
+
+        if isnan(idx_r)
+            continue
+        end
+
+        % Get new r 
+        r = (idx_r-1)*step + r_range1;  
+        
+        % Refine ellipse again with second moment matrix -----------------%
+        
+        e = second_moment_ellipse(sub_array_dx, ...
+                                  sub_array_dy, ...
+                                  e, ...
+                                  x_sub_array, ...
+                                  y_sub_array, ...
+                                  r);
+        if e(3)/e(4) > opts.blob_detect_eccentricity_cutoff
             continue
         end
             
+        % Re-check LoG value ---------------------------------------------% 
+        
+        idx_r = (r-r_range1)/step+1;
+        if I_stack_LoG(y,x,idx_r) <= opts.blob_detect_LoG_cutoff
+            continue
+        end
+        
         % Store blob -----------------------------------------------------%
         
         % Do some very rudimentary clustering
@@ -362,8 +323,6 @@ function blobs = blob_detect(array,opts)
             blobs(end).rot = e(5);
         end
     end
-    
-    toc
 end
 
 function W = weight_array(e,x,y)
@@ -382,7 +341,7 @@ end
 
 function e = M2ellipse(M,p,r)
     % Get shape of ellipse from second moment matrix
-    e = alg.cov2ellipse(M^(-1/2),p);
+    e = alg.cov2ellipse(inv(M),p);
     
     % Constrain so: minor axis + major axis = 3*radius
     sf = 2*r/(e(3)+e(4));

@@ -1,13 +1,47 @@
-function blobs = blob_detect(array,opts)
-    % Performs blob detection on input array. By default this returns dark
-    % blobs.
+function blobs = blob_detect_LoG(array,opts)
+    % Performs blob detection on input array; this returns dark blobs.
     % 
     % Inputs:
     %   array - array; MxN array
     %   opts - struct;
+    %       .blob_detect_r_range1 - scalar; starting point for blob radius
+    %           search.
+    %       .blob_detect_r_range2 - scalar; end point for blob radius
+    %           search.
+    %       .blob_detect_step - scalar; increment for blob radius search.
+    %       .blob_detect_num_cutoff - int; max number of blobs found.
+    %       .blob_detect_LoG_cutoff - scalar; cutoff for blob LoG value.
+    %       .blob_detect_LoG_interp - string; interpolation used for
+    %           LoG resampling.
+    %       .blob_detect_eccentricity_cutoff - scalar; cutoff for
+    %           eccentricity of blob.
+    %       .blob_detect_maxima_it_cutoff - int; max number of iterations
+    %           performed for refinement of maxima parameters.
+    %       .blob_detect_maxima_norm_cutoff - scalar; cutoff for norm of
+    %           difference of parameter vector for refinement of maxima
+    %           parameters.
+    %       .blob_detect_centroid_it_cutoff - int; max number of iterations
+    %           performed for refinement of centroid.
+    %       .blob_detect_centroid_norm_cutoff - scalar; cutoff for norm of
+    %           difference of parameter vector for refinement of centroid.
+    %       .blob_detect_r_it_cutoff - int; max number of iterations
+    %           performed for refinement of radius.
+    %       .blob_detect_r_norm_cutoff - scalar; cutoff for norm of
+    %           difference of radius.
+    %       .blob_detect_d_cluster - scalar; clusters blobs within d
+    %           distance.
+    %       .blob_detect_r1_cluster - scalar; clusters blobs within r1
+    %           distance.
+    %       .blob_detect_r2_cluster - scalar; clusters blobs within r2
+    %           distance.
     %
     % Outputs:
-    %   blobs - struct; contains:
+    %   blobs - array; Px5 array containing:
+    %       blobs(i,1) = h; x component of center of blob
+    %       blobs(i,2) = k; y component of center of blob
+    %       blobs(i,3) = a; major axis length 
+    %       blobs(i,4) = b; minor axis length
+    %       blobs(i,5) = alpha; rotation of major axis
         
     % Normalize array
     array = alg.normalize_array(array);
@@ -34,6 +68,12 @@ function blobs = blob_detect(array,opts)
         % Apply LoG filter
         stack_LoG(:,:,i) = imfilter(array, kernel_LoG, 'same', 'replicate');
     end 
+    
+    % Get interpolator
+    I_stack_LoG = griddedInterpolant({1:size(stack_LoG,1),1:size(stack_LoG,2),1:size(stack_LoG,3)}, ...
+                                      stack_LoG, ...
+                                      opts.blob_detect_LoG_interp, ...
+                                      'none');
             
     % Get initial maxima of scale normalized LoG stack -------------------%
     
@@ -66,17 +106,15 @@ function blobs = blob_detect(array,opts)
     idx_r_maxima_init = idx_r_maxima_init(idx_maxima_sorted);
     
     % Get refined maxima of scale normalized LoG stack -------------------%
-              
+                        
+    % Initialize blobs
+    blobs = zeros(0,5);
+    
     % Initialize "box" to interpolate in order to compute finite difference
     % approximations to gradient/hessian
     [y_box,x_box,idx_r_box] = ndgrid(-1:1:1,-1:1:1,-1:1:1);
-    
-    % Get interpolator
-    I_stack_LoG = griddedInterpolant({1:size(stack_LoG,1),1:size(stack_LoG,2),1:size(stack_LoG,3)}, ...
-                                      stack_LoG,opts.blob_detect_interp,'none');
-    
-    % Initialize blobs struct
-    blobs = struct('x',{},'y',{},'r1',{},'r2',{},'rot',{});    
+        
+    % Iterate
     for i = 1:numel(x_maxima_init)
         % Grab initial values
         x_maxima = x_maxima_init(i);
@@ -85,7 +123,8 @@ function blobs = blob_detect(array,opts)
         
         % Get sub-pixel values with gauss newton method ------------------%    
         
-        for it = 1:opts.blob_detect_it_cutoff
+        % Iterate
+        for it = 1:opts.blob_detect_maxima_it_cutoff
             % Get finite difference coordinates for interpolation
             x_fd = x_box + x_maxima;
             y_fd = y_box + y_maxima;
@@ -142,7 +181,7 @@ function blobs = blob_detect(array,opts)
             
             % Exit if change in distance is small
             diff_norm = norm(delta_params);            
-            if diff_norm < opts.blob_detect_norm_cutoff
+            if diff_norm < opts.blob_detect_maxima_norm_cutoff
                 break
             end
         end
@@ -186,20 +225,22 @@ function blobs = blob_detect(array,opts)
         
         e = second_moment_ellipse(sub_array_dx, ...
                                   sub_array_dy, ...
-                                  e, ...
                                   x_sub_array, ...
                                   y_sub_array, ...
+                                  e, ...
                                   r);
         if e(3)/e(4) > opts.blob_detect_eccentricity_cutoff
             continue
         end
 
-        % Refine center position of blob using centroid analysis ---------%
+        % Refine center position of blob using centroid refinement -------%
         
         % Use inverse of sub array for centroid refinement
         sub_array_c = alg.normalize_array(-sub_array);  
         
         % Iterate
+        x = e(1);
+        y = e(2);
         for it = 1:opts.blob_detect_centroid_it_cutoff
             % Store previous
             x_prev = x;
@@ -209,10 +250,10 @@ function blobs = blob_detect(array,opts)
             W = weight_array(e,x_sub_array,y_sub_array);
 
             % Get refined x and y position
-            sub_array_inv_W = sub_array_c.*W;
-            sum_sub_array_inv_W = sum(sub_array_inv_W(:));
-            x = sum(sum(sub_array_inv_W.*x_sub_array))/sum_sub_array_inv_W;
-            y = sum(sum(sub_array_inv_W.*y_sub_array))/sum_sub_array_inv_W;
+            sub_array_c_W = sub_array_c.*W;
+            sum_sub_array_c_W = sum(sub_array_c_W(:));
+            x = sum(sum(sub_array_c_W.*x_sub_array))/sum_sub_array_c_W;
+            y = sum(sum(sub_array_c_W.*y_sub_array))/sum_sub_array_c_W;
 
             % Update center position of ellipse
             e(1) = x;
@@ -231,7 +272,7 @@ function blobs = blob_detect(array,opts)
         idx_r = (r-r_range1)/step+1;
         
         % Iterate
-        for it = 1:opts.blob_detect_it_cutoff
+        for it = 1:opts.blob_detect_r_it_cutoff
             % Get finite difference coordinates for interpolation
             x_fd = [e(1) e(1) e(1)];
             y_fd = [e(2) e(2) e(2)];
@@ -275,7 +316,7 @@ function blobs = blob_detect(array,opts)
 
             % Exit if change in distance is small
             diff_norm = norm(delta_params);            
-            if diff_norm < opts.blob_detect_norm_cutoff
+            if diff_norm < opts.blob_detect_r_norm_cutoff
                 break
             end
         end
@@ -287,13 +328,13 @@ function blobs = blob_detect(array,opts)
         % Get new r 
         r = (idx_r-1)*step + r_range1;  
         
-        % Refine ellipse again with second moment matrix -----------------%
+        % Refine ellipse with second moment matrix and updated scale -----%
         
         e = second_moment_ellipse(sub_array_dx, ...
                                   sub_array_dy, ...
-                                  e, ...
                                   x_sub_array, ...
                                   y_sub_array, ...
+                                  e, ...
                                   r);
         if e(3)/e(4) > opts.blob_detect_eccentricity_cutoff
             continue
@@ -301,61 +342,52 @@ function blobs = blob_detect(array,opts)
             
         % Re-check LoG value ---------------------------------------------% 
         
+        % Convert r into index
         idx_r = (r-r_range1)/step+1;
-        if I_stack_LoG(y,x,idx_r) <= opts.blob_detect_LoG_cutoff
-            continue
-        end
         
+        % Get value
+        LoG_val = I_stack_LoG(e(2),e(1),idx_r);
+        if isnan(LoG_val) || LoG_val <= opts.blob_detect_LoG_cutoff
+            continue
+        end        
+                
         % Store blob -----------------------------------------------------%
         
         % Do some very rudimentary clustering
-        dist_d = sqrt(([blobs.x]-e(1)).^2 + ...
-                      ([blobs.y]-e(2)).^2);
-        dist_r1 = abs([blobs.r1]-e(3));       
-        dist_r2 = abs([blobs.r2]-e(4));        
+        dist_d = sqrt((blobs(:,1)-e(1)).^2 + (blobs(:,2)-e(2)).^2);
+        dist_r1 = abs(blobs(:,3)-e(3));       
+        dist_r2 = abs(blobs(:,4)-e(4));        
         if all(dist_d > opts.blob_detect_d_cluster | ...
                dist_r1 > opts.blob_detect_r1_cluster | ...
                dist_r2 > opts.blob_detect_r2_cluster)
-            blobs(end+1).x = e(1); %#ok<AGROW>
-            blobs(end).y = e(2);
-            blobs(end).r1 = e(3);
-            blobs(end).r2 = e(4);
-            blobs(end).rot = e(5);
+            blobs(end+1,:)= e; %#ok<AGROW>
         end
     end
 end
 
-function W = weight_array(e,x,y)
+function W = weight_array(e,xs,ys)
     [cov, p] = alg.ellipse2cov(e);
-    W = mvnpdf([x(:) y(:)], p, cov);
-    W = reshape(W,size(x));
+    W = mvnpdf([xs(:) ys(:)], p, cov);
+    W = reshape(W,size(xs));
 end
 
-function M = second_moment(array_dx,array_dy,W)
+function e = second_moment_ellipse(array_dx,array_dy,xs,ys,e,r)
+    % Get weight matrix
+    W = weight_array(e,xs,ys);
+
     % Get second moment matrix
+    M = zeros(2);
     M(1,1) = sum(W(:).*array_dx(:).^2);
     M(1,2) = sum(W(:).*array_dx(:).*array_dy(:));
     M(2,2) = sum(W(:).*array_dy(:).^2);
-    M(2,1) = M(1,2);     
-end
-
-function e = M2ellipse(M,p,r)
+    M(2,1) = M(1,2);    
+       
     % Get shape of ellipse from second moment matrix
-    e = alg.cov2ellipse(inv(M),p);
+    e = alg.cov2ellipse(inv(M),e(1:2)');
     
-    % Constrain so: minor axis + major axis = 3*radius
+    % Constrain so:
+    %   minor axis + major axis = 2*radius
     sf = 2*r/(e(3)+e(4));
     e(3) = sf*e(3);
     e(4) = sf*e(4);
-end
-
-function e = second_moment_ellipse(array_dx,array_dy,e,x,y,r)
-    % Get weight matrix
-    W = weight_array(e,x,y);
-
-    % Get second moment matrix
-    M = second_moment(array_dx,array_dy,W);
-    
-    % Estimate ellipse from second moment matrix
-    e = M2ellipse(M,e(1:2)',r);
 end

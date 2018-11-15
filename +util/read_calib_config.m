@@ -83,6 +83,25 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','refine_stereo_params_lambda_init'       ,'required',false,'default',0.01                           ,'validation_fun',@validate_pos_num);    
     field_info(end+1) = struct('field','refine_stereo_params_lambda_factor'     ,'required',false,'default',10                             ,'validation_fun',@validate_pos_num);    
     
+    % Blob detection
+    field_info(end+1) = struct('field','blob_detect_r_range1'                   ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_r_range2'                   ,'required',false,'default',15                             ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_step'                       ,'required',false,'default',0.5                            ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_num_cutoff'                 ,'required',false,'default',1000                           ,'validation_fun',@validate_pos_int);    
+    field_info(end+1) = struct('field','blob_detect_LoG_cutoff'                 ,'required',false,'default',0.1                            ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_LoG_interp'                 ,'required',false,'default','cubic'                        ,'validation_fun',@validate_string);    
+    field_info(end+1) = struct('field','blob_detect_eccentricity_cutoff'        ,'required',false,'default',5                              ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_maxima_it_cutoff'           ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);    
+    field_info(end+1) = struct('field','blob_detect_maxima_norm_cutoff'         ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_centroid_it_cutoff'         ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);    
+    field_info(end+1) = struct('field','blob_detect_centroid_norm_cutoff'       ,'required',false,'default',0.1                            ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_r_it_cutoff'                ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);    
+    field_info(end+1) = struct('field','blob_detect_r_norm_cutoff'              ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_d_cluster'                  ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_r1_cluster'                 ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_r2_cluster'                 ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
+    
+    
     % Plotting info
     field_info(end+1) = struct('field','camera_size'                            ,'required',false,'default',0                              ,'validation_fun',@validate_num);
         

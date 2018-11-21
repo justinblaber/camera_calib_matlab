@@ -44,7 +44,7 @@ function blobs = blob_detect_LoG(array,opts)
     %       blobs(i,5) = alpha; rotation of major axis
         
     % Normalize array
-    array = alg.normalize_array(array);
+    array = alg.normalize_array(array,'min-max');
     
     % Precompute gradients
     array_dx = alg.grad_array(array,'x');  
@@ -236,7 +236,7 @@ function blobs = blob_detect_LoG(array,opts)
         % Refine center position of blob using centroid refinement -------%
         
         % Use inverse of sub array for centroid refinement
-        sub_array_c = alg.normalize_array(-sub_array);  
+        sub_array_c = alg.normalize_array(-sub_array,'min-max');  
         
         % Iterate
         x = e(1);

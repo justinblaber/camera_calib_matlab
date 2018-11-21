@@ -53,7 +53,7 @@ function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
     array_grad_mag = array_dx.^2 + array_dy.^2;
     
     % Normalize gradient magnitude between 0 and 1
-    array_grad_mag = alg.normalize_array(array_grad_mag);
+    array_grad_mag = alg.normalize_array(array_grad_mag,'min-max');
         
     % Create initial parameter vector
     params = [1;
@@ -74,7 +74,7 @@ function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
         % Update weights
         kernel_gauss = mvnpdf([xs ys], params(5:6)', cov_gauss);
         kernel_gauss = reshape(kernel_gauss,[s s]);
-        kernel_gauss = alg.normalize_array(kernel_gauss);
+        kernel_gauss = alg.normalize_array(kernel_gauss,'min-max');
         W = kernel_gauss.*W_init;
 
         % Get and store update
@@ -99,7 +99,7 @@ function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
     % Update weights
     kernel_gauss = mvnpdf([xs ys], params(5:6)', cov_gauss);
     kernel_gauss = reshape(kernel_gauss,[s s]);
-    kernel_gauss = alg.normalize_array(kernel_gauss);
+    kernel_gauss = alg.normalize_array(kernel_gauss,'min-max');
     W = kernel_gauss.*W_init;
     
     % Get covaraince

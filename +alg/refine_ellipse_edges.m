@@ -49,7 +49,7 @@ function [e, cov_e] = refine_ellipse_edges(array_dx,array_dy,e_init,opts)
     array_grad_mag = array_dx.^2 + array_dy.^2;
     
     % Normalize gradient magnitude between 0 and 1
-    array_grad_mag = alg.normalize_array(array_grad_mag);
+    array_grad_mag = alg.normalize_array(array_grad_mag,'min-max');
         
     % Create initial parameter vector
     params = [1;

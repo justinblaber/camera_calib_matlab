@@ -12,7 +12,7 @@ function calib_config = read_calib_config(calib_config_path)
     if exist(calib_config_path,'file') == 0
         error(['Config file: "' calib_config_path '" does not exist.']);
     end
-        
+
     % Load config file
     calib_config = util.read_data(calib_config_path);
     
@@ -58,7 +58,7 @@ function calib_config = read_calib_config(calib_config_path)
     
     % Undistort array
     field_info(end+1) = struct('field','undistort_array_interp'                 ,'required',false,'default','spline'                       ,'validation_fun',@validate_string);
-        
+	
     % Distort array
     field_info(end+1) = struct('field','distort_array_interp'                   ,'required',false,'default','spline'                       ,'validation_fun',@validate_string);
     
@@ -95,13 +95,10 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','blob_detect_maxima_norm_cutoff'         ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
     field_info(end+1) = struct('field','blob_detect_centroid_it_cutoff'         ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);    
     field_info(end+1) = struct('field','blob_detect_centroid_norm_cutoff'       ,'required',false,'default',0.1                            ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','blob_detect_r_it_cutoff'                ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);    
-    field_info(end+1) = struct('field','blob_detect_r_norm_cutoff'              ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
     field_info(end+1) = struct('field','blob_detect_d_cluster'                  ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
     field_info(end+1) = struct('field','blob_detect_r1_cluster'                 ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
     field_info(end+1) = struct('field','blob_detect_r2_cluster'                 ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
-    
-    
+        
     % Plotting info
     field_info(end+1) = struct('field','camera_size'                            ,'required',false,'default',0                              ,'validation_fun',@validate_num);
         

@@ -10,14 +10,15 @@ f = figure();
 markers_dir_path = fileparts(mfilename('fullpath'));
 marker_config = util.read_data(fullfile(markers_dir_path,'marker.conf'));
 
-% Get radius and theta samples
-r_samples = linspace(marker_config.marker_radius*marker_config.radius_norm_range(1), ...
-                     marker_config.marker_radius*marker_config.radius_norm_range(2), ...
-                     marker_config.radius_num_samples);
 % For theta, sample 1 more and then remove it; this allows [0 2*pi)
-theta_samples = linspace(0,2*pi,marker_config.theta_num_samples+1);
+theta_samples = linspace(0,2*pi,marker_config.num_samples_theta+1)';
 theta_samples(end) = []; 
 
+% Get normalized radius and theta samples used for sampling polar patch
+radius_samples = linspace(marker_config.r_marker*marker_config.range_r_norm(1), ...
+                          marker_config.r_marker*marker_config.range_r_norm(2), ...
+                          marker_config.num_samples_radius)';
+                 
 % Cycle over markers and create/save polar patch templates
 marker_templates_path = fullfile(markers_dir_path,'marker_templates.txt');
 fclose(fopen(marker_templates_path,'w')); % Creates/clears file
@@ -27,11 +28,11 @@ for i = 1:numel(marker_config.marker_paths)
     marker = rgb2gray(im2double(marker));
 
     % Get coordinates
-    x = bsxfun(@times,cos(theta_samples)',r_samples) + (size(marker,2)+1)/2; 
-    y = bsxfun(@times,sin(theta_samples)',r_samples) + (size(marker,1)+1)/2; 
+    x = bsxfun(@times,cos(theta_samples),radius_samples') + (size(marker,2)+1)/2; 
+    y = bsxfun(@times,sin(theta_samples),radius_samples') + (size(marker,1)+1)/2; 
     
     % Get polar patch
-    polar_patch = alg.array_interp(marker,[x(:) y(:)],'cubic'); 
+    polar_patch = alg.interp_array(marker,[x(:) y(:)],marker_config.interp); 
     polar_patch = reshape(polar_patch,numel(theta_samples),[]); 
     
     % Plot sampling points

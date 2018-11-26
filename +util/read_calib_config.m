@@ -19,88 +19,106 @@ function calib_config = read_calib_config(calib_config_path)
     % Perform validations on input fields --------------------------------%
     
     % Calibration board info
-    field_info        = struct('field','target_type'                            ,'required',true ,'default',''                             ,'validation_fun',@validate_target_type);
-    field_info(end+1) = struct('field','num_targets_height'                     ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','num_targets_width'                      ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','target_spacing'                         ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','units'                                  ,'required',true ,'default',''                             ,'validation_fun',@validate_string);
-    field_info(end+1) = struct('field','height_fp'                              ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','width_fp'                               ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','target_mat'                             ,'required',false,'default',[]                             ,'validation_fun',@validate_target_mat);
+    field_info        = struct('field','target_type'                                ,'required',true ,'default',''                             ,'validation_fun',@validate_target_type);
+    field_info(end+1) = struct('field','num_targets_height'                         ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','num_targets_width'                          ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','target_spacing'                             ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','units'                                      ,'required',true ,'default',''                             ,'validation_fun',@validate_string);
+    field_info(end+1) = struct('field','height_fp'                                  ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','width_fp'                                   ,'required',true ,'default',[]                             ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','target_mat'                                 ,'required',false,'default',[]                             ,'validation_fun',@validate_target_mat);
     
     % Verbosity
-    field_info(end+1) = struct('field','verbosity'                              ,'required',false,'default',3                              ,'validation_fun',@validate_int);
+    field_info(end+1) = struct('field','verbosity'                                  ,'required',false,'default',3                              ,'validation_fun',@validate_int);
     
     % Homography computation
-    field_info(end+1) = struct('field','homography_p2p_it_cutoff'               ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','homography_p2p_norm_cutoff'             ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','homography_c2e_it_cutoff'               ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','homography_c2e_norm_cutoff'             ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','homography_p2p_it_cutoff'                   ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','homography_p2p_norm_cutoff'                 ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','homography_c2e_it_cutoff'                   ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','homography_c2e_norm_cutoff'                 ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);
     
     % Checker refinement
-    field_info(end+1) = struct('field','refine_checker_min_hw'                  ,'required',false,'default',4                              ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','refine_checker_max_hw'                  ,'required',false,'default',15                             ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','refine_checker_opencv_it_cutoff'        ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','refine_checker_opencv_norm_cutoff'      ,'required',false,'default',0.001                          ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','refine_checker_edges_it_cutoff'         ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','refine_checker_edges_norm_cutoff'       ,'required',false,'default',0.001                          ,'validation_fun',@validate_pos_num);
-    field_info(end+1) = struct('field','refine_checker_edges_h2_init'           ,'required',false,'default',0.75                           ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','refine_checker_min_hw'                      ,'required',false,'default',4                              ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','refine_checker_max_hw'                      ,'required',false,'default',15                             ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','refine_checker_opencv_it_cutoff'            ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','refine_checker_opencv_norm_cutoff'          ,'required',false,'default',0.001                          ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','refine_checker_edges_it_cutoff'             ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','refine_checker_edges_norm_cutoff'           ,'required',false,'default',0.001                          ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','refine_checker_edges_h2_init'               ,'required',false,'default',0.75                           ,'validation_fun',@validate_pos_num);
     
     % Ellipse refinement
-    field_info(end+1) = struct('field','circle_radius'                          ,'required',false,'default',nan                            ,'validation_fun',@validate_circle_radius);
-    field_info(end+1) = struct('field','refine_ellipse_edges_it_cutoff'         ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','refine_ellipse_edges_norm_cutoff'       ,'required',false,'default',0.001                          ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','refine_ellipse_edges_h2_init'           ,'required',false,'default',0.75                           ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','circle_radius'                              ,'required',false,'default',nan                            ,'validation_fun',@validate_circle_radius);
+    field_info(end+1) = struct('field','refine_ellipse_edges_it_cutoff'             ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','refine_ellipse_edges_norm_cutoff'           ,'required',false,'default',0.001                          ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','refine_ellipse_edges_h2_init'               ,'required',false,'default',0.75                           ,'validation_fun',@validate_pos_num);    
     
     % p_p_d2p_p
-    field_info(end+1) = struct('field','p_p_d2p_p_it_cutoff'                    ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','p_p_d2p_p_norm_cutoff'                  ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);
+    field_info(end+1) = struct('field','p_p_d2p_p_it_cutoff'                        ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','p_p_d2p_p_norm_cutoff'                      ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);
     
     % Undistort array
-    field_info(end+1) = struct('field','undistort_array_interp'                 ,'required',false,'default','spline'                       ,'validation_fun',@validate_string);
+    field_info(end+1) = struct('field','undistort_array_interp'                     ,'required',false,'default','spline'                       ,'validation_fun',@validate_string);
 	
     % Distort array
-    field_info(end+1) = struct('field','distort_array_interp'                   ,'required',false,'default','spline'                       ,'validation_fun',@validate_string);
+    field_info(end+1) = struct('field','distort_array_interp'                       ,'required',false,'default','spline'                       ,'validation_fun',@validate_string);
     
     % Distortion refinement
-    field_info(end+1) = struct('field','distortion_refinement_it_cutoff'        ,'required',false,'default',5                              ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','distortion_refinement_it_cutoff'            ,'required',false,'default',5                              ,'validation_fun',@validate_pos_int);
     
     % Covariance optimization
-    field_info(end+1) = struct('field','apply_covariance_optimization'          ,'required',false,'default',true                           ,'validation_fun',@validate_logical);
+    field_info(end+1) = struct('field','apply_covariance_optimization'              ,'required',false,'default',true                           ,'validation_fun',@validate_logical);
     
     % sym_p_p2p_p_d
-    field_info(end+1) = struct('field','sym_p_p2p_p_d'                          ,'required',false,'default','distortion.wang08'            ,'validation_fun',@validate_distortion);
+    field_info(end+1) = struct('field','sym_p_p2p_p_d'                              ,'required',false,'default','distortion.wang08'            ,'validation_fun',@validate_distortion);
     
     % Single calibration    
-    field_info(end+1) = struct('field','refine_single_params_it_cutoff'         ,'required',false,'default',200                            ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','refine_single_params_norm_cutoff'       ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','refine_single_params_lambda_init'       ,'required',false,'default',0.01                           ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','refine_single_params_lambda_factor'     ,'required',false,'default',10                             ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','refine_single_params_it_cutoff'             ,'required',false,'default',200                            ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','refine_single_params_norm_cutoff'           ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','refine_single_params_lambda_init'           ,'required',false,'default',0.01                           ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','refine_single_params_lambda_factor'         ,'required',false,'default',10                             ,'validation_fun',@validate_pos_num);    
     
     % Stereo calibration  
-    field_info(end+1) = struct('field','refine_stereo_params_it_cutoff'         ,'required',false,'default',200                            ,'validation_fun',@validate_pos_int);
-    field_info(end+1) = struct('field','refine_stereo_params_norm_cutoff'       ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','refine_stereo_params_lambda_init'       ,'required',false,'default',0.01                           ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','refine_stereo_params_lambda_factor'     ,'required',false,'default',10                             ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','refine_stereo_params_it_cutoff'             ,'required',false,'default',200                            ,'validation_fun',@validate_pos_int);
+    field_info(end+1) = struct('field','refine_stereo_params_norm_cutoff'           ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','refine_stereo_params_lambda_init'           ,'required',false,'default',0.01                           ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','refine_stereo_params_lambda_factor'         ,'required',false,'default',10                             ,'validation_fun',@validate_pos_num);    
     
     % Blob detection
-    field_info(end+1) = struct('field','blob_detect_r_range1'                   ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','blob_detect_r_range2'                   ,'required',false,'default',15                             ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','blob_detect_step'                       ,'required',false,'default',0.5                            ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','blob_detect_num_cutoff'                 ,'required',false,'default',1000                           ,'validation_fun',@validate_pos_int);    
-    field_info(end+1) = struct('field','blob_detect_LoG_cutoff'                 ,'required',false,'default',0.1                            ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','blob_detect_LoG_interp'                 ,'required',false,'default','cubic'                        ,'validation_fun',@validate_string);    
-    field_info(end+1) = struct('field','blob_detect_eccentricity_cutoff'        ,'required',false,'default',5                              ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','blob_detect_maxima_it_cutoff'           ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);    
-    field_info(end+1) = struct('field','blob_detect_maxima_norm_cutoff'         ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','blob_detect_centroid_it_cutoff'         ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);    
-    field_info(end+1) = struct('field','blob_detect_centroid_norm_cutoff'       ,'required',false,'default',0.1                            ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','blob_detect_d_cluster'                  ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','blob_detect_r1_cluster'                 ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','blob_detect_r2_cluster'                 ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_r_range1'                       ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_r_range2'                       ,'required',false,'default',15                             ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_step'                           ,'required',false,'default',0.5                            ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_num_cutoff'                     ,'required',false,'default',1000                           ,'validation_fun',@validate_pos_int);    
+    field_info(end+1) = struct('field','blob_detect_LoG_cutoff'                     ,'required',false,'default',0.1                            ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_LoG_interp'                     ,'required',false,'default','cubic'                        ,'validation_fun',@validate_string);    
+    field_info(end+1) = struct('field','blob_detect_eccentricity_cutoff'            ,'required',false,'default',5                              ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_lambda'                         ,'required',false,'default',1e-2                           ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_maxima_it_cutoff'               ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);    
+    field_info(end+1) = struct('field','blob_detect_maxima_norm_cutoff'             ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_centroid_it_cutoff'             ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);    
+    field_info(end+1) = struct('field','blob_detect_centroid_norm_cutoff'           ,'required',false,'default',0.1                            ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_d_cluster'                      ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_r1_cluster'                     ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_r2_cluster'                     ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
         
+    % Four point detection    
+    field_info(end+1) = struct('field','ellipse_detect_num_samples_theta'           ,'required',false,'default',100                            ,'validation_fun',@validate_pos_int); 
+    field_info(end+1) = struct('field','ellipse_detect_interp'                      ,'required',false,'default','cubic'                        ,'validation_fun',@validate_string); 
+    field_info(end+1) = struct('field','ellipse_detect_sf_cost'                     ,'required',false,'default',2                              ,'validation_fun',@validate_pos_int); 
+    field_info(end+1) = struct('field','ellipse_detect_it_cutoff'                   ,'required',false,'default',100                            ,'validation_fun',@validate_pos_int); 
+    field_info(end+1) = struct('field','ellipse_detect_norm_cutoff'                 ,'required',false,'default',1e-3                           ,'validation_fun',@validate_pos_num); 
+    field_info(end+1) = struct('field','ellipse_detect_lambda_init'                 ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num); 
+    field_info(end+1) = struct('field','ellipse_detect_lambda_factor'               ,'required',false,'default',2                              ,'validation_fun',@validate_pos_num); 
+    field_info(end+1) = struct('field','ellipse_detect_d_cluster'                   ,'required',false,'default',2                              ,'validation_fun',@validate_pos_num); 
+    field_info(end+1) = struct('field','ellipse_detect_r1_cluster'                  ,'required',false,'default',2                              ,'validation_fun',@validate_pos_num); 
+    field_info(end+1) = struct('field','ellipse_detect_r2_cluster'                  ,'required',false,'default',2                              ,'validation_fun',@validate_pos_num);  
+    field_info(end+1) = struct('field','four_points_detect_marker_templates_path'   ,'required',false,'default','+markers/marker_templates.txt','validation_fun',@validate_path);   
+    field_info(end+1) = struct('field','four_points_detect_marker_config_path'      ,'required',false,'default','+markers/marker.conf'         ,'validation_fun',@validate_path);   
+    field_info(end+1) = struct('field','four_points_detect_num_cutoff'              ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int); 
+    field_info(end+1) = struct('field','four_points_detect_mse_cutoff'              ,'required',false,'default',0.2                            ,'validation_fun',@validate_pos_num); 
+    field_info(end+1) = struct('field','four_points_detect_padding_radial'          ,'required',false,'default',3                              ,'validation_fun',@validate_pos_int); 
+    
     % Plotting info
-    field_info(end+1) = struct('field','camera_size'                            ,'required',false,'default',0                              ,'validation_fun',@validate_num);
+    field_info(end+1) = struct('field','camera_size'                                ,'required',false,'default',0                              ,'validation_fun',@validate_num);
         
     % Check to see if any unrecognized fields exist
     calib_config_fields = fields(calib_config);
@@ -220,7 +238,7 @@ function calib_config = validate_distortion(calib_config,field)
     calib_config.(field) = eval(calib_config.(field));
 end
 
-function calib_config = validate_file_path(calib_config,field)
+function calib_config = validate_path(calib_config,field)
     if isempty(calib_config.(field)) || exist(calib_config.(field),'file') ~= 2
         error(['Field: "' field '" has a value which is not an existing file.']);
     end

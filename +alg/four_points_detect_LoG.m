@@ -3,11 +3,69 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
     % the calibration board.
     % 
     % Inputs:
-    %   
+    %   array - array; MxN array
+    %   opts - struct;
+    %       .blob_detect_r_range1 - scalar; starting point for blob radius
+    %           search.
+    %       .blob_detect_r_range2 - scalar; end point for blob radius
+    %           search.
+    %       .blob_detect_step - scalar; increment for blob radius search.
+    %       .blob_detect_num_cutoff - int; max number of blobs found.
+    %       .blob_detect_LoG_cutoff - scalar; cutoff for blob LoG value.
+    %       .blob_detect_LoG_interp - string; interpolation used for
+    %           LoG resampling.
+    %       .blob_detect_eccentricity_cutoff - scalar; cutoff for
+    %           eccentricity of blob.
+    %       .blob_detect_lambda - scalar; damping factor added to hession
+    %       .blob_detect_maxima_it_cutoff - int; max number of iterations
+    %           performed for refinement of maxima parameters.
+    %       .blob_detect_maxima_norm_cutoff - scalar; cutoff for norm of
+    %           difference of parameter vector for refinement of maxima
+    %           parameters.
+    %       .blob_detect_centroid_it_cutoff - int; max number of iterations
+    %           performed for refinement of centroid.
+    %       .blob_detect_centroid_norm_cutoff - scalar; cutoff for norm of
+    %           difference of parameter vector for refinement of centroid.
+    %       .blob_detect_d_cluster - scalar; clusters blobs within d
+    %           distance.
+    %       .blob_detect_r1_cluster - scalar; clusters blobs within r1
+    %           distance.
+    %       .blob_detect_r2_cluster - scalar; clusters blobs within r2
+    %           distance.
+	%       .ellipse_detect_num_samples_theta - int; number of samples for 
+    %           theta.
+    %       .ellipse_detect_interp - string; interpolation used for ellipse
+    %           detection.
+    %       .ellipse_detect_sf_cost - int; upscaling used for cost array in
+    %           ellipse detection.
+    %       .ellipse_detect_it_cutoff - int; max number of iterations used
+    %           for ellipse detection.
+    %       .ellipse_detect_norm_cutoff - scalar; cutoff for norm of
+    %           difference of parameter used for ellipse detection.
+    %       .ellipse_detect_lambda_init - scalar; initial lambda used in
+    %           backtracking.
+    %       .ellipse_detect_lambda_factor - scalar; multiplicative factor
+    %           used for lambda in backtracking.
+    %       .ellipse_detect_d_cluster - scalar; ellipses within d distance
+    %           of each other are clustered.
+    %       .ellipse_detect_r1_cluster - scalar; ellipses within r1
+    %           distance of each other are clustered.
+    %       .ellipse_detect_r2_cluster - scalar; ellipses within r2
+    %           distance of each other are clustered.
+    %       .four_points_detect_marker_templates_path - path; path to
+    %           marker templates.
+    %       .four_points_detect_marker_config_path - path; path to marker
+    %           template config.
+    %       .four_points_detect_num_cutoff - scalar; mse cutoff for fast
+    %           template thresholding.
+    %       .four_points_detect_mse_cutoff - int; max number of ellipses
+    %           for fast template thresholding.
+    %       .four_points_detect_padding_radial - int; radial padding used
+    %           for marker detection.
     %
     % Outputs:
-    %   
-    %
+    %   p_fp_ps - array; 4x2 array of four points in pixel coordinates
+    %   debug - struct; used for debugging purposes
     
     % Get blobs ----------------------------------------------------------%
 
@@ -61,7 +119,7 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
         % Get gradients of cost array
         sub_array_c_dx = alg.grad_array(sub_array_c,'x');
         sub_array_c_dy = alg.grad_array(sub_array_c,'y');
-                                       
+        
         % Get interpolants for speed
         I_sub_array_c = griddedInterpolant({1:size(sub_array_c,1),1:size(sub_array_c,2)}, ...
                                            sub_array_c, ...
@@ -84,7 +142,7 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
         
         % Initialize lambda        
         lambda = opts.ellipse_detect_lambda_init;
-                
+        
         % Iterate
         for it = 1:opts.ellipse_detect_it_cutoff      
             % Get previous coordinates
@@ -134,7 +192,7 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
             % Increase step for next iteration
             lambda = lambda*opts.ellipse_detect_lambda_factor;
             
-            % Exit if the ellipse went out of the bounding box
+            % Exit if the ellipse is out of the bounding box
             if any(x < 1 | x > size(sub_array_c,2) | ...
                    y < 1 | y > size(sub_array_c,1))
                 e(:) = NaN;
@@ -142,12 +200,12 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
             end
             
             % Exit if change in distance is small
-            diff_norm = norm(e-e_prev);            
+            diff_norm = norm(e-e_prev);
             if diff_norm < opts.ellipse_detect_norm_cutoff
                 break
             end
         end
-                     
+        
         % Check if any params are NaNs
         if any(isnan(e))
             continue
@@ -168,29 +226,27 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
         end
     end 
         
-    % Four point marker detection; load stuff ----------------------------%
-        
-    % Load marker templates
-    marker_templates = util.read_data(opts.four_point_detect_marker_templates_path);
-       
-    % Normalize them with mean-norm normalization since cross correlation
-    % is performed
+    % Four point marker detection; load stuff first ----------------------%
+     
+    % Load marker templates and normalize them with mean-norm normalization
+    % since cross correlation is performed
+    marker_templates = util.read_data(opts.four_points_detect_marker_templates_path);
     for i = 1:4
         marker_templates.polar_patches{i} = alg.normalize_array(marker_templates.polar_patches{i}, 'mean-norm');
     end
     
     % Read marker config
-    marker_config = util.read_data(opts.four_point_detect_marker_config_path);
+    marker_config = util.read_data(opts.four_points_detect_marker_config_path);
     
     % For theta, sample 1 more and then remove it; this allows [0 2*pi)
     theta_samples = linspace(0,2*pi,marker_config.num_samples_theta+1)';
     theta_samples(end) = []; 
-        
+    
     % Get normalized radius and theta samples used for sampling polar patch
     radius_samples = linspace(marker_config.range_r_norm(1), ...
                               marker_config.range_r_norm(2), ...
                               marker_config.num_samples_radius)';
-                          
+    
     % Perform fast threshold ---------------------------------------------%
     
     % Get fast threshold template
@@ -207,7 +263,7 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
     % Get interpolator
     I_array = griddedInterpolant({1:size(array,1),1:size(array,2)}, ...
                                  array, ...
-                                 opts.four_point_detect_interp, ...
+                                 marker_config.interp, ...
                                  'none');
     
     % Iterate over ellipses
@@ -220,7 +276,7 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
         polar_patch = zeros(4,numel(theta_samples));   
         
         % Sample at different scale factors
-        for j = 1:4            
+        for j = 1:4
             % Get sampling points
             e_polar_patch = e;
             e_polar_patch(3) = sf_ft(j)*(e_polar_patch(3)+0.5);
@@ -231,6 +287,9 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
             polar_patch(j,:) = I_array(p_polar_patch(:,2),p_polar_patch(:,1));
         end
         
+        % Normalize
+        polar_patch = alg.normalize_array(polar_patch,'min-max');
+        
         % Get mse between polar patch and template
         c_ft(i) = mean(mean((polar_patch - template_ft).^2));
     end
@@ -238,8 +297,8 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
     % Get most powerful marker responses specified by num_cutoff and
     % mse_cutoff
     [~,idx_c_sorted] = sort(c_ft);
-    idx_c_sorted = idx_c_sorted(1:min(opts.four_point_detect_num_cutoff,end));
-    idx_c_sorted = idx_c_sorted(c_ft(idx_c_sorted) > opts.four_point_detect_mse_cutoff);    
+    idx_c_sorted = idx_c_sorted(1:min(opts.four_points_detect_num_cutoff,end));
+    idx_c_sorted = idx_c_sorted(c_ft(idx_c_sorted) < opts.four_points_detect_mse_cutoff);    
     ellipses = ellipses(idx_c_sorted,:);
     
     % Do more refined matching to distinguish four markers ---------------%
@@ -265,16 +324,16 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
             continue
         end
             
-        % Resample
+        % Get polar patch
         polar_patch = alg.interp_array(array, p_polar_patch(1:2,:)', marker_config.interp);
         polar_patches{i} = reshape(polar_patch,numel(theta_samples),[]);
         polar_patches{i} = alg.normalize_array(polar_patches{i},'mean-norm'); % cross correlation is performed, so do mean-norm normalization
-        polar_patches{i} = polar_patches{i}(:,opts.four_point_detect_padding_radial+1: ...
-                                              end-opts.four_point_detect_padding_radial); % Trim according to padding
+        polar_patches{i} = polar_patches{i}(:,opts.four_points_detect_padding_radial+1: ...
+                                              end-opts.four_points_detect_padding_radial); % Trim according to padding
     end
     
     % Cross correlate each polar patch with 4 templates. 
-    cc_mat = -Inf(numel(polar_patches),4); % Due to radial padding, this wont strictly be between -1 and 1, but it should be close
+    cc_mat = -Inf(numel(polar_patches),4);
     idx_i_mat = -1*ones(numel(polar_patches),4);
     idx_j_mat = -1*ones(numel(polar_patches),4);
     for i = 1:numel(polar_patches)
@@ -287,8 +346,8 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
         % Compare to four templates with circular cross correlation over
         % theta and slide over radius if padding is provided.
         for j = 1:4
-            cc_buf = zeros(numel(theta_samples),2*opts.four_point_detect_padding_radial+1);
-            for m = 1:2*opts.four_point_detect_padding_radial+1
+            cc_buf = zeros(numel(theta_samples),2*opts.four_points_detect_padding_radial+1);
+            for m = 1:2*opts.four_points_detect_padding_radial+1
                 for n = 1:size(polar_patches{i},2)
                     cc_buf(:,m) = cc_buf(:,m) + ifft(fft(polar_patches{i}(:,n)).*conj(fft(marker_templates.polar_patches{j}(:,m+n-1))));
                 end
@@ -303,10 +362,10 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
     end   
         
     % Get best matches and store four points
-    patch_matches = struct('patch',cell(4,1), ...
+    patch_matches = struct('patch',   cell(4,1), ...
                            'template',cell(4,1), ...
-                           'ellipse',cell(4,1), ...
-                           'cc_val',cell(4,1));
+                           'ellipse', cell(4,1), ...
+                           'val_cc',  cell(4,1));
     p_fp_ps = zeros(4,2);
     for i = 1:4        
         % Get max value
@@ -316,10 +375,12 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
         p_fp_ps(idx_j_max,:) = [ellipses(idx_i_max,1) ellipses(idx_i_max,2)];
                        
         % Store best patch matches
-        patch_matches(idx_j_max).patch = circshift(polar_patches{idx_i_max},-(idx_i_mat(idx_i_max,idx_j_max)-1));
-        patch_matches(idx_j_max).template = marker_templates.polar_patches{idx_j_max}(:,idx_j_mat(idx_i_max,idx_j_max):idx_j_mat(idx_i_max,idx_j_max)+size(polar_patches{idx_i_max},2)-1);
-        patch_matches(idx_j_max).ellipse = ellipses(idx_i_max);
-        patch_matches(idx_j_max).cc_val = cc_mat(idx_i_max,idx_j_max);
+        patch_matches(idx_j_max).patch = circshift(polar_patches{idx_i_max}, ...
+                                                   -(idx_i_mat(idx_i_max,idx_j_max)-1));
+        patch_matches(idx_j_max).template = marker_templates.polar_patches{idx_j_max}(:,idx_j_mat(idx_i_max,idx_j_max): ...
+                                                                                        idx_j_mat(idx_i_max,idx_j_max)+size(polar_patches{idx_i_max},2)-1);
+        patch_matches(idx_j_max).ellipse = ellipses(idx_i_max,:);
+        patch_matches(idx_j_max).val_cc = cc_mat(idx_i_max,idx_j_max);
                 
         % "disable" this patch and template
         cc_mat(idx_i_max,:) = -Inf; % patch

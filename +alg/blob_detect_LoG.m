@@ -15,6 +15,7 @@ function blobs = blob_detect_LoG(array,opts)
     %           LoG resampling.
     %       .blob_detect_eccentricity_cutoff - scalar; cutoff for
     %           eccentricity of blob.
+    %       .blob_detect_lambda - scalar; damping factor added to hession
     %       .blob_detect_maxima_it_cutoff - int; max number of iterations
     %           performed for refinement of maxima parameters.
     %       .blob_detect_maxima_norm_cutoff - scalar; cutoff for norm of
@@ -209,6 +210,11 @@ function blobs = blob_detect_LoG(array,opts)
                                                  'idx_r', ...
                                                  opts);
 
+        % Make sure optimization was successful
+        if any(isnan(params_maxima))
+            continue
+        end
+        
         % Get new r
         r = (params_maxima(3)-1)*step + r_range1;  
         
@@ -299,11 +305,10 @@ function params = refine_LoG_maxima_params(params, I_stack_LoG, optimization_typ
 
         % Get incremental parameters
         try
-            delta_params = linsolve(-hess(idx_update,idx_update), ... % Negative hess => positive definite
+            delta_params = linsolve(-hess(idx_update,idx_update) + opts.blob_detect_lambda*eye(sum(idx_update)), ... % Negative hess => positive definite
                                     grad(idx_update), ...
                                     struct('POSDEF',true,'SYM',true));
         catch
-            % This actually removes a lot of non-blob points
             params(:) = NaN;
             break
         end
@@ -340,7 +345,9 @@ function e = second_moment_ellipse(array_dx,array_dy,xs,ys,e,r)
     M(1,1) = sum(W(:).*array_dx(:).^2);
     M(1,2) = sum(W(:).*array_dx(:).*array_dy(:));
     M(2,2) = sum(W(:).*array_dy(:).^2);
-    M(2,1) = M(1,2);    
+    M(2,1) = M(1,2);
+    
+    % TODO maybe add check to see if M is invertible, possible
        
     % Get shape of ellipse from second moment matrix
     e = alg.cov2ellipse(inv(M),e(1:2)');

@@ -111,7 +111,7 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
         
         % Get cost array
         sf_cost = opts.ellipse_detect_sf_cost;
-        sub_array_up = imresize(alg.gauss_array(sub_array,e(4)/2),sf_cost); % Use minor axis to blur
+        sub_array_up = imresize(alg.gauss_array(sub_array,e(4)/4),sf_cost); % Use minor axis to blur
         sub_array_c = sqrt(alg.grad_array(sub_array_up,'x').^2 + ...
                            alg.grad_array(sub_array_up,'y').^2);
         sub_array_c = alg.normalize_array(sub_array_c,'min-max');
@@ -210,7 +210,7 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
         if any(isnan(e))
             continue
         end
-                
+        
         % Before storing ellipse, make sure there isn't another ellipse 
         % near this one. This is ad-hoc clustering and is typically 
         % "good enough"
@@ -225,9 +225,9 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
             ellipses(end+1,:) = e; %#ok<AGROW>
         end
     end 
-        
+    
     % Four point marker detection; load stuff first ----------------------%
-     
+    
     % Load marker templates and normalize them with mean-norm normalization
     % since cross correlation is performed
     marker_templates = util.read_data(opts.four_points_detect_marker_templates_path);
@@ -267,7 +267,7 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
                                  'none');
     
     % Iterate over ellipses
-    c_ft = zeros(size(ellipses,1),1);
+    c_ft = Inf(size(ellipses,1),1);
     for i = 1:size(ellipses,1)
         % Get ellipse
         e = ellipses(i,:);
@@ -287,13 +287,18 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
             polar_patch(j,:) = I_array(p_polar_patch(:,2),p_polar_patch(:,1));
         end
         
+        % Make sure samples are in bounds
+        if any(isnan(polar_patch))
+            continue
+        end            
+        
         % Normalize
         polar_patch = alg.normalize_array(polar_patch,'min-max');
         
         % Get mse between polar patch and template
         c_ft(i) = mean(mean((polar_patch - template_ft).^2));
     end
-        
+    
     % Get most powerful marker responses specified by num_cutoff and
     % mse_cutoff
     [~,idx_c_sorted] = sort(c_ft);
@@ -332,7 +337,17 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
                                               end-opts.four_points_detect_padding_radial); % Trim according to padding
     end
     
-    % Cross correlate each polar patch with 4 templates. 
+    % Initialize four point output ---------------------------------------%
+    
+    p_fp_ps = nan(4,2);
+    
+    % Make sure there are at least four non-empty polar patches
+    if sum(~cellfun(@isempty,polar_patches)) < 4
+        return
+    end
+    
+    % Cross correlate each polar patch with 4 templates ------------------%
+    
     cc_mat = -Inf(numel(polar_patches),4);
     idx_i_mat = -1*ones(numel(polar_patches),4);
     idx_j_mat = -1*ones(numel(polar_patches),4);
@@ -361,12 +376,12 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
         end
     end   
         
-    % Get best matches and store four points
+    % Get best matches and store four points -----------------------------%
+    
     patch_matches = struct('patch',   cell(4,1), ...
                            'template',cell(4,1), ...
                            'ellipse', cell(4,1), ...
                            'val_cc',  cell(4,1));
-    p_fp_ps = zeros(4,2);
     for i = 1:4        
         % Get max value
         [idx_i_max, idx_j_max] = find(cc_mat == max(cc_mat(:)),1);
@@ -386,8 +401,11 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
         cc_mat(idx_i_max,:) = -Inf; % patch
         cc_mat(:,idx_j_max) = -Inf; % template
     end     
+
+    % TODO: maybe add check to see if four points make a "z" shape
+
+    % Set debugging output -----------------------------------------------%
     
-    % Set debugging output
     debug.blobs = blobs;
     debug.ellipses = ellipses;
     debug.patch_matches = patch_matches;

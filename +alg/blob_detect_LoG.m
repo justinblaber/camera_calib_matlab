@@ -39,7 +39,7 @@ function blobs = blob_detect_LoG(array,opts)
     %       blobs(i,3) = a; major axis length 
     %       blobs(i,4) = b; minor axis length
     %       blobs(i,5) = alpha; rotation of major axis
-        
+    
     % Normalize array
     array = alg.normalize_array(array,'min-max');
     
@@ -54,7 +54,7 @@ function blobs = blob_detect_LoG(array,opts)
     r_range2 = opts.blob_detect_r_range2;   
     step = opts.blob_detect_step;
     num_scales = ceil((r_range2-r_range1)/step) + 1;
-            
+    
     % Create scale normalized LoG stack
     stack_LoG = zeros([size(array) num_scales]);
     for i = 1:num_scales
@@ -64,7 +64,7 @@ function blobs = blob_detect_LoG(array,opts)
     
         % Apply LoG filter
         stack_LoG(:,:,i) = imfilter(array, kernel_LoG, 'same', 'replicate');
-    end 
+    end
     
     % Get interpolator
     I_stack_LoG = griddedInterpolant({1:size(stack_LoG,1),1:size(stack_LoG,2),1:size(stack_LoG,3)}, ...
@@ -101,11 +101,11 @@ function blobs = blob_detect_LoG(array,opts)
     x_maxima_init = x_maxima_init(idx_maxima_sorted);
     y_maxima_init = y_maxima_init(idx_maxima_sorted);
     idx_r_maxima_init = idx_r_maxima_init(idx_maxima_sorted);
-                            
+    
     % Initialize blobs ---------------------------------------------------%
     
     blobs = zeros(0,5);
-            
+    
     % Iterate
     for i = 1:numel(x_maxima_init)        
         % Get sub-pixel maxima values with gauss newton method -----------%    
@@ -133,7 +133,7 @@ function blobs = blob_detect_LoG(array,opts)
         hw = ceil(4*r);
         bb_sub_array = [round(x)-hw round(y)-hw;
                         round(x)+hw round(y)+hw];
-                    
+        
         % Make sure sub array is in bounds
         if bb_sub_array(1,1) < 1 || bb_sub_array(2,1) > size(array,2) || ...
            bb_sub_array(1,2) < 1 || bb_sub_array(2,2) > size(array,1)
@@ -144,11 +144,11 @@ function blobs = blob_detect_LoG(array,opts)
         sub_array = array(bb_sub_array(1,2):bb_sub_array(2,2),bb_sub_array(1,1):bb_sub_array(2,1));
         sub_array_dx = array_dx(bb_sub_array(1,2):bb_sub_array(2,2),bb_sub_array(1,1):bb_sub_array(2,1));  
         sub_array_dy = array_dy(bb_sub_array(1,2):bb_sub_array(2,2),bb_sub_array(1,1):bb_sub_array(2,1));         
-                        
+        
         % Get sub_array coordinates
         [y_sub_array,x_sub_array] = ndgrid(bb_sub_array(1,2):bb_sub_array(2,2), ...
                                            bb_sub_array(1,1):bb_sub_array(2,1));
-                
+        
         % Initialize ellipse ---------------------------------------------%
         
         e = [x y r r 0];
@@ -339,7 +339,7 @@ end
 function e = second_moment_ellipse(array_dx,array_dy,xs,ys,e,r)
     % Get weight matrix
     W = weight_array(e,xs,ys);
-
+    
     % Get second moment matrix
     M = zeros(2);
     M(1,1) = sum(W(:).*array_dx(:).^2);
@@ -348,7 +348,7 @@ function e = second_moment_ellipse(array_dx,array_dy,xs,ys,e,r)
     M(2,1) = M(1,2);
     
     % TODO maybe add check to see if M is invertible, possible
-       
+    
     % Get shape of ellipse from second moment matrix
     e = alg.cov2ellipse(inv(M),e(1:2)');
     

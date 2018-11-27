@@ -96,9 +96,9 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','blob_detect_maxima_norm_cutoff'             ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);    
     field_info(end+1) = struct('field','blob_detect_centroid_it_cutoff'             ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);    
     field_info(end+1) = struct('field','blob_detect_centroid_norm_cutoff'           ,'required',false,'default',0.1                            ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','blob_detect_d_cluster'                      ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','blob_detect_r1_cluster'                     ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','blob_detect_r2_cluster'                     ,'required',false,'default',1                              ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_d_cluster'                      ,'required',false,'default',2                              ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_r1_cluster'                     ,'required',false,'default',2                              ,'validation_fun',@validate_pos_num);    
+    field_info(end+1) = struct('field','blob_detect_r2_cluster'                     ,'required',false,'default',2                              ,'validation_fun',@validate_pos_num);    
         
     % Four point detection    
     field_info(end+1) = struct('field','ellipse_detect_num_samples_theta'           ,'required',false,'default',100                            ,'validation_fun',@validate_pos_int); 
@@ -115,7 +115,7 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','four_points_detect_marker_config_path'      ,'required',false,'default','+markers/marker.conf'         ,'validation_fun',@validate_path);   
     field_info(end+1) = struct('field','four_points_detect_num_cutoff'              ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int); 
     field_info(end+1) = struct('field','four_points_detect_mse_cutoff'              ,'required',false,'default',0.2                            ,'validation_fun',@validate_pos_num); 
-    field_info(end+1) = struct('field','four_points_detect_padding_radial'          ,'required',false,'default',3                              ,'validation_fun',@validate_pos_int); 
+    field_info(end+1) = struct('field','four_points_detect_padding_radial'          ,'required',false,'default',5                              ,'validation_fun',@validate_pos_int); 
     
     % Plotting info
     field_info(end+1) = struct('field','camera_size'                                ,'required',false,'default',0                              ,'validation_fun',@validate_num);

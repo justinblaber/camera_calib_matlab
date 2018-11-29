@@ -21,5 +21,5 @@ function test_p_p2p_p_d
     assert(all(all(abs(p_p_d - [195   331;
                                 505   343;
                                 231    86;
-                                485    88]) < eps('single'))));
+                                485    88]) < 1e-4)));
 end

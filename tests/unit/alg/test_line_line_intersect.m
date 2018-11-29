@@ -25,5 +25,5 @@ function test_line_line_intersect
     %}
     
     % Assert
-    assert(all(all(abs(p - [29.247846160999831  32.396111912569111]) < eps('single'))));
+    assert(all(all(abs(p - [29.247846160999831  32.396111912569111]) < 1e-4)));
 end

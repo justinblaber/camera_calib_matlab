@@ -32,7 +32,7 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
     %           distance.
     %       .blob_detect_r2_cluster - scalar; clusters blobs within r2
     %           distance.
-	%       .ellipse_detect_num_samples_theta - int; number of samples for 
+    %       .ellipse_detect_num_samples_theta - int; number of samples for 
     %           theta.
     %       .ellipse_detect_interp - string; interpolation used for ellipse
     %           detection.
@@ -340,6 +340,7 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
     % Initialize four point output ---------------------------------------%
     
     p_fp_ps = nan(4,2);
+    debug = struct('blobs',[],'ellipses',[],'patch_matches',[]);
     
     % Make sure there are at least four non-empty polar patches
     if sum(~cellfun(@isempty,polar_patches)) < 4

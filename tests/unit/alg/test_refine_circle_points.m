@@ -64,9 +64,9 @@ function test_refine_circle_points
     % Assert
     load(fullfile(tests_path,'data','ellipse1_points.mat'));
     
-    assert(all(all(abs(p_cb_ps - p_cb_ps_test) < eps('single'))));
+    assert(all(all(abs(p_cb_ps - p_cb_ps_test) < 1e-4)));
     for i = 1:numel(cov_cb_ps_test)
-        assert(all(all(abs(cov_cb_ps{i} - cov_cb_ps_test{i}) < eps('single')))); %#ok<USENS>
+        assert(all(all(abs(cov_cb_ps{i} - cov_cb_ps_test{i}) < 1e-4))); %#ok<IDISVAR,USENS>
     end
     assert(all(idx_valid  == idx_valid_test));
 end

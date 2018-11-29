@@ -24,6 +24,6 @@ function test_line_bb_intersect
     %}
     
     % Assert
-    assert(all(all(abs(p1 - [30.980603193514437   0.500000000000000]) < eps('single'))));    
-    assert(all(all(abs(p2 - [27.666776753692503  61.500000000000000]) < eps('single'))));
+    assert(all(all(abs(p1 - [30.980603193514437   0.500000000000000]) < 1e-4)));    
+    assert(all(all(abs(p2 - [27.666776753692503  61.500000000000000]) < 1e-4)));
 end

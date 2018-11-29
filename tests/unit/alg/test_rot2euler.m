@@ -5,6 +5,6 @@ function test_rot2euler
     euler = alg.rot2euler(R);
     
     % Assert
-    assert(all(abs(euler - [0.1; 0.2; 0.3]) < eps('single')));   
-    assert(all(all(abs(alg.euler2rot(euler) - R) < eps('single'))));
+    assert(all(abs(euler - [0.1; 0.2; 0.3]) < 1e-4));   
+    assert(all(all(abs(alg.euler2rot(euler) - R) < 1e-4)));
 end

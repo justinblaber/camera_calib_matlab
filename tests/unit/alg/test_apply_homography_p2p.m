@@ -15,5 +15,5 @@ function test_apply_homography_p2p
             0.8 0.7];
     
     % Assert
-    assert(all(all(abs(alg.apply_homography_p2p(p_1s,H_12) - p_2s) < eps('single'))));
+    assert(all(all(abs(alg.apply_homography_p2p(p_1s,H_12) - p_2s) < 1e-4)));
 end

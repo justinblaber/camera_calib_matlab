@@ -34,11 +34,11 @@ function test_single_calib_fp_dr
 
     % Assert
     load(fullfile(tests_path,'data','circle','calib.mat'));
-    assert(all(all(abs(calib_test.intrin.A - calib.intrin.A) < eps('single'))));
-    assert(all(all(abs(calib_test.intrin.d - calib.intrin.d) < eps('single'))));
+    assert(all(all(abs(calib_test.intrin.A - calib.intrin.A) < 1e-4)));
+    assert(all(all(abs(calib_test.intrin.d - calib.intrin.d) < 1e-4)));
     for i = 1:numel(img_cbs)
-        assert(all(all(abs(calib_test.extrin(i).R - calib.extrin(i).R) < eps('single'))));
-        assert(all(all(abs(calib_test.extrin(i).t - calib.extrin(i).t) < eps('single'))));
+        assert(all(all(abs(calib_test.extrin(i).R - calib.extrin(i).R) < 1e-4)));
+        assert(all(all(abs(calib_test.extrin(i).t - calib.extrin(i).t) < 1e-4)));
     end
     
     clear
@@ -78,10 +78,10 @@ function test_single_calib_fp_dr
     
     % Assert
     load(fullfile(tests_path,'data','checker','calib.mat'));
-    assert(all(all(abs(calib_test.intrin.A - calib.intrin.A) < eps('single'))));
-    assert(all(all(abs(calib_test.intrin.d - calib.intrin.d) < eps('single'))));
+    assert(all(all(abs(calib_test.intrin.A - calib.intrin.A) < 1e-4)));
+    assert(all(all(abs(calib_test.intrin.d - calib.intrin.d) < 1e-4)));
     for i = 1:numel(img_cbs)
-        assert(all(all(abs(calib_test.extrin(i).R - calib.extrin(i).R) < eps('single'))));
-        assert(all(all(abs(calib_test.extrin(i).t - calib.extrin(i).t) < eps('single'))));
+        assert(all(all(abs(calib_test.extrin(i).R - calib.extrin(i).R) < 1e-4)));
+        assert(all(all(abs(calib_test.extrin(i).t - calib.extrin(i).t) < 1e-4)));
     end    
 end

@@ -24,8 +24,8 @@ function test_refine_stereo_params
                                                              cov_cb_p_dss);
                                                          
     % Assert
-    assert(all(all(abs(params_test - params) < eps('single'))));
-    assert(all(all(abs(cov_params_test - cov_params) < eps('single'))));
+    assert(all(all(abs(params_test - params) < 1e-4)));
+    assert(all(all(abs(cov_params_test - cov_params) < 1e-4)));
     
     clear
     
@@ -53,8 +53,8 @@ function test_refine_stereo_params
                                                              opts);
                                                          
     % Assert
-    assert(all(all(abs(params_test - params) < eps('single'))));
-    assert(all(all(abs(cov_params_test - cov_params) < eps('single'))));
+    assert(all(all(abs(params_test - params) < 1e-4)));
+    assert(all(all(abs(cov_params_test - cov_params) < 1e-4)));
     
     clear
 end

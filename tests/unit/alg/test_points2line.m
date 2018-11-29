@@ -19,5 +19,5 @@ function test_points2line
     %}
     
     % Assert
-    assert(all(all(abs(l - [0.850000000000000  -1.000000000000000  18.000000000000000]) < eps('single'))));
+    assert(all(all(abs(l - [0.850000000000000  -1.000000000000000  18.000000000000000]) < 1e-4)));
 end

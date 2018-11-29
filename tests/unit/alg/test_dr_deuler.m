@@ -16,5 +16,5 @@ function test_dr_deuler
     end
     
     % Assert
-    assert(all(all(abs(dr_deuler - alg.dr_deuler(euler)) < 1e-5)));                     
+    assert(all(all(abs(dr_deuler - alg.dr_deuler(euler)) < 1e-4)));                     
 end

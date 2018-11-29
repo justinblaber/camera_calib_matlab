@@ -33,5 +33,5 @@ function test_dh_drt
     end
     
     % Assert
-    assert(all(all(abs(dh_drt - alg.dh_drt(alg.a2A(a))) < 1e-5)));                     
+    assert(all(all(abs(dh_drt - alg.dh_drt(alg.a2A(a))) < 1e-4)));                     
 end

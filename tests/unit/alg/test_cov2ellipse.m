@@ -26,5 +26,5 @@ function test_cov2ellipse
     %}
           
     % Assert
-    assert(all(all(abs(alg.cov2ellipse(cov,p) - e) < eps('single'))));
+    assert(all(all(abs(alg.cov2ellipse(cov,p) - e) < 1e-4)));
 end

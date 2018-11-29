@@ -15,5 +15,5 @@ function test_undistort_array
     % Assert
     abs_diff = abs(array - rgb2gray(im2double(imread(fullfile(tests_path,'data','checker1.jpg')))));
     abs_diff(isnan(abs_diff)) = 0;
-    assert(all(all(abs_diff < 0.055)));
+    assert(all(all(abs_diff < 0.075)));
 end

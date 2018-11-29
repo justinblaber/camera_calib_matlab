@@ -17,5 +17,5 @@ function test_homography_p2p
     % Assert
     opts.homography_p2p_it_cutoff = 20;
     opts.homography_p2p_norm_cutoff = 1e-6;
-    assert(all(all(abs(alg.homography_p2p(p_1s,p_2s,opts) - H_12) < eps('single'))));
+    assert(all(all(abs(alg.homography_p2p(p_1s,p_2s,opts) - H_12) < 1e-4)));
 end

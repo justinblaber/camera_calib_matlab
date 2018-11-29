@@ -6,6 +6,6 @@ function test_interp_array
              0.4694    0.3112    0.6541    0.2290    0.9961];
 
     % Assert
-    assert(abs(alg.interp_array(array,[3 3],'cubic') - array(3,3)) < eps('single'))
-    assert(abs(alg.interp_array(array,[2.5 2.5],'cubic') - 0.273426562500000) < eps('single'))
+    assert(abs(alg.interp_array(array,[3 3],'cubic') - array(3,3)) < 1e-4)
+    assert(abs(alg.interp_array(array,[2.5 2.5],'cubic') - 0.273426562500000) < 1e-4)
 end

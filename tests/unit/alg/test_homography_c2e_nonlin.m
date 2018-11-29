@@ -18,5 +18,5 @@ function test_homography_c2e_nonlin
     opts.homography_c2e_it_cutoff = 20;
     opts.homography_c2e_norm_cutoff = 1e-6;
     opts.circle_radius = 2;
-    assert(all(all(abs(alg.homography_c2e_nonlin(p_1s,p_2s,round(H_12,1),opts) - H_12) < eps('single'))));
+    assert(all(all(abs(alg.homography_c2e_nonlin(p_1s,p_2s,round(H_12,1),opts) - H_12) < 1e-4)));
 end

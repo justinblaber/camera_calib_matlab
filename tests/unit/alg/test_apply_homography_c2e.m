@@ -49,5 +49,5 @@ function test_apply_homography_c2e
     %}
        
     % Assert
-    assert(all(all(abs(alg.apply_homography_c2e(p_1s,H_12,r_1) - p_2s) < eps('single'))));
+    assert(all(all(abs(alg.apply_homography_c2e(p_1s,H_12,r_1) - p_2s) < 1e-4)));
 end

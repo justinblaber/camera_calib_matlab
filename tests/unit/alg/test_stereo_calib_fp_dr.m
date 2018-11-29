@@ -74,14 +74,14 @@ function test_stereo_calib_fp_dr
 
     % Assert
     load(fullfile(tests_path,'data','stereo','calib.mat'));
-    assert(all(all(abs(calib_test.L.intrin.A - calib.L.intrin.A) < eps('single'))));
-    assert(all(all(abs(calib_test.L.intrin.d - calib.L.intrin.d) < eps('single'))));
-    assert(all(all(abs(calib_test.R.intrin.A - calib.R.intrin.A) < eps('single'))));
-    assert(all(all(abs(calib_test.R.intrin.d - calib.R.intrin.d) < eps('single'))));
+    assert(all(all(abs(calib_test.L.intrin.A - calib.L.intrin.A) < 1e-4)));
+    assert(all(all(abs(calib_test.L.intrin.d - calib.L.intrin.d) < 1e-4)));
+    assert(all(all(abs(calib_test.R.intrin.A - calib.R.intrin.A) < 1e-4)));
+    assert(all(all(abs(calib_test.R.intrin.d - calib.R.intrin.d) < 1e-4)));
     for i = 1:numel(img_cbs)
-        assert(all(all(abs(calib_test.L.extrin(i).R - calib.L.extrin(i).R) < eps('single'))));
-        assert(all(all(abs(calib_test.L.extrin(i).t - calib.L.extrin(i).t) < eps('single'))));
-        assert(all(all(abs(calib_test.R.extrin(i).R - calib.R.extrin(i).R) < eps('single'))));
-        assert(all(all(abs(calib_test.R.extrin(i).t - calib.R.extrin(i).t) < eps('single'))));
+        assert(all(all(abs(calib_test.L.extrin(i).R - calib.L.extrin(i).R) < 1e-4)));
+        assert(all(all(abs(calib_test.L.extrin(i).t - calib.L.extrin(i).t) < 1e-4)));
+        assert(all(all(abs(calib_test.R.extrin(i).R - calib.R.extrin(i).R) < 1e-4)));
+        assert(all(all(abs(calib_test.R.extrin(i).t - calib.R.extrin(i).t) < 1e-4)));
     end
 end

@@ -23,5 +23,5 @@ function test_dp_dh_c2e
     end
     
     % Assert
-    assert(all(all(abs(dp_dh - alg.dp_dh_c2e(p_1s,H_12,r_1)) < 1e-5)));                     
+    assert(all(all(abs(dp_dh - alg.dp_dh_c2e(p_1s,H_12,r_1)) < 1e-4)));                     
 end

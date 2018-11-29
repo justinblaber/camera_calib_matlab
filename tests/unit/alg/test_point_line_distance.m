@@ -22,5 +22,5 @@ function test_point_line_distance
     
     % Assert
     d = alg.point_line_distance(p1,l);    
-    assert(all(all(abs(d - sqrt(sum((p1-p2).^2))) < eps('single'))));
+    assert(all(all(abs(d - sqrt(sum((p1-p2).^2))) < 1e-4)));
 end

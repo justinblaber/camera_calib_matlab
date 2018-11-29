@@ -17,5 +17,5 @@ function test_homography_p2p_nonlin
     % Assert  
     opts.homography_p2p_it_cutoff = 20;
     opts.homography_p2p_norm_cutoff = 1e-6;
-    assert(all(all(abs(alg.homography_p2p_nonlin(p_1s,p_2s,round(H_12,1),opts) - H_12) < eps('single'))));
+    assert(all(all(abs(alg.homography_p2p_nonlin(p_1s,p_2s,round(H_12,1),opts) - H_12) < 1e-4)));
 end

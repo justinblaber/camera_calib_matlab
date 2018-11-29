@@ -15,5 +15,5 @@ function test_homography_p2p_lin
             -0.162162162162162   0.027027027027027   1.000000000000000];
         
     % Assert
-    assert(all(all(abs(alg.homography_p2p_lin(p_1s,p_2s) - H_12) < eps('single'))));
+    assert(all(all(abs(alg.homography_p2p_lin(p_1s,p_2s) - H_12) < 1e-4)));
 end

@@ -18,5 +18,5 @@ function test_distort_array
     
     % Assert    
     load(fullfile(tests_path,'data','checker1_d.mat'));
-    assert(all(all(abs(checker1_d - array_d) < eps('single'))));
+    assert(all(all(abs(checker1_d - array_d) < 1e-4)));
 end

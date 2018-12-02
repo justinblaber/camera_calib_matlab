@@ -8,20 +8,20 @@ function data = read_data(file_path)
     %   ...
     % It returns everything as a struct with members corresponding to the 
     % name(s). If multiple names are found, then struct member will be a 
-    % cell array. It is assumed all "num" are real and finite; if not, they
-    % are assumed to be a string. It is also assumed file was written to 
-    % with the write_*() functions (or written in accordance to these 
-    % rules).
-    %  
+    % cell array. It is assumed all "num" are those strings convertable to
+    % a "num" through str2num(); if not, they are assumed to be a string. 
+    % Therefore, strings which are also numbers ("i", "nan", etc...) will
+    % be interpreted as a number.
+    % 
     % Inputs:
     %   file_path - string; path to data file to read from.
-    %
+    % 
     % Outputs:
     %   data - struct;
-                
+    
     % Check to make sure data file exists
-    if exist(file_path,'file') == 0
-        error(['Data file: ' file_path ' does not exist.']);
+    if exist(file_path,'file') ~= 2
+        error(['Data file: "' file_path '" does not exist.']);
     end
     
     % Initialize
@@ -46,15 +46,16 @@ function data = read_data(file_path)
                 name = strtrim(line_split{1});
                 if ~isfield(data,name)
                     data.(name) = {};
-                end             
+                end
                 
                 % Test if name is a num, string, or array    
                 param = strtrim(line_split{2});
                 if ~isempty(param)                
                     % This is either a num or string
-                    if util.is_num(str2num(param)) %#ok<ST2NM>
+                    num = str2num(param); %#ok<ST2NM>
+                    if ~isempty(num)
                         % number
-                        data.(name){end+1} = str2num(param); %#ok<ST2NM>
+                        data.(name){end+1} = num;
                     else
                         % string
                         data.(name){end+1} = param;

@@ -9,7 +9,7 @@ function calib_config = read_calib_config(calib_config_path)
     %   calib_config - struct;
 
     % Check to make sure config file exists
-    if exist(calib_config_path,'file') == 0
+    if exist(calib_config_path,'file') ~= 2
         error(['Config file: "' calib_config_path '" does not exist.']);
     end
 
@@ -57,10 +57,10 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','p_p_d2p_p_norm_cutoff'                      ,'required',false,'default',1e-6                           ,'validation_fun',@validate_pos_num);
     
     % Undistort array
-    field_info(end+1) = struct('field','undistort_array_interp'                     ,'required',false,'default','spline'                       ,'validation_fun',@validate_string);
+    field_info(end+1) = struct('field','undistort_array_interp'                     ,'required',false,'default','spline'                       ,'validation_fun',@validate_interp);
 	
     % Distort array
-    field_info(end+1) = struct('field','distort_array_interp'                       ,'required',false,'default','spline'                       ,'validation_fun',@validate_string);
+    field_info(end+1) = struct('field','distort_array_interp'                       ,'required',false,'default','spline'                       ,'validation_fun',@validate_interp);
     
     % Distortion refinement
     field_info(end+1) = struct('field','distortion_refinement_it_cutoff'            ,'required',false,'default',5                              ,'validation_fun',@validate_pos_int);
@@ -89,7 +89,7 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','blob_detect_step'                           ,'required',false,'default',0.5                            ,'validation_fun',@validate_pos_num);    
     field_info(end+1) = struct('field','blob_detect_num_cutoff'                     ,'required',false,'default',1000                           ,'validation_fun',@validate_pos_int);    
     field_info(end+1) = struct('field','blob_detect_LoG_cutoff'                     ,'required',false,'default',0.1                            ,'validation_fun',@validate_pos_num);    
-    field_info(end+1) = struct('field','blob_detect_LoG_interp'                     ,'required',false,'default','cubic'                        ,'validation_fun',@validate_string);    
+    field_info(end+1) = struct('field','blob_detect_LoG_interp'                     ,'required',false,'default','cubic'                        ,'validation_fun',@validate_interp);    
     field_info(end+1) = struct('field','blob_detect_eccentricity_cutoff'            ,'required',false,'default',5                              ,'validation_fun',@validate_pos_num);    
     field_info(end+1) = struct('field','blob_detect_lambda'                         ,'required',false,'default',1e-2                           ,'validation_fun',@validate_pos_num);    
     field_info(end+1) = struct('field','blob_detect_maxima_it_cutoff'               ,'required',false,'default',10                             ,'validation_fun',@validate_pos_int);    
@@ -102,7 +102,7 @@ function calib_config = read_calib_config(calib_config_path)
         
     % Four point detection    
     field_info(end+1) = struct('field','ellipse_detect_num_samples_theta'           ,'required',false,'default',100                            ,'validation_fun',@validate_pos_int); 
-    field_info(end+1) = struct('field','ellipse_detect_interp'                      ,'required',false,'default','cubic'                        ,'validation_fun',@validate_string); 
+    field_info(end+1) = struct('field','ellipse_detect_interp'                      ,'required',false,'default','cubic'                        ,'validation_fun',@validate_interp); 
     field_info(end+1) = struct('field','ellipse_detect_sf_cost'                     ,'required',false,'default',2                              ,'validation_fun',@validate_pos_int); 
     field_info(end+1) = struct('field','ellipse_detect_it_cutoff'                   ,'required',false,'default',100                            ,'validation_fun',@validate_pos_int); 
     field_info(end+1) = struct('field','ellipse_detect_norm_cutoff'                 ,'required',false,'default',1e-3                           ,'validation_fun',@validate_pos_num); 
@@ -111,22 +111,23 @@ function calib_config = read_calib_config(calib_config_path)
     field_info(end+1) = struct('field','ellipse_detect_d_cluster'                   ,'required',false,'default',2                              ,'validation_fun',@validate_pos_num); 
     field_info(end+1) = struct('field','ellipse_detect_r1_cluster'                  ,'required',false,'default',2                              ,'validation_fun',@validate_pos_num); 
     field_info(end+1) = struct('field','ellipse_detect_r2_cluster'                  ,'required',false,'default',2                              ,'validation_fun',@validate_pos_num);  
-    field_info(end+1) = struct('field','four_points_detect_marker_templates_path'   ,'required',false,'default','+markers/marker_templates.txt','validation_fun',@validate_path);   
-    field_info(end+1) = struct('field','four_points_detect_marker_config_path'      ,'required',false,'default','+markers/marker.conf'         ,'validation_fun',@validate_path);   
+    field_info(end+1) = struct('field','four_points_detect_marker_templates_path'   ,'required',false,'default','+markers/marker_templates.txt','validation_fun',@validate_file);   
+    field_info(end+1) = struct('field','four_points_detect_marker_config_path'      ,'required',false,'default','+markers/marker.conf'         ,'validation_fun',@validate_file);   
     field_info(end+1) = struct('field','four_points_detect_num_cutoff'              ,'required',false,'default',20                             ,'validation_fun',@validate_pos_int); 
     field_info(end+1) = struct('field','four_points_detect_mse_cutoff'              ,'required',false,'default',0.2                            ,'validation_fun',@validate_pos_num); 
     field_info(end+1) = struct('field','four_points_detect_padding_radial'          ,'required',false,'default',5                              ,'validation_fun',@validate_pos_int); 
+    field_info(end+1) = struct('field','four_points_detect_array_min_size'          ,'required',false,'default',400                            ,'validation_fun',@validate_int); 
     
     % Plotting info
     field_info(end+1) = struct('field','camera_size'                                ,'required',false,'default',0                              ,'validation_fun',@validate_num);
-        
+    
     % Check to see if any unrecognized fields exist
     calib_config_fields = fields(calib_config);
     for i = 1:numel(calib_config_fields)
         if ~any(strcmp(calib_config_fields{i},{field_info.field}))
             error(['Unrecognized field: "' calib_config_fields{i} '" ' ...
                    'in calibration config file.']);
-        end        
+        end
     end
     
     % Validate all inputs
@@ -161,11 +162,12 @@ end
 % the calib_config. This makes things easier.
 
 function calib_config = validate_target_type(calib_config,field)
-    switch calib_config.(field)
-        case 'checker'
-        case 'circle'
-        otherwise
-            error(['Calibration target: "' calib_config.(field) '" is not supported.']);
+    if ~ischar(calib_config.(field)) 
+        error(['Field: "' field '" has a value which is not a string.']);
+    end
+    
+    if ~any(strcmp(calib_config.(field),{'checker','circle'}))
+        error(['Calibration target: "' calib_config.(field) '" is not supported.']);
     end
 end
 
@@ -200,46 +202,86 @@ function calib_config = validate_string(calib_config,field)
 end
 
 function calib_config = validate_logical(calib_config,field)
-    if ~islogical(calib_config.(field)) 
-        error(['Field: "' field '" has a value which is not a logical.']);
+    % Try to convert to boolean
+    try 
+        calib_config.(field) = logical(calib_config.(field));
+    catch
+        error(['Field: "' field '" has a value which is not convertable to a boolean']);
+    end
+
+    % Make sure output is a scalar
+    if ~isscalar(calib_config.(field))
+        error(['Field: "' field '" has a value which is not a scalar.']);
     end
 end
 
-function calib_config = validate_target_mat(calib_config,field)    
+function calib_config = validate_interp(calib_config,field)
+    if ~ischar(calib_config.(field)) 
+        error(['Field: "' field '" has a value which is not a string.']);
+    end
+    
+    if ~any(strcmp(calib_config.(field),{'linear','cubic','spline'}))
+        error(['Interpolation: "' calib_config.(field) '" is not supported.']);
+    end
+end
+
+function calib_config = validate_target_mat(calib_config,field)
+    % If not set, initialize to all true
     if isempty(calib_config.(field))
-        % If not set, initialize to all true
         calib_config.(field) = true(calib_config.num_targets_height, ...
                                     calib_config.num_targets_width);
     end
-    
+        
+    % Try to convert to boolean
+    try 
+        calib_config.(field) = logical(calib_config.(field));
+    catch
+        error(['Field: "' field '" has a value which is not convertable to a boolean']);
+    end
+        
     % Validate size of target_mat
     if size(calib_config.(field),1) ~= calib_config.num_targets_height || ...
        size(calib_config.(field),2) ~= calib_config.num_targets_width
         error(['Field: "' field '" has an invalid size of: ' num2str(size(calib_config.(field)))]);
-    end        
-    
-    % Ensure target_mat is boolean
-    calib_config.(field) = logical(calib_config.(field));
+    end
 end
 
 function calib_config = validate_circle_radius(calib_config,field)
-    if strcmp(calib_config.target_type,'circle') && isnan(calib_config.(field))
-        error(['Field: "' field '" must be set when using circle targets.']);
-    elseif strcmp(calib_config.target_type,'circle') && calib_config.(field) <= 0
-        error(['Field: "' field '" must be a positive value.']);
+    % Check if target type is a circle
+    if strcmp(calib_config.target_type,'circle')
+        % Make sure circle_radius is set to a positive number
+        if isnan(calib_config.(field))
+            error(['Field: "' field '" must be set when using circle targets.']);
+        elseif ~util.is_pos(calib_config.(field))
+            error(['Field: "' field '" must be a positive value.']);
+        end
     end
 end
 
 function calib_config = validate_distortion(calib_config,field)
-    if ~startsWith(calib_config.(field),'distortion.')
+    % Make sure field is a string starting with "distortion."
+    if ~ischar(calib_config.(field)) || ~startsWith(calib_config.(field),'distortion.')
         error(['Field: "' field '" must start with ''distortion.''.']);
     end
-
+    
+    % This will convert string to symbolic function
     calib_config.(field) = eval(calib_config.(field));
+    
+    % Validate that this is indeed a symbolic function
+    if ~isa(calib_config.(field),'symfun')
+        error(['Field: "' field '" must be a symbolic function.']);
+    end
+    
+    % Validate that this is a valid distortion function
+    args = arrayfun(@char,argnames(calib_config.(field)),'UniformOutput',false);
+    if ~all(strcmp(args(1:5),{'x_p','y_p','a','x_o','y_o'}))
+        error(['Field: "' field '" must be a symbolic function ' ...
+               'that has arguments which start with (x_p,y_p,a,x_o,y_o).']);
+    end
 end
 
-function calib_config = validate_path(calib_config,field)
-    if isempty(calib_config.(field)) || exist(calib_config.(field),'file') ~= 2
+function calib_config = validate_file(calib_config,field)
+    if ~ischar(calib_config.(field)) || exist(calib_config.(field),'file') ~= 2
         error(['Field: "' field '" has a value which is not an existing file.']);
     end
 end

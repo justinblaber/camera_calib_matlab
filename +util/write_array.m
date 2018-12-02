@@ -10,7 +10,7 @@ function write_array(array,name,file_path)
     %   array - array; array to write to file.
     %   name - string; This is the name associated with the array.
     %   file_path - string; path to file to write array to.
-      
+    
     % Write name
     f = fopen(file_path,'a');
     fprintf(f,['%s = ' newline],name);

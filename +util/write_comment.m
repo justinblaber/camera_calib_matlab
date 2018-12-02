@@ -6,7 +6,7 @@ function write_comment(comment,file_path)
     % Inputs:
     %   comment - string; comment to write
     %   file_path - string; path to file to write comment to.
-      
+    
     % Write comment
     f = fopen(file_path,'a');
     fprintf(f,['%% %s' newline],comment);

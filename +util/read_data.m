@@ -6,12 +6,11 @@ function data = read_data(file_path)
     %   name = num
     %   name = string
     %   ...
-    % It returns everything as a struct with members corresponding to the 
-    % name(s). If multiple names are found, then struct member will be a 
+    % It returns everything as a struct with fields corresponding to the 
+    % name(s). If multiple names are found, then struct field will be a 
     % cell array. It is assumed all "num" are those strings convertable to
-    % a "num" through str2num(); if not, they are assumed to be a string. 
-    % Therefore, strings which are also numbers ("i", "nan", etc...) will
-    % be interpreted as a number.
+    % a logical or double through str2num(); if not, they are assumed to be
+    % a string.
     % 
     % Inputs:
     %   file_path - string; path to data file to read from.
@@ -36,13 +35,14 @@ function data = read_data(file_path)
     while ischar(line)
         % Trim leading and trailing white spaces
         line = strtrim(line);        
+        
         % Make sure line isn't blank or a comment
         if ~isempty(line) && line(1) ~= '%'     
             % Splitting string with equal sign should either result in 2 or
             % 1 parts.
             line_split = strsplit(line,'=');
             if numel(line_split) == 2
-                % This is a name; initialize cell if name doesn't exist
+                % This line has a name; initialize cell if name doesn't exist
                 name = strtrim(line_split{1});
                 if ~isfield(data,name)
                     data.(name) = {};
@@ -50,16 +50,17 @@ function data = read_data(file_path)
                 
                 % Test if name is a num, string, or array    
                 param = strtrim(line_split{2});
-                if ~isempty(param)                
+                if ~isempty(param)
                     % This is either a num or string
-                    num = str2num(param); %#ok<ST2NM>
+                    num = str2doubleorlogical(param);
                     if ~isempty(num)
                         % number
                         data.(name){end+1} = num;
                     else
                         % string
                         data.(name){end+1} = param;
-                    end                    
+                    end        
+                    
                     % We are definitely no longer in an array
                     in_array = false;
                 else
@@ -72,21 +73,38 @@ function data = read_data(file_path)
                 if in_array
                     % Use name from previous iteration; attempt to 
                     % concatenate array row.
-                    try
-                        data.(name){end} = vertcat(data.(name){end},str2num(line)); %#ok<ST2NM>
-                    catch e
-                        error(['Failed to concatenate line: ' ...
-                                num2str(line_num) ' for array with ' ...
-                               'name: "' name '". Are you sure ' ...
-                               'this is a valid matrix? ' getReport(e)]);
+                    num_line = str2doubleorlogical(line);
+                    
+                    % Check to make sure line contains double or logical
+                    if ~isempty(num_line)
+                        % Check to make sure number of elements allows it
+                        % to be vertically concatenated
+                        if isempty(data.(name){end}) || ...
+                           size(data.(name){end},2) == size(num_line,2)
+                            data.(name){end} = vertcat(data.(name){end}, ...
+                                                       num_line);
+                        else
+                            error(['Failed to concatenate line: "' ...
+                                    num2str(line_num) '" for array with ' ...
+                                   'name: "' name '" and value: "' line ...
+                                   '" because the number of elements do ' ...
+                                   'not match the previous row.']);
+                        end
+                    else
+                        error(['Failed to concatenate line: "' ...
+                                num2str(line_num) '" for array with ' ...
+                               'name: "' name '" and value: "' line ...
+                               '" because it is not a double or logical ' ...
+                               'number.']);
                     end
                 else
-                    error(['Unknown line: ' num2str(line_num) ' ' ...
-                           'following name: "' name '". A line without ' ...
-                           'an "=" is only valid for an array.']);
+                    error(['Unknown line: "' num2str(line_num) '" ' ...
+                           'with value: "' line '". A line without an ' ...
+                           '"=" is only valid for an array.']);
                 end
             else 
-                error(['Multiple assignments on line: ' num2str(line_num)]);         
+                error(['Multiple assignments on line: "' num2str(line_num) ...
+                       '" with value: "' line '".']);         
             end
         end
         
@@ -103,4 +121,16 @@ function data = read_data(file_path)
             data.(data_fields{i}) = data.(data_fields{i}){1};
         end
     end
+end
+
+function num = str2doubleorlogical(str)
+    num = str2num(str); %#ok<ST2NM>
+    if ~isempty(num)
+        % Note that if string is a function name, then this can cause
+        % str2num to have issues, hence why the double and logical check
+        % are done here
+        if ~any(strcmp(class(num),{'double','logical'}))
+            num = [];
+        end
+    end        
 end

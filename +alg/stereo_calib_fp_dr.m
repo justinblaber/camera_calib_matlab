@@ -3,7 +3,7 @@ function calib = stereo_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
     % refinement" method.        
     % 
     % Inputs:
-    %   img_cbs - struct;
+    %   img_paths - struct;
     %       .L - util.img; Nx1 calibration board images
     %       .R - util.img; Nx1 calibration board images
     %   p_fp_p_dss - struct;
@@ -38,8 +38,11 @@ function calib = stereo_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
     util.verbose_disp('------------',1,calib_config);
     util.verbose_disp('Performing stereo calibration with four point distortion refinement method...',1,calib_config);    
             
+    % Get distortion function
+    sym_p_p2p_p_d = eval(calib_config.sym_p_p2p_p_d);
+    
     % If intrinsics are passed in, don't optimize for them
-    num_params_d = alg.num_params_d(calib_config.sym_p_p2p_p_d);
+    num_params_d = alg.num_params_d(sym_p_p2p_p_d);
     if exist('intrin','var')
         % Validate A - assumes single focal length and no skew
         if intrin.L.A(1,1) ~= intrin.L.A(2,2) || any(intrin.L.A([2 3 4 6])) || ...
@@ -66,13 +69,13 @@ function calib = stereo_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
     num_boards = numel(img_cbs.L);
     
     % Get function handle for distortion function   
-    f_p_p2p_p_d = matlabFunction(calib_config.sym_p_p2p_p_d);
+    f_p_p2p_p_d = matlabFunction(sym_p_p2p_p_d);
     
     % Get function handles for distortion function partial derivatives
-    args_p_p2p_p_d = argnames(calib_config.sym_p_p2p_p_d);
+    args_p_p2p_p_d = argnames(sym_p_p2p_p_d);
     for i = 1:numel(args_p_p2p_p_d)
         % Differentiate
-        f_dp_p_d_dargs{i} = diff(calib_config.sym_p_p2p_p_d, ...
+        f_dp_p_d_dargs{i} = diff(sym_p_p2p_p_d, ...
                                  args_p_p2p_p_d(i)); %#ok<AGROW>
         % Convert to function handle 
         f_dp_p_d_dargs{i} = matlabFunction(f_dp_p_d_dargs{i}); %#ok<AGROW>

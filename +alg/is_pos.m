@@ -7,5 +7,5 @@ function success = is_pos(num)
     % Outputs:
     %   success - logical;
     
-    success = util.is_num(num) && num > 0;
+    success = alg.is_num(num) && num > 0;
 end

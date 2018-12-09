@@ -32,11 +32,12 @@ function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
     array_dx(isnan(array_dx)) = 0;
     array_dy(isnan(array_dy)) = 0;
     
-    % Get size
-    s = length(array_dx);
+    % Get size and bounding box
+    s = size(array_dx,1);
+    bb_array = alg.bb_array(array_dx);
     
     % Get coordinates of pixels
-    [ys,xs] = ndgrid(1:s,1:s);
+    [ys,xs] = alg.ndgrid_bb(bb_array);
     xs = xs(:);
     ys = ys(:);
     
@@ -79,7 +80,14 @@ function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
 
         % Get and store update
         delta_params = -lscov(jacob,res,W(:));
-        params = params + delta_params;        
+        params = params + delta_params;
+        
+        % Make sure point doesnt go outside of bounding box
+        if ~alg.is_p_in_bb(params(5:6)',bb_array)
+            p = nan(1,2);
+            cov_p = nan(2);
+            return
+        end
          
         % Exit if change in distance is small
         if norm(delta_params) < opts.refine_checker_edges_norm_cutoff

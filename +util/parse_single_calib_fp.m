@@ -1,7 +1,28 @@
 function [calib, data] = parse_single_calib_fp(data, suffix)
-                   
-    % TODO: add checks for validation
-    
+    % Parses calibration (intrinsics + extrinsics) from input data struct.
+    % 
+    % Inputs:
+    %   data - struct; struct containing calibration
+    %   suffix - string; optional suffix appended to names
+    %
+    % Outputs:
+    %   calib - struct;
+    %       .intrin - struct;
+    %           .A - array; 3x3 camera matrix
+    %           .d - array; Mx1 array of distortion coefficients
+    %       .extrin - struct; Nx1 struct containing extrinsics
+    %           .img_path - string; path to calibration board image
+    %           .R - array; 3x3 rotation matrix
+    %           .t - array; 3x1 translation vector
+    %           .p_fp_p_ds - array; four point box around the
+    %               calibration board image in distorted pixel coordinates
+    %           .p_cb_p_ds - array; calibration board points in distorted
+    %               pixel coordinates
+    %           .cov_cb_p_ds - cell; covariances of calibration board 
+    %               points in distorted pixel coordinates
+    %           .idx_valid - array; valid calibration board points
+    %   data - struct; input data with calibration removed.
+                       
     if ~exist('suffix','var')
         suffix = '';
     end

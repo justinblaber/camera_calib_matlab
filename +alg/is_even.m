@@ -7,5 +7,5 @@ function success = is_even(num)
     % Outputs:
     %   success - logical;
     
-    success = util.is_int(num) && mod(num,2) == 0;
+    success = alg.is_int(num) && mod(num,2) == 0;
 end

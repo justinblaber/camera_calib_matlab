@@ -9,10 +9,10 @@ function bb = bb_array(array)
     %       [top-left point;
     %        bottom-right point]
 
-    height = size(array,1);
-    width = size(array,2);
+    h = size(array,1);
+    w = size(array,2);
     
-    bb = [0.5 0.5;
-          width-0.5 height-0.5];
+    bb = [1 1;
+          w h];
 end
 

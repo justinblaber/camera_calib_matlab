@@ -5,9 +5,10 @@ function [p1, p2] = line_bb_intersect(l, bb)
     %   l - array; 3x1 array of a line in the form: 
     %       [a; b; c] where ax + by + c = 0
     % 
-    % Outputs:
-    %   bb - array; 4x2 bounding box in the form:
-    %       [top-left; bottom-left; top-right; bottom-right]
+    % Outputs: 
+    %   bb - array; 2x2 bounding box in the form:
+    %       [top-left point;
+    %        bottom-right point]
     
     % Get lines of bounding box
     l_bb = [1 0 -bb(1,1);

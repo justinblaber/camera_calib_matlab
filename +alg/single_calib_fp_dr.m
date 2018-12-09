@@ -346,6 +346,7 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
     end
     
     % Package outputs ----------------------------------------------------%
+    calib.config = calib_config;
     calib.intrin.A = alg.a2A(a);
     calib.intrin.d = d;
     for i = 1:num_boards
@@ -358,7 +359,6 @@ function calib = single_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
         calib.extrin(i).idx_valid = idx_valids{i};
         calib.extrin(i).debug = debugs{i};
     end
-    calib.config = calib_config;
     calib.debug.params = params;
     calib.debug.cov_params = cov_params;
 end

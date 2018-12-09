@@ -30,6 +30,9 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points(array_cb
     %       .refine_checker_edges_norm_cutoff - scalar; cutoff for the 
     %           difference in norm of the parameter vector for "edges" 
     %           checker refinement
+    %       .refine_checker_opencv_edges_diff_norm_cutoff - scalar; cutoff 
+    %           for the norm of difference of the points predicted by
+    %           opencv and edges method
     %   idx_valid_init - array; logical indices which indicate which target 
     %       points are valid 
     %
@@ -81,8 +84,8 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points(array_cb
                                hw_p, ...
                                opts);
        
-        % If "opencv" refinement failed, then p_cb_p_opencv will be nans
-        if any(isnan(p_cb_p_opencv))
+        % Make sure p_cb_p_opencv is valid
+        if any(~isfinite(p_cb_p_opencv))
             continue
         end
         
@@ -94,10 +97,19 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points(array_cb
                                                                array_dy, ...
                                                                hw_p, ...
                                                                opts);
-
-        % If "edges" refinement failed, then p_cb_p_edges or cov_cb_p_edges
-        % will be nans
-        if ~any(isnan(p_cb_p_edges)) && ~any(isnan(cov_cb_p_edges(:)))
+        
+        % Make sure:
+        % 1) p_cb_p_edges and cov_cb_p_edges are valid
+        % 2) cov_cb_p_edges is positive definite. lscov() for sparse
+        %   matrices requires covariance matrix to be positive definite. If
+        %   the model is perfect, then covariance will be zero, but this is
+        %   basically an impossibility with real data.
+        % 3) points from opencv and edges estimation are close; if not,
+        %   this means this checker is unreliable
+        if all(isfinite(p_cb_p_edges)) && ...
+           all(isfinite(cov_cb_p_edges(:))) && ...
+           alg.is_pos_def(cov_cb_p_edges) && ...
+           norm(p_cb_p_opencv - p_cb_p_edges) < opts.refine_checker_opencv_edges_diff_norm_cutoff
             p_cb_ps(i,:) = p_cb_p_edges;
             cov_cb_ps{i} = cov_cb_p_edges;
             idx_valid(i) = true;
@@ -152,29 +164,29 @@ function hw_p = calc_half_window(p_w,f_p_w2p_p,opts)
 end
 
 function p_p = opencv(p_p_init,array_dx,array_dy,hw_p,opts)
-    % Initialize
+    % Get bb of array
+    bb_array = alg.bb_array(array_dx);
+    
+    % Initialize point
     p_p = p_p_init;
-
+    
     % Perform iterations until convergence
-    for it = 1:opts.refine_checker_opencv_it_cutoff            
+    for it = 1:opts.refine_checker_opencv_it_cutoff
         % Get bounding box of sub array
         p_p_rounded = round(p_p);
         bb_p_sub = [p_p_rounded(1)-hw_p p_p_rounded(2)-hw_p;
                     p_p_rounded(1)+hw_p p_p_rounded(2)+hw_p];
 
         % Check bounds
-        if bb_p_sub(1,1) < 1 || bb_p_sub(2,1) > size(array_dx,2) || ...
-           bb_p_sub(1,2) < 1 || bb_p_sub(2,2) > size(array_dx,1)
+        if ~alg.is_bb_in_bb(bb_p_sub, bb_array)
             % An output with nans indicates that this process failed
             p_p = nan(1,2);
             return
         end
 
         % Get sub arrays
-        sub_array_dx = array_dx(bb_p_sub(1,2):bb_p_sub(2,2), ...
-                                bb_p_sub(1,1):bb_p_sub(2,1));
-        sub_array_dy = array_dy(bb_p_sub(1,2):bb_p_sub(2,2), ...
-                                bb_p_sub(1,1):bb_p_sub(2,1));
+        sub_array_dx = alg.get_sub_array_bb(array_dx, bb_p_sub);
+        sub_array_dy = alg.get_sub_array_bb(array_dy, bb_p_sub);
 
         % Cache previous point
         p_p_prev = p_p;
@@ -185,7 +197,13 @@ function p_p = opencv(p_p_init,array_dx,array_dy,hw_p,opts)
                                             p_p - bb_p_sub(1,:) + 1);
 
         % Get point in array coordinates.
-        p_p = p_p_sub + bb_p_sub(1,:) - 1;    
+        p_p = p_p_sub + bb_p_sub(1,:) - 1;
+        
+        % Make sure p_p does not go outside of original bounding box
+        if any(abs(p_p - p_p_init) > hw_p)
+            p_p = nan(1,2);
+            return
+        end
         
         % Exit if change in distance is small
         diff_norm = norm(p_p_prev-p_p);
@@ -196,6 +214,9 @@ function p_p = opencv(p_p_init,array_dx,array_dy,hw_p,opts)
 end
 
 function [p_p, cov_p, bb_p_sub] = edges(p_p_init,p_w,f_p_w2p_p,array_dx,array_dy,hw_p,opts)
+    % Get bb of array
+    bb_array = alg.bb_array(array_dx);
+    
     % Initialize
     p_p = p_p_init;
     
@@ -203,10 +224,9 @@ function [p_p, cov_p, bb_p_sub] = edges(p_p_init,p_w,f_p_w2p_p,array_dx,array_dy
     p_p_rounded = round(p_p);
     bb_p_sub = [p_p_rounded(1)-hw_p p_p_rounded(2)-hw_p;
                 p_p_rounded(1)+hw_p p_p_rounded(2)+hw_p];
-
+    
     % Check bounds
-    if bb_p_sub(1,1) < 1 || bb_p_sub(2,1) > size(array_dx,2) || ...
-       bb_p_sub(1,2) < 1 || bb_p_sub(2,2) > size(array_dx,1)
+    if ~alg.is_bb_in_bb(bb_p_sub, bb_array)
         % An output with nans indicates that this process failed
         p_p = nan(1,2);
         cov_p = nan(2);
@@ -214,10 +234,8 @@ function [p_p, cov_p, bb_p_sub] = edges(p_p_init,p_w,f_p_w2p_p,array_dx,array_dy
     end
 
     % Get sub arrays
-    sub_array_dx = array_dx(bb_p_sub(1,2):bb_p_sub(2,2), ...
-                            bb_p_sub(1,1):bb_p_sub(2,1));
-    sub_array_dy = array_dy(bb_p_sub(1,2):bb_p_sub(2,2), ...
-                            bb_p_sub(1,1):bb_p_sub(2,1));
+    sub_array_dx = alg.get_sub_array_bb(array_dx, bb_p_sub);
+    sub_array_dy = alg.get_sub_array_bb(array_dy, bb_p_sub);
 
     % Get diamond around point in world coordinates
     % Note:
@@ -232,7 +250,7 @@ function [p_p, cov_p, bb_p_sub] = edges(p_p_init,p_w,f_p_w2p_p,array_dx,array_dy
                  p_w(1)+opts.target_spacing p_w(2)];
 
     % Apply xform to go from world coordinates to pixel coordinates
-    diamond_p = f_p_w2p_p(diamond_w);            
+    diamond_p = f_p_w2p_p(diamond_w);
 
     % Get points in sub array coordinates
     diamond_p_sub = diamond_p - bb_p_sub(1,:) + 1;
@@ -251,5 +269,12 @@ function [p_p, cov_p, bb_p_sub] = edges(p_p_init,p_w,f_p_w2p_p,array_dx,array_dy
                                                 opts);
     
     % Get point in array coordinates.
-    p_p = p_p_sub + bb_p_sub(1,:) - 1;  
+    p_p = p_p_sub + bb_p_sub(1,:) - 1;
+        
+    % Make sure p_p does not go outside of original bounding box
+    if any(abs(p_p - p_p_init) > hw_p)
+        p_p = nan(1,2);
+        cov_p = nan(2);
+        return
+    end
 end

@@ -24,7 +24,7 @@ function e = conic2ellipse(Aq)
     F = Aq(3,3);
     
     % Return NaNs if input conic is not ellipse
-    if any(isnan(Aq(:))) || abs(B^2-4*A*C) < eps('single') || B^2-4*A*C > 0
+    if any(~isfinite(Aq(:))) || abs(B^2-4*A*C) < eps('single') || B^2-4*A*C > 0
         e = nan(5,1);
         return
     end
@@ -66,6 +66,10 @@ function e = conic2ellipse(Aq)
     elseif q*A-q*C < 0
         % 1/4*pi < alpha < 3/4*pi
         alpha = 1/2*atan(B/(A-C)) + 1/2*pi;
+    else
+        % This should never happen
+        e = nan(5,1);
+        return
     end
     
     % Store ellipse parameters

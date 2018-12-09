@@ -206,8 +206,8 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
             end
         end
         
-        % Check if any params are NaNs
-        if any(isnan(e))
+        % Check if any params are invalid
+        if any(~isfinite(e))
             continue
         end
         
@@ -287,8 +287,8 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
             polar_patch(j,:) = I_array(p_polar_patch(:,2),p_polar_patch(:,1));
         end
         
-        % Make sure samples are in bounds
-        if any(isnan(polar_patch))
+        % Make sure samples are in bounds and valid
+        if any(~isfinite(polar_patch))
             continue
         end            
         

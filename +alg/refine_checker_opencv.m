@@ -11,9 +11,14 @@ function [p, cov_p] = refine_checker_opencv(array_dx,array_dy,p)
     %   p - array; 1x2 refined checker center
     %   cov_p - array; 2x2 covariance of checker center
     
+    % Make sure gradients are equal in size and square
     if size(array_dx,1) ~= size(array_dx,2) || ~isequal(size(array_dx),size(array_dy))
         error('Input gradient arrays must be square and equal in size');
     end
+    
+    % Get size and bounding box
+    s = size(array_dx,1);
+    bb_array = alg.bb_array(array_dx);
     
     % Initialize weights
     W_init = double(~isnan(array_dx) & ~isnan(array_dy));
@@ -21,12 +26,9 @@ function [p, cov_p] = refine_checker_opencv(array_dx,array_dy,p)
     % Remove any NaNs from array gradient
     array_dx(isnan(array_dx)) = 0;
     array_dy(isnan(array_dy)) = 0;
-    
-    % Get size
-    s = length(array_dx);
-    
+        
     % Get coordinates of pixels
-    [ys,xs] = ndgrid(1:s,1:s);
+    [ys,xs] = alg.ndgrid_bb(bb_array);
     xs = xs(:);
     ys = ys(:);
     
@@ -44,7 +46,7 @@ function [p, cov_p] = refine_checker_opencv(array_dx,array_dy,p)
     % Form linear system
     A = [array_dx(:) array_dy(:)];
     b = array_dx(:).*xs + array_dy(:).*ys;
-
+        
     % Solve for center point and center point covariance using gaussian
     % kernel as weights
     [p,~,~,cov_p] = lscov(A,b,W(:));

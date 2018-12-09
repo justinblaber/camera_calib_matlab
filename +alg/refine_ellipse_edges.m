@@ -39,8 +39,11 @@ function [e, cov_e] = refine_ellipse_edges(array_dx,array_dy,e_init,opts)
     array_dx(isnan(array_dx)) = 0;
     array_dy(isnan(array_dy)) = 0;
         
+    % Get bounding box
+    bb_array = alg.bb_array(array_dx);
+    
     % Get coordinates of pixels
-    [ys,xs] = ndgrid(1:size(array_dx,1),1:size(array_dx,2));
+    [ys,xs] = alg.ndgrid_bb(bb_array);
     xs = xs(:);
     ys = ys(:);
                 
@@ -68,6 +71,13 @@ function [e, cov_e] = refine_ellipse_edges(array_dx,array_dy,e_init,opts)
         delta_params = -lscov(jacob,res,W_init(:));
         params = params + delta_params;        
          
+        % Make sure point doesnt go outside of bounding box
+        if ~alg.is_p_in_bb(params(3:4)',bb_array)
+            e = nan(5,1);
+            cov_e = nan(5);
+            return
+        end
+        
         % Exit if change in distance is small
         if norm(delta_params) < opts.refine_ellipse_edges_norm_cutoff
             break

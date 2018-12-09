@@ -26,7 +26,7 @@ function calib_config = read_calib_config(calib_config_path)
                'fields were found: "' strjoin(fields_data,', ') '".']);
     end
     
-    % Display contents of config file
+    % Display contents of config file if verbosity is set
     util.verbose_disp('------------',1,calib_config);
     util.verbose_disp('Calibration config file:',1,calib_config);
     util.verbose_disp(' ',1,calib_config);

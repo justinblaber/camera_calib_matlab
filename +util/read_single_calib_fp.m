@@ -1,20 +1,40 @@
 function calib = read_single_calib_fp(file_path)
-                
-    % TODO: add checks to validate file
-    
+    % Reads a four point single calibration from file path
+    % 
+    % Inputs:
+    %   file_path - string; path to calibration
+    % 
+    % Outputs:
+    %   calib - struct;
+    %       .config - struct; calibration config
+    %       .intrin - struct;
+    %           .A - array; 3x3 camera matrix
+    %           .d - array; Mx1 array of distortion coefficients
+    %       .extrin - struct; Nx1 struct containing extrinsics
+    %           .img_path - string; path to calibration board image
+    %           .R - array; 3x3 rotation matrix
+    %           .t - array; 3x1 translation vector
+    %           .p_fp_p_ds - array; four point box around the
+    %               calibration board image in distorted pixel coordinates
+    %           .p_cb_p_ds - array; calibration board points in distorted
+    %               pixel coordinates
+    %           .cov_cb_p_ds - cell; covariances of calibration board 
+    %               points in distorted pixel coordinates
+    %           .idx_valid - array; valid calibration board points
+                   
     % Check to make sure data file exists
-    if exist(file_path,'file') == 0
+    if exist(file_path,'file') ~= 2
         error(['Calibration file: ' file_path ' does not exist.']);
     end
     
     % Read data
     data = util.read_data(file_path);
+           
+    % Parse out calib config
+    [calib_config, data] = util.parse_calib_config(data);
     
     % Parse out single four point calibration
-    [calib, data] = util.parse_single_calib_fp(data);
-        
-    % Parse out calib config
-    [calib.config, data] = util.parse_calib_config(data);
+    [calib_tmp, data] = util.parse_single_calib_fp(data);
         
     % Display error if there are still fields existing in data
     fields_data = fields(data);
@@ -22,4 +42,9 @@ function calib = read_single_calib_fp(file_path)
         error(['When reading calibration, the following unknown ' ...
                'fields were found: "' strjoin(fields_data,', ') '".']);
     end
+    
+    % Package outputs
+    calib.config = calib_config;
+    calib.intrin = calib_tmp.intrin;
+    calib.extrin = calib_tmp.extrin;
 end

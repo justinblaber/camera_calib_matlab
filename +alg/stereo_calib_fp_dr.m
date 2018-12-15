@@ -143,7 +143,7 @@ function calib = stereo_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
     end
 
     % Get least squares approximation
-    R_s_init = reshape(lscov(R,r),3,3);
+    R_s_init = reshape(-alg.lscov_finite(R,r),3,3);
     R_s_init = alg.approx_rot(R_s_init); % Get best rotational approximation
 
     % Get least squares linear guess for t_s
@@ -155,7 +155,7 @@ function calib = stereo_calib_fp_dr(img_cbs,p_fp_p_dss,calib_config,intrin)
     end
 
     % Get least squares approximation
-    t_s_init = lscov(T,t);
+    t_s_init = alg.lscov_finite(T,t);
 
     % Perform nonlinear refinement of all parameters ---------------------%  
         

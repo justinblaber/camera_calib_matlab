@@ -27,4 +27,9 @@ function test_cov2ellipse
           
     % Assert
     assert(all(all(abs(alg.cov2ellipse(cov,p) - e) < 1e-4)));
+    
+    % Also test for degenerate case
+    cov = nan(2);
+    p = nan(1,2);
+    assert(all(all(isnan(alg.cov2ellipse(cov,p)))));
 end

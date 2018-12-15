@@ -25,37 +25,38 @@ function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
         error('Input gradient arrays must be square and equal in size');
     end
     
-    % Initialize weights
-    W_init = double(~isnan(array_dx) & ~isnan(array_dy));
-    
-    % Remove any NaNs from array gradient
-    array_dx(isnan(array_dx)) = 0;
-    array_dy(isnan(array_dy)) = 0;
-    
     % Get size and bounding box
     s = size(array_dx,1);
     bb_array = alg.bb_array(array_dx);
-    
+
+    % Initialize weights
+    W_init = double(~isnan(array_dx) & ~isnan(array_dy));
+
+    % Remove any NaNs from array gradient
+    array_dx(isnan(array_dx)) = 0;
+    array_dy(isnan(array_dy)) = 0;
+
     % Get coordinates of pixels
     [ys,xs] = alg.ndgrid_bb(bb_array);
     xs = xs(:);
     ys = ys(:);
-    
+
     % Set gaussian kernel parameters
     sigma_gauss = (s-1)/4;
     cov_gauss = [sigma_gauss^2 0; ...
                  0             sigma_gauss^2];
-    
+             
     % Initial guess for center point
     p_init = alg.line_line_intersect(l1, l2);    
-            
-    % Get gradient magnitude - I found that using squared magnitude is
-    % better because it tends to supress smaller gradients due to noise
+
+    % Get gradient magnitude - I found that using squared magnitude
+    % is better because it tends to supress smaller gradients due 
+    % to noise
     array_grad_mag = array_dx.^2 + array_dy.^2;
-    
+
     % Normalize gradient magnitude between 0 and 1
     array_grad_mag = alg.normalize_array(array_grad_mag,'min-max');
-        
+
     % Create initial parameter vector
     params = [1;
               opts.refine_checker_edges_h2_init;
@@ -63,7 +64,7 @@ function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
               atan(-l2(1)/l2(2));
               p_init(1);
               p_init(2)];
-    
+
     % Perform iterations until convergence
     for it = 1:opts.refine_checker_edges_it_cutoff  
         % Get gauss newton parameters
@@ -71,47 +72,46 @@ function [p, cov_p] = refine_checker_edges(array_dx,array_dy,l1,l2,opts)
                                                 array_grad_mag, ...
                                                 xs, ...
                                                 ys);
-                                            
+
         % Update weights
-        kernel_gauss = mvnpdf([xs ys], params(5:6)', cov_gauss);
+        kernel_gauss = alg.mvnpdf_pos_def([xs ys], params(5:6)', cov_gauss);
         kernel_gauss = reshape(kernel_gauss,[s s]);
         kernel_gauss = alg.normalize_array(kernel_gauss,'min-max');
         W = kernel_gauss.*W_init;
 
         % Get and store update
-        delta_params = -lscov(jacob,res,W(:));
+        delta_params = -alg.lscov_finite(jacob,res,W(:));
         params = params + delta_params;
-        
+
         % Make sure point doesnt go outside of bounding box
         if ~alg.is_p_in_bb(params(5:6)',bb_array)
-            p = nan(1,2);
-            cov_p = nan(2);
-            return
+            params(:) = nan;
+            break
         end
-         
+
         % Exit if change in distance is small
         if norm(delta_params) < opts.refine_checker_edges_norm_cutoff
             break
         end        
     end
-        
-    % Get center point
-    p = params(5:6)';    
     
+    % Get center point
+    p = params(5:6)';
+
     % Get covariance of center point
     [jacob, res] = calc_gauss_newton_params(params, ...
                                             array_grad_mag, ...
                                             xs, ...
                                             ys);
-                             
+
     % Update weights
-    kernel_gauss = mvnpdf([xs ys], params(5:6)', cov_gauss);
+    kernel_gauss = alg.mvnpdf_pos_def([xs ys], params(5:6)', cov_gauss);
     kernel_gauss = reshape(kernel_gauss,[s s]);
     kernel_gauss = alg.normalize_array(kernel_gauss,'min-max');
     W = kernel_gauss.*W_init;
-    
+
     % Get covaraince
-    [~,~,~,cov_params] = lscov(jacob,res,W(:));
+    [~,~,~,cov_params] = alg.lscov_finite(jacob,res,W(:));
     cov_p = cov_params(5:6,5:6);
 end
 

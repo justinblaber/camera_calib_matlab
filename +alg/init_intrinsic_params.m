@@ -1,4 +1,4 @@
-function A = init_intrinsic_params(Hs,width,height)
+function A = init_intrinsic_params(Hs, width, height)
     % This will initialize the intrinsic parameters of a given set of 
     % homographies.
     %
@@ -54,10 +54,10 @@ function A = init_intrinsic_params(Hs,width,height)
     % collinear.
     alpha_squared = dot(b,A)/dot(b,b);
     if alpha_squared < 0
-        A = nan(3);
-        return
-    end    
-    alpha = sqrt(alpha_squared);
+        alpha = nan; % Instead of returning imaginary number, just return nan
+    else
+        alpha = sqrt(alpha_squared);
+    end
     
     % Set A
     A = [alpha 0      x_o;

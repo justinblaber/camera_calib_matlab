@@ -1,7 +1,7 @@
 function test_dp_p_d_dextrinsic
     p_ws = [100   100];
         
-    % Undistort
+    % Get jacobian
     a = 1.0e+02 * [5.811989327265433;
                    3.115861087870574;
                    2.342314804973926];

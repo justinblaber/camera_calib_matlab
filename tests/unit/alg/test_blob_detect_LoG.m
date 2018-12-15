@@ -112,6 +112,4 @@ function test_blob_detect_LoG
 
     % Assert
     assert(all(all(abs(blobs - blobs_truth) < 1e-4)));
-    
-    clear
 end

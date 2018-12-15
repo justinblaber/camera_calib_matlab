@@ -40,6 +40,9 @@ function blobs = blob_detect_LoG(array,opts)
     %       blobs(i,4) = b; minor axis length
     %       blobs(i,5) = alpha; rotation of major axis
     
+    % Get bounding box of array
+    bb_array = alg.bb_array(array);
+    
     % Normalize array
     array = alg.normalize_array(array,'min-max');
     
@@ -135,19 +138,17 @@ function blobs = blob_detect_LoG(array,opts)
                         round(x)+hw round(y)+hw];
         
         % Make sure sub array is in bounds
-        if bb_sub_array(1,1) < 1 || bb_sub_array(2,1) > size(array,2) || ...
-           bb_sub_array(1,2) < 1 || bb_sub_array(2,2) > size(array,1)
+        if ~alg.is_bb_in_bb(bb_sub_array,bb_array)
             continue
         end
         
         % Grab sub arrays
-        sub_array = array(bb_sub_array(1,2):bb_sub_array(2,2),bb_sub_array(1,1):bb_sub_array(2,1));
-        sub_array_dx = array_dx(bb_sub_array(1,2):bb_sub_array(2,2),bb_sub_array(1,1):bb_sub_array(2,1));  
-        sub_array_dy = array_dy(bb_sub_array(1,2):bb_sub_array(2,2),bb_sub_array(1,1):bb_sub_array(2,1));         
+        sub_array = alg.get_sub_array_bb(array, bb_sub_array);
+        sub_array_dx = alg.get_sub_array_bb(array_dx, bb_sub_array);
+        sub_array_dy = alg.get_sub_array_bb(array_dy, bb_sub_array);        
         
         % Get sub_array coordinates
-        [y_sub_array,x_sub_array] = ndgrid(bb_sub_array(1,2):bb_sub_array(2,2), ...
-                                           bb_sub_array(1,1):bb_sub_array(2,1));
+        [y_sub_array,x_sub_array] = alg.ndgrid_bb(bb_sub_array);
         
         % Initialize ellipse ---------------------------------------------%
         
@@ -161,7 +162,7 @@ function blobs = blob_detect_LoG(array,opts)
                                   y_sub_array, ...
                                   e, ...
                                   r);
-        if e(3)/e(4) > opts.blob_detect_eccentricity_cutoff
+        if any(~isfinite(e)) || e(3)/e(4) > opts.blob_detect_eccentricity_cutoff
             continue
         end
 
@@ -192,7 +193,7 @@ function blobs = blob_detect_LoG(array,opts)
             e(2) = y;
 
             % Exit if change in distance is small
-            diff_norm = sqrt((x_prev-x)^2+(y_prev-y)^2);     
+            diff_norm = norm([x_prev-x y_prev-y]);     
             if diff_norm < opts.blob_detect_centroid_norm_cutoff
                 break
             end
@@ -226,7 +227,7 @@ function blobs = blob_detect_LoG(array,opts)
                                   y_sub_array, ...
                                   e, ...
                                   r);
-        if e(3)/e(4) > opts.blob_detect_eccentricity_cutoff
+        if any(~isfinite(e)) || e(3)/e(4) > opts.blob_detect_eccentricity_cutoff
             continue
         end
             
@@ -331,8 +332,8 @@ function params = refine_LoG_maxima_params(params, I_stack_LoG, optimization_typ
 end
 
 function W = weight_array(e,xs,ys)
-    [cov, p] = alg.ellipse2cov(e);
-    W = mvnpdf([xs(:) ys(:)], p, cov);
+    [cov, p] = alg.ellipse2cov(e);   
+    W = alg.mvnpdf_pos_def([xs(:) ys(:)], p, cov);
     W = reshape(W,size(xs));
 end
 
@@ -346,9 +347,7 @@ function e = second_moment_ellipse(array_dx,array_dy,xs,ys,e,r)
     M(1,2) = sum(W(:).*array_dx(:).*array_dy(:));
     M(2,2) = sum(W(:).*array_dy(:).^2);
     M(2,1) = M(1,2);
-    
-    % TODO maybe add check to see if M is invertible, possible
-    
+        
     % Get shape of ellipse from second moment matrix
     e = alg.cov2ellipse(inv(M),e(1:2)');
     

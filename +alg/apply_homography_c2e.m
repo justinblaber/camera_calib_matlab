@@ -14,6 +14,10 @@ function p_2s = apply_homography_c2e(p_1s,H_12,r_1)
     % Outputs:
     %   p_2s - array; Nx2 array of points in perspective "2"; centers of
     %       ellipses
+   
+    if ~alg.is_pos(r_1)
+        error('radius must be positive')
+    end
     
     % TODO: Find matrix equation equivalent of this    
     u_prime = -H_12(3,1)*((p_1s(:,1)*H_12(1,3))/r_1^2 + (H_12(1,1)*(p_1s(:,1).^2 - r_1^2))/r_1^2 + (p_1s(:,1)*H_12(1,2).*p_1s(:,2))/r_1^2) - H_12(3,2)*((H_12(1,3)*p_1s(:,2))/r_1^2 + (H_12(1,2)*(p_1s(:,2).^2 - r_1^2))/r_1^2 + (p_1s(:,1)*H_12(1,1).*p_1s(:,2))/r_1^2) - H_12(3,3)*(H_12(1,3)/r_1^2 + (p_1s(:,1)*H_12(1,1))/r_1^2 + (H_12(1,2)*p_1s(:,2))/r_1^2);

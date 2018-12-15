@@ -9,11 +9,17 @@ function R = approx_rot(R)
     % Outputs:
     %   R - array; "best" 3x3 rotation matrix approximation of input R
     
+    if any(~isfinite(R(:)))
+        R = nan(3);
+        return
+    end
+    
+    % Use SVD and set singular values to 1
     [U,~,V] = svd(R);
     R = U*V';
     
     % Rotation matrix must have a determinant of positive 1
     if abs(det(R) - 1) > eps('single')
-        R(:) = nan;
+        R = nan(3);
     end
 end

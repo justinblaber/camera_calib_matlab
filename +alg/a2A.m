@@ -7,7 +7,7 @@ function A = a2A(a)
     % 
     % Outputs:
     %   A - array; 3x3 camera matrix
-    
+        
     A = [a(1) 0    a(2);
          0    a(1) a(3);
          0    0    1];

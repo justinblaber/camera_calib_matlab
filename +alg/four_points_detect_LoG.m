@@ -66,6 +66,9 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
     % Outputs:
     %   p_fp_ps - array; 4x2 array of four points in pixel coordinates
     %   debug - struct; used for debugging purposes
+         
+    % Get bounding box of array
+    bb_array = alg.bb_array(array);
     
     % Get blobs ----------------------------------------------------------%
 
@@ -100,14 +103,12 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
         bb_sub_array(2,:) = ceil(bb_sub_array(2,:));
         
         % Make sure sub array is in bounds
-        if bb_sub_array(1,1) < 1 || bb_sub_array(2,1) > size(array,2) || ...
-           bb_sub_array(1,2) < 1 || bb_sub_array(2,2) > size(array,1)
+        if ~alg.is_bb_in_bb(bb_sub_array,bb_array)
             continue
         end
         
         % Grab sub array
-        sub_array = array(bb_sub_array(1,2):bb_sub_array(2,2), ...
-                          bb_sub_array(1,1):bb_sub_array(2,1));
+        sub_array = alg.get_sub_array_bb(array, bb_sub_array);
         
         % Get cost array
         sf_cost = opts.ellipse_detect_sf_cost;
@@ -116,10 +117,13 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
                            alg.grad_array(sub_array_up,'y').^2);
         sub_array_c = alg.normalize_array(sub_array_c,'min-max');
         
+        % Get bounding box of cost array
+        bb_sub_array_c = alg.bb_array(sub_array_c);
+        
         % Get gradients of cost array
         sub_array_c_dx = alg.grad_array(sub_array_c,'x');
         sub_array_c_dy = alg.grad_array(sub_array_c,'y');
-        
+                
         % Get interpolants for speed
         I_sub_array_c = griddedInterpolant({1:size(sub_array_c,1),1:size(sub_array_c,2)}, ...
                                            sub_array_c, ...
@@ -137,8 +141,8 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
         % Perform gradient ascent with backtracking ----------------------%
         
         % Based on tests that I've done, lambda appears to stay relatively
-        % constant, so I used the lambda technique from the
-        % Levenberg-Marquardt method.
+        % constant, so I used the lambda technique from the Levenberg-Marquardt
+        % method.
         
         % Initialize lambda        
         lambda = opts.ellipse_detect_lambda_init;
@@ -148,12 +152,11 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
             % Get previous coordinates
             e_prev = e;
             p_prev = alg.sample_ellipse(e_prev,theta_samples);
-            x_prev = sf_cost*(p_prev(:,1)-bb_sub_array(1,1)+1 - 1/2*(1-1/sf_cost));
-            y_prev = sf_cost*(p_prev(:,2)-bb_sub_array(1,2)+1 - 1/2*(1-1/sf_cost));
+            p_sub_array_c_prev = alg.p2imresize(p_prev-bb_sub_array(1,:)+1, sf_cost);
             
             % Compute gradient at e_prev
-            dc_dx = I_sub_array_c_dx(y_prev,x_prev);
-            dc_dy = I_sub_array_c_dy(y_prev,x_prev);
+            dc_dx = I_sub_array_c_dx(p_sub_array_c_prev(:,2),p_sub_array_c_prev(:,1));
+            dc_dy = I_sub_array_c_dy(p_sub_array_c_prev(:,2),p_sub_array_c_prev(:,1));
             dx_de = [ones(numel(theta_samples),1)  zeros(numel(theta_samples),1) cos(e_prev(5))*cos(theta_samples) -sin(e_prev(5))*sin(theta_samples) -e_prev(3)*sin(e_prev(5))*cos(theta_samples)-e_prev(4)*cos(e_prev(5))*sin(theta_samples)];
             dy_de = [zeros(numel(theta_samples),1) ones(numel(theta_samples),1)  sin(e_prev(5))*cos(theta_samples)  cos(e_prev(5))*sin(theta_samples)  e_prev(3)*cos(e_prev(5))*cos(theta_samples)-e_prev(4)*sin(e_prev(5))*sin(theta_samples)];
             grad = sum(dc_dx.*dx_de + dc_dy.*dy_de)';
@@ -161,14 +164,14 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
             % Get new coordinates
             e = e_prev + lambda*grad;
             p = alg.sample_ellipse(e,theta_samples);
-            x = sf_cost*(p(:,1)-bb_sub_array(1,1)+1 - 1/2*(1-1/sf_cost));
-            y = sf_cost*(p(:,2)-bb_sub_array(1,2)+1 - 1/2*(1-1/sf_cost));
+            p_sub_array_c = alg.p2imresize(p-bb_sub_array(1,:)+1, sf_cost);
             
-            % Perform backtracking 
-            cost_init = sum(I_sub_array_c(y_prev,x_prev));
-            while any(x < 1 | x > size(sub_array_c,2) | ...
-                      y < 1 | y > size(sub_array_c,1)) || ...
-                  sum(I_sub_array_c(y',x')) < cost_init+(1/2)*lambda*dot(grad,grad) % Backtracking guaranteed to exit this condition eventually
+            % Perform backtracking as long as ellipse is outside of sub
+            % array or cost doesnt increase enough
+            cost_init = sum(I_sub_array_c(p_sub_array_c_prev(:,2),p_sub_array_c_prev(:,1)));
+            while ~alg.is_p_in_bb(min(p_sub_array_c), bb_sub_array_c) || ...
+                  ~alg.is_p_in_bb(max(p_sub_array_c), bb_sub_array_c) || ...
+                  sum(I_sub_array_c(p_sub_array_c(:,2),p_sub_array_c(:,1))) < cost_init+(1/2)*lambda*dot(grad,grad) % Backtracking guaranteed to exit this condition eventually
                                
                 % Decrease step
                 lambda = lambda/opts.ellipse_detect_lambda_factor;
@@ -177,24 +180,22 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
                     % This will already be a very, very small step, so just
                     % exit
                     e = e_prev;
-                    x = x_prev;
-                    y = y_prev;
+                    p_sub_array_c = p_sub_array_c_prev;
                     break
                 end
                 
                 % Get new coordinates
                 e = e_prev + lambda*grad;
                 p = alg.sample_ellipse(e,theta_samples);
-                x = sf_cost*(p(:,1)-bb_sub_array(1,1)+1 - 1/2*(1-1/sf_cost));
-                y = sf_cost*(p(:,2)-bb_sub_array(1,2)+1 - 1/2*(1-1/sf_cost));
+                p_sub_array_c = alg.p2imresize(p-bb_sub_array(1,:)+1, sf_cost);
             end
                                 
             % Increase step for next iteration
             lambda = lambda*opts.ellipse_detect_lambda_factor;
             
             % Exit if the ellipse is out of the bounding box
-            if any(x < 1 | x > size(sub_array_c,2) | ...
-                   y < 1 | y > size(sub_array_c,1))
+            if ~alg.is_p_in_bb(min(p_sub_array_c), bb_sub_array_c) || ...
+               ~alg.is_p_in_bb(max(p_sub_array_c), bb_sub_array_c)
                 e(:) = NaN;
                 break
             end
@@ -322,15 +323,16 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array,opts)
         
         % Apply xform
         p_polar_patch = xform * vertcat(x(:)',y(:)',ones(1,numel(theta_samples)*numel(radius_samples)));
+        p_polar_patch = p_polar_patch(1:2,:)';
         
         % Check for out of bounds points
-        if any(p_polar_patch(1,:) < 1 | p_polar_patch(1,:) > size(array,2) | ...
-               p_polar_patch(2,:) < 1 | p_polar_patch(2,:) > size(array,1))
+        if ~alg.is_p_in_bb(min(p_polar_patch), bb_array) || ...
+           ~alg.is_p_in_bb(max(p_polar_patch), bb_array)
             continue
         end
             
         % Get polar patch
-        polar_patch = alg.interp_array(array, p_polar_patch(1:2,:)', marker_config.interp);
+        polar_patch = alg.interp_array(array, p_polar_patch, marker_config.interp);
         polar_patches{i} = reshape(polar_patch,numel(theta_samples),[]);
         polar_patches{i} = alg.normalize_array(polar_patches{i},'mean-norm'); % cross correlation is performed, so do mean-norm normalization
         polar_patches{i} = polar_patches{i}(:,opts.four_points_detect_padding_radial+1: ...

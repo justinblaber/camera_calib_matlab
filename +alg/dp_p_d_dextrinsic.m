@@ -4,7 +4,7 @@ function jacob = dp_p_d_dextrinsic(p_ws,f_p_w2p_p,f_dp_p_dh,R,t,f_dp_p_d_dargs,a
     % Inputs:
     %   p_ws - array; Nx2 array of points in world coordinates    
     %   f_p_w2p_p - function handle; function which transforms world
-    %           coordinates to pixel coordinates  
+    %       coordinates to pixel coordinates  
     %   f_dp_p_dh - function handle; derivative of p_w2p_p wrt homography
     %       parameters.
     %   R - array; 3x3 rotation matrix
@@ -18,7 +18,7 @@ function jacob = dp_p_d_dextrinsic(p_ws,f_p_w2p_p,f_dp_p_dh,R,t,f_dp_p_d_dargs,a
     %       extrinsics.
     %
     % Outputs:
-    %   jacob - array; 2*Nx(3+M) array. 
+    %   jacob - array; 2*Nx6 array. 
     %       Format of jacobian is:
     %
     %                dtheta_x dtheta_y dtheta_z t_x t_y t_z

@@ -13,10 +13,6 @@ function e = refine_ellipse_dualconic(array_dx,array_dy)
     %       e(4) = b; minor axis length
     %       e(5) = alpha; rotation of major axis
     
-    if ~isequal(size(array_dx),size(array_dy))
-        error('Input gradient arrays must be equal in size');
-    end
-    
     % Fit conic
     Aq = alg.fit_conic(array_dx, array_dy);
     

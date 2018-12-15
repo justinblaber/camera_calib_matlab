@@ -15,7 +15,7 @@ function array = undistort_array(array_d,f_p_p2p_p_d,a,d,opts)
     %   array - array; array containing undistorted image
     
     % Get pixel coordinates
-    [y_ps, x_ps] = ndgrid(1:size(array_d,1),1:size(array_d,2));
+    [y_ps, x_ps] = alg.ndgrid_bb(alg.bb_array(array_d));
     
     % Transform coordinates from pixels to distorted pixels
     p_p_ds = alg.p_p2p_p_d([x_ps(:) y_ps(:)], ...

@@ -10,8 +10,8 @@ function xform = ellipse2xform(e)
     %       e(5) = alpha; rotation of major axis
     %
     % Outputs:
-    %   xform - array; 3x3 affine matrix which converted unit circle to
-    %       ellipse
+    %   xform - array; 3x3 affine matrix which transforms a unit circle to
+    %       an ellipse
     
     % Get scaling
     s = [e(3) 0; ...

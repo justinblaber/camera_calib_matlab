@@ -25,5 +25,5 @@ function l = pointslope2line(p,m)
     end
     
     % Store
-    l = [a b c];
+    l = [a b c]';
 end

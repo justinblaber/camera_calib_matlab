@@ -21,8 +21,8 @@ function [l1, l2] = asymptotes(Aq)
     E = 2*Aq(2,3); %#ok<NASGU>
     F = Aq(3,3); %#ok<NASGU>
     
-    % Make sure input conic is a hyperbola
-    if abs(B^2-4*A*C) < eps('single') || B^2-4*A*C < 0
+    % Return NaNs if input conic is not a hyperbola
+    if any(~isfinite(Aq(:))) || abs(B^2-4*A*C) < eps('single') || B^2-4*A*C < 0
         l1 = nan(3,1);
         l2 = nan(3,1);
         return

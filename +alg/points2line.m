@@ -1,5 +1,5 @@
 function l = points2line(p1,p2)
-    % Computes line given two points.
+    % Computes a line given two points.
     % 
     % Inputs:
     %   p1 - array; 1x2 point 

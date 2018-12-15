@@ -7,4 +7,12 @@ function test_A2a
        
     % Assert
     assert(isequal(alg.A2a(A),a));
+    
+    % Test in case of NaNs    
+    A = [nan 0   nan;
+         0   nan nan;
+         0   0   1];
+     
+    % Assert
+    assert(all(isnan(alg.A2a(A))));
 end

@@ -68,7 +68,7 @@ function [e, cov_e] = refine_ellipse_edges(array_dx,array_dy,e_init,opts)
                                                 ys);
 
         % Get and store update
-        delta_params = -lscov(jacob,res,W_init(:));
+        delta_params = -alg.lscov_finite(jacob,res,W_init(:));
         params = params + delta_params;        
          
         % Make sure point doesnt go outside of bounding box
@@ -92,7 +92,7 @@ function [e, cov_e] = refine_ellipse_edges(array_dx,array_dy,e_init,opts)
                                             array_grad_mag, ...
                                             xs, ...
                                             ys);
-    [~,~,~,cov_params] = lscov(jacob,res,W_init(:));
+    [~,~,~,cov_params] = alg.lscov_finite(jacob,res,W_init(:));
     cov_e = cov_params(3:7,3:7);
 end
 

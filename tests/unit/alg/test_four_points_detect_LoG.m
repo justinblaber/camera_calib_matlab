@@ -158,6 +158,4 @@ function test_four_points_detect_LoG
         % Assert
         assert(all(all(abs(p_fp_ps - p_fp_p_ds{i}) < 1e-4)));
     end
-    
-    clear
 end

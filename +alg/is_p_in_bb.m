@@ -1,4 +1,4 @@
-function in_bb = is_p_in_bb(p, bb)
+function success = is_p_in_bb(p, bb)
     % Given a point and a bounding box, this will return true if p is 
     % inside of it, and false otherwise.
     % 
@@ -9,14 +9,14 @@ function in_bb = is_p_in_bb(p, bb)
     %        bottom-right point]
     % 
     % Outputs:
-    %   in_bb - logical; true if point is in bounding box
+    %   success - logical; true if point is in bounding box
     
     % Initialize to false
-    in_bb = false;
+    success = false;
     
     % Test in bounds
     if p(1) >= bb(1,1) && p(2) >= bb(1,2) && ...
        p(1) <= bb(2,1) && p(2) <= bb(2,2)
-        in_bb = true;
+        success = true;
     end   
 end

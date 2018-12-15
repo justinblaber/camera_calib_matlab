@@ -231,7 +231,7 @@ function [params,cov_params] = refine_single_params(params,p_cb_p_dss,idx_valids
                                             f_p_p2p_p_d, ...
                                             f_dp_p_d_dargs, ...
                                             true(size(idx_update))); % Mark all as true for final covariance estimation
-    [~,~,~,cov_params] = lscov(jacob,res,W);
+    [~,~,~,cov_params] = alg.lscov_finite(jacob,res,W);
 end
 
 function delta_params = calc_delta_params(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_dp_p_dh,f_p_p2p_p_d,f_dp_p_d_dargs,idx_update,lambda,W)
@@ -256,7 +256,7 @@ function delta_params = calc_delta_params(params,p_ws,p_p_dss,idx_valids,f_p_w2p
     hess = hess + lambda*eye(sum(idx_update));
           
     % Get change in params
-    delta_params = -lscov(hess,grad);
+    delta_params = -alg.lscov_finite(hess,grad);
 end
 
 function cost = calc_cost(params,p_ws,p_p_dss,idx_valids,f_p_w2p_p,f_dp_p_dh,f_p_p2p_p_d,f_dp_p_d_dargs,idx_update,W)               

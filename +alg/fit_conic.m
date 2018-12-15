@@ -18,22 +18,23 @@ function Aq = fit_conic(array_dx,array_dy)
         
     % Get bounding box
     bb_array = alg.bb_array(array_dx);
-    
+
     % Remove any NaNs from array gradient
     array_dx(isnan(array_dx)) = 0;
     array_dy(isnan(array_dy)) = 0;
-        
+
     % Get coordinates of pixels
     [ys,xs] = alg.ndgrid_bb(bb_array);
     ps = [xs(:) ys(:)];
 
-    % Normalize coordinates; shift the origin of the coordinate system to
-    % the center of the image, and then scale the axes such that the mean
-    % distance to the center becomes sqrt(2); this should be "good enough".
+    % Normalize coordinates; shift the origin of the coordinate system
+    % to the center of the image, and then scale the axes such that the
+    % mean distance to the center becomes sqrt(2); this should be 
+    % "good enough".
     T = norm_mat(ps);
     p_augs = [ps ones(size(ps,1),1)]';
     p_norms = T*p_augs;
-    
+
     % Get homogeneous coordinates of lines
     ls = [array_dx(:) array_dy(:) -(array_dx(:).*p_norms(1,:)' + array_dy(:).*p_norms(2,:)')];
 
@@ -42,14 +43,14 @@ function Aq = fit_conic(array_dx,array_dy)
     b = -ls(:,3).^2;
 
     % Solve
-    aq = lscov(A,b);
+    aq = alg.lscov_finite(A,b);
 
     % Get conic matrix
     Aq_inv = [aq(1)   aq(2)/2 aq(4)/2;
               aq(2)/2 aq(3)   aq(5)/2;
               aq(4)/2 aq(5)/2 1];
     Aq = inv(Aq_inv);
-    
+
     % Rescale conic matrix to take normalization into account
     Aq = T'*Aq*T; %#ok<MINV>
 end

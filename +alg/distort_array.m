@@ -26,7 +26,7 @@ function array_d = distort_array(array,f_p_p2p_p_d,f_dp_p_d_dx_p,f_dp_p_d_dy_p,a
     %   array_d - array; array containing distorted image
     
     % Get distorted pixel coordinates
-    [y_p_ds, x_p_ds] = ndgrid(1:size(array,1),1:size(array,2));
+    [y_p_ds, x_p_ds] = alg.ndgrid_bb(alg.bb_array(array));
     
     % Transform coordinates from distorted pixels to pixels - this is
     % slow...

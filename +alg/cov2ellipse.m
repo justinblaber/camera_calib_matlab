@@ -13,6 +13,11 @@ function e = cov2ellipse(cov,p)
     %       e(4) = b; minor axis length
     %       e(5) = alpha; rotation of major axis
     
+    if any(~isfinite(cov(:)))
+        e = nan(5,1);
+        return
+    end
+    
     % Calculate eigenvectors and eigenvalues
     [V,D] = eig(cov);
     [D,idx_sorted] = sort(diag(D));

@@ -1,9 +1,9 @@
 function calib = read_single_calib_fp(file_path)
     % Reads a four point single calibration from file path
-    % 
+    %
     % Inputs:
     %   file_path - string; path to calibration
-    % 
+    %
     % Outputs:
     %   calib - struct;
     %       .config - struct; calibration config
@@ -18,31 +18,31 @@ function calib = read_single_calib_fp(file_path)
     %               calibration board image in distorted pixel coordinates
     %           .p_cb_p_ds - array; calibration board points in distorted
     %               pixel coordinates
-    %           .cov_cb_p_ds - cell; covariances of calibration board 
+    %           .cov_cb_p_ds - cell; covariances of calibration board
     %               points in distorted pixel coordinates
     %           .idx_valid - array; valid calibration board points
-                   
+
     % Check to make sure data file exists
-    if exist(file_path,'file') ~= 2
+    if exist(file_path, 'file') ~= 2
         error(['Calibration file: ' file_path ' does not exist.']);
     end
-    
+
     % Read data
     data = util.read_data(file_path);
-           
+
     % Parse out calib config
     [calib_config, data] = util.parse_calib_config(data);
-    
+
     % Parse out single four point calibration
     [calib_tmp, data] = util.parse_single_calib_fp(data);
-        
+
     % Display error if there are still fields existing in data
     fields_data = fields(data);
     if numel(fields_data) ~= 0
         error(['When reading calibration, the following unknown ' ...
-               'fields were found: "' strjoin(fields_data,', ') '".']);
+               'fields were found: "' strjoin(fields_data, ', ') '".']);
     end
-    
+
     % Package outputs
     calib.config = calib_config;
     calib.intrin = calib_tmp.intrin;

@@ -13,7 +13,7 @@ function test_homography_p2p_lin
     H_12 = [ 0.486486486486487   0.105405405405405   0.100000000000000;
             -0.216216216216216   0.521621621621622   0.300000000000000;
             -0.162162162162162   0.027027027027027   1.000000000000000];
-        
+
     % Assert
-    assert(all(all(abs(alg.homography_p2p_lin(p_1s,p_2s) - H_12) < 1e-4)));
+    assert(all(all(abs(alg.homography_p2p_lin(p_1s, p_2s) - H_12) < 1e-4)));
 end

@@ -1,34 +1,34 @@
-function plot_four_point_debug(four_points_p,four_points_debug,cb_img,calib_config,a)
+function plot_four_point_debug(four_points_p, four_points_debug, cb_img, calib_config, a)
     % This plots debugging info for the four point detector
-        
-    if ~exist('a','var')
-        f = figure(); 
+
+    if ~exist('a', 'var')
+        f = figure();
         a = axes(f);
     end
     cla(a);
-    
+
     % Show calibration board (must rescale)
     array = cb_img.get_array();
     if calib_config.four_point_detect_scaled_array_min_size == realmax
         scale_factor = 1;
     else
         scale_factor = calib_config.four_point_detect_scaled_array_min_size/min(size(array));
-        array = imresize(array,scale_factor);
+        array = imresize(array, scale_factor);
     end
-    imshow(array,[],'Parent',a)
-    hold(a,'on');
-    
+    imshow(array, [], 'Parent', a)
+    hold(a, 'on');
+
     % Plot four points (must rescale)
-    plot(scale_factor*(four_points_p(1:2,1)-1/2*(1-1/scale_factor)), ...
-         scale_factor*(four_points_p(1:2,2)-1/2*(1-1/scale_factor)),'-o', ...
-         'Color',[0.0000 0.0000 1.0000],'MarkerSize',8,'LineWidth',2,'parent',a);
-    plot(scale_factor*(four_points_p(2:3,1)-1/2*(1-1/scale_factor)), ...
-         scale_factor*(four_points_p(2:3,2)-1/2*(1-1/scale_factor)),'-o', ...
-         'Color',[1.0000 0.1034 0.7241],'MarkerSize',8,'LineWidth',2,'parent',a);
-    plot(scale_factor*(four_points_p(3:4,1)-1/2*(1-1/scale_factor)), ...
-         scale_factor*(four_points_p(3:4,2)-1/2*(1-1/scale_factor)),'-o', ...
-         'Color',[1.0000 0.8276 0.0000],'MarkerSize',8,'LineWidth',2,'parent',a);
-     
+    plot(scale_factor*(four_points_p(1:2, 1)-1/2*(1-1/scale_factor)), ...
+         scale_factor*(four_points_p(1:2, 2)-1/2*(1-1/scale_factor)), '-o', ...
+         'Color', [0.0000 0.0000 1.0000], 'MarkerSize', 8, 'LineWidth', 2, 'parent', a);
+    plot(scale_factor*(four_points_p(2:3, 1)-1/2*(1-1/scale_factor)), ...
+         scale_factor*(four_points_p(2:3, 2)-1/2*(1-1/scale_factor)), '-o', ...
+         'Color', [1.0000 0.1034 0.7241], 'MarkerSize', 8, 'LineWidth', 2, 'parent', a);
+    plot(scale_factor*(four_points_p(3:4, 1)-1/2*(1-1/scale_factor)), ...
+         scale_factor*(four_points_p(3:4, 2)-1/2*(1-1/scale_factor)), '-o', ...
+         'Color', [1.0000 0.8276 0.0000], 'MarkerSize', 8, 'LineWidth', 2, 'parent', a);
+
     % Plot blobs and ellipses (does not need to be rescaled)
     axes(a);
     for i = 1:numel(four_points_debug.blobs)
@@ -37,7 +37,7 @@ function plot_four_point_debug(four_points_p,four_points_debug,cb_img,calib_conf
                          0, ...
                          four_points_debug.blobs(i).x, ...
                          four_points_debug.blobs(i).y, ...
-                         'r');  
+                         'r');
     end
     for i = 1:numel(four_points_debug.ellipses)
         external.ellipse(four_points_debug.ellipses(i).r1, ...
@@ -45,9 +45,9 @@ function plot_four_point_debug(four_points_p,four_points_debug,cb_img,calib_conf
                          four_points_debug.ellipses(i).rot, ...
                          four_points_debug.ellipses(i).x, ...
                          four_points_debug.ellipses(i).y, ...
-                         'g');  
+                         'g');
     end
-    
+
     % Remove hold
-    hold(a,'off');
+    hold(a, 'off');
 end

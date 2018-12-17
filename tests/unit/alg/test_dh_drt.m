@@ -16,22 +16,22 @@ function test_dh_drt
           0.294155417289261;
          -0.233179206220718;
           0.926876501086125];
-    
-    rt = vertcat(r,t);
-      
-    H = alg.a2A(a)*[rt(1:3) rt(4:6) rt(10:12)];  
+
+    rt = vertcat(r, t);
+
+    H = alg.a2A(a)*[rt(1:3) rt(4:6) rt(10:12)];
 
     % Get finite difference approximation
     delta = 1e-5;
-    dh_drt = zeros(9,12);
+    dh_drt = zeros(9, 12);
     for i = 1:12
         rt_delta = rt;
         rt_delta(i) = rt(i) + delta;
-        H_delta = alg.a2A(a)*[rt_delta(1:3) rt_delta(4:6) rt_delta(10:12)];  
-        H_delta = (H_delta-H)./delta;        
-        dh_drt(:,i) = H_delta(:);
+        H_delta = alg.a2A(a)*[rt_delta(1:3) rt_delta(4:6) rt_delta(10:12)];
+        H_delta = (H_delta-H)./delta;
+        dh_drt(:, i) = H_delta(:);
     end
-    
+
     % Assert
-    assert(all(all(abs(dh_drt - alg.dh_drt(alg.a2A(a))) < 1e-4)));                     
+    assert(all(all(abs(dh_drt - alg.dh_drt(alg.a2A(a))) < 1e-4)));
 end

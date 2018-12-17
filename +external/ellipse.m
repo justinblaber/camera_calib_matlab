@@ -5,18 +5,18 @@ function h=ellipse(ra,rb,ang,x0,y0,C,Nb)
 % a semimajor axis of radius rb, a semimajor axis of ang, centered at
 % the point x0,y0.
 %
-% The length of ra, rb, and ang should be the same. 
+% The length of ra, rb, and ang should be the same.
 % If ra is a vector of length L and x0,y0 scalars, L ellipses
 % are added at point x0,y0.
-% If ra is a scalar and x0,y0 vectors of length M, M ellipse are with the same 
+% If ra is a scalar and x0,y0 vectors of length M, M ellipse are with the same
 % radii are added at the points x0,y0.
 % If ra, x0, y0 are vectors of the same length L=M, M ellipses are added.
 % If ra is a vector of length L and x0, y0 are  vectors of length
 % M~=L, L*M ellipses are added, at each point x0,y0, L ellipses of radius ra.
 %
 % ELLIPSE(ra,rb,ang,x0,y0,C)
-% adds ellipses of color C. C may be a string ('r','b',...) or the RGB value. 
-% If no color is specified, it makes automatic use of the colors specified by 
+% adds ellipses of color C. C may be a string ('r','b',...) or the RGB value.
+% If no color is specified, it makes automatic use of the colors specified by
 % the axes ColorOrder property. For several circles C may be a vector.
 %
 % ELLIPSE(ra,rb,ang,x0,y0,C,Nb), Nb specifies the number of points
@@ -33,12 +33,12 @@ function h=ellipse(ra,rb,ang,x0,y0,C,Nb)
 %
 
 % written by D.G. Long, Brigham Young University, based on the
-% CIRCLES.m original 
-% written by Peter Blattner, Institute of Microtechnology, University of 
+% CIRCLES.m original
+% written by Peter Blattner, Institute of Microtechnology, University of
 % Neuchatel, Switzerland, blattner@imt.unine.ch
 
 
-% Check the number of input arguments 
+% Check the number of input arguments
 
 if nargin<1,
   ra=[];
@@ -58,7 +58,7 @@ if nargin<5,
   x0=[];
   y0=[];
 end;
- 
+
 if nargin<6,
   C=[];
 end
@@ -106,7 +106,7 @@ end;
 % drawing loop
 
 for k=1:maxk
-  
+
   if length(x0)==1
     xpos=x0;
     ypos=y0;

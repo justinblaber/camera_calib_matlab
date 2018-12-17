@@ -1,10 +1,10 @@
-function jacob = dp_p_d_dextrinsic(p_ws,f_p_w2p_p,f_dp_p_dh,R,t,f_dp_p_d_dargs,a,d,drt_dm)
+function jacob = dp_p_d_dextrinsic(p_ws, f_p_w2p_p, f_dp_p_dh, R, t, f_dp_p_d_dargs, a, d, drt_dm)
     % Returns jacobian of distorted pixel points wrt extrinsics.
     %
     % Inputs:
-    %   p_ws - array; Nx2 array of points in world coordinates    
+    %   p_ws - array; Nx2 array of points in world coordinates
     %   f_p_w2p_p - function handle; function which transforms world
-    %       coordinates to pixel coordinates  
+    %       coordinates to pixel coordinates
     %   f_dp_p_dh - function handle; derivative of p_w2p_p wrt homography
     %       parameters.
     %   R - array; 3x3 rotation matrix
@@ -18,7 +18,7 @@ function jacob = dp_p_d_dextrinsic(p_ws,f_p_w2p_p,f_dp_p_dh,R,t,f_dp_p_d_dargs,a
     %       extrinsics.
     %
     % Outputs:
-    %   jacob - array; 2*Nx6 array. 
+    %   jacob - array; 2*Nx6 array.
     %       Format of jacobian is:
     %
     %                dtheta_x dtheta_y dtheta_z t_x t_y t_z
@@ -29,21 +29,21 @@ function jacob = dp_p_d_dextrinsic(p_ws,f_p_w2p_p,f_dp_p_dh,R,t,f_dp_p_d_dargs,a
     %          .
     %       dx_p_d_N
     %       dy_p_d_N
-    
+
     % Get homography
-    H = alg.a2A(a)*[R(:,1) R(:,2) t];
-        
+    H = alg.a2A(a)*[R(:, 1) R(:, 2) t];
+
     % Get p_p
-    p_ps = f_p_w2p_p(p_ws,H);
+    p_ps = f_p_w2p_p(p_ws, H);
 
     % Get dp_p_d_dh
-    dp_p_dh = f_dp_p_dh(p_ws,H);
-    dp_p_d_dp_p = alg.dp_p_d_dp_p(p_ps,f_dp_p_d_dargs{1},f_dp_p_d_dargs{2},a,d);
+    dp_p_dh = f_dp_p_dh(p_ws, H);
+    dp_p_d_dp_p = alg.dp_p_d_dp_p(p_ps, f_dp_p_d_dargs{1}, f_dp_p_d_dargs{2}, a, d);
     dp_p_d_dh = dp_p_d_dp_p*dp_p_dh;
-    
+
     % Get dh_drt
     dh_drt = alg.dh_drt(alg.a2A(a));
-    
+
     % Form jacobian
     jacob = dp_p_d_dh*dh_drt*drt_dm;
 end

@@ -1,4 +1,4 @@
-function [e, cov_e] = refine_ellipse_edges(array_dx,array_dy,e_init,opts)
+function [e, cov_e] = refine_ellipse_edges(array_dx, array_dy, e_init, opts)
     % Performs "edges" refinement of an ellipse.
     %
     % Inputs:
@@ -7,60 +7,60 @@ function [e, cov_e] = refine_ellipse_edges(array_dx,array_dy,e_init,opts)
     %   e_init - array; 5x1 initial guess for ellipse matrix stored as:
     %       e(1) = h; x component of center of ellipse
     %       e(2) = k; y component of center of ellipse
-    %       e(3) = a; major axis length 
+    %       e(3) = a; major axis length
     %       e(4) = b; minor axis length
     %       e(5) = alpha; rotation of major axis
     %   opts - struct;
     %       .refine_ellipse_edges_h2_init - scalar; initial value of h2
     %           parameter in "edges" ellipse refinement
-    %       .refine_ellipse_edges_it_cutoff - int; max number of 
-    %           iterations performed for "edges" ellipse refinement 
-    %       .refine_ellipse_edges_norm_cutoff - scalar; cutoff for the 
-    %           difference in norm of the parameter vector for "edges" 
+    %       .refine_ellipse_edges_it_cutoff - int; max number of
+    %           iterations performed for "edges" ellipse refinement
+    %       .refine_ellipse_edges_norm_cutoff - scalar; cutoff for the
+    %           difference in norm of the parameter vector for "edges"
     %           ellipse refinement
     %
     % Outputs:
     %   e - array; 5x1 refined ellipse matrix stored as:
     %       e(1) = h; x component of center of ellipse
     %       e(2) = k; y component of center of ellipse
-    %       e(3) = a; major axis length 
+    %       e(3) = a; major axis length
     %       e(4) = b; minor axis length
     %       e(5) = alpha; rotation of major axis
     %   cov_e - array; 5x5 covariance array
-        
-    if ~isequal(size(array_dx),size(array_dy))
+
+    if ~isequal(size(array_dx), size(array_dy))
         error('Input gradient arrays must be equal in size');
     end
-    
+
     % Initialize weights
     W_init = double(~isnan(array_dx) & ~isnan(array_dy));
-    
+
     % Remove any NaNs from array gradient
     array_dx(isnan(array_dx)) = 0;
     array_dy(isnan(array_dy)) = 0;
-        
+
     % Get bounding box
     bb_array = alg.bb_array(array_dx);
-    
+
     % Get coordinates of pixels
-    [ys,xs] = alg.ndgrid_bb(bb_array);
+    [ys, xs] = alg.ndgrid_bb(bb_array);
     xs = xs(:);
     ys = ys(:);
-                
+
     % Get gradient magnitude - I found that using squared magnitude is
     % better because it tends to supress smaller gradients due to noise
     array_grad_mag = array_dx.^2 + array_dy.^2;
-    
+
     % Normalize gradient magnitude between 0 and 1
-    array_grad_mag = alg.normalize_array(array_grad_mag,'min-max');
-        
+    array_grad_mag = alg.normalize_array(array_grad_mag, 'min-max');
+
     % Create initial parameter vector
     params = [1;
               opts.refine_ellipse_edges_h2_init;
               e_init];
-    
+
     % Perform iterations until convergence
-    for it = 1:opts.refine_ellipse_edges_it_cutoff  
+    for it = 1:opts.refine_ellipse_edges_it_cutoff
         % Get gauss newton parameters
         [jacob, res] = calc_gauss_newton_params(params, ...
                                                 array_grad_mag, ...
@@ -68,38 +68,31 @@ function [e, cov_e] = refine_ellipse_edges(array_dx,array_dy,e_init,opts)
                                                 ys);
 
         % Get and store update
-        delta_params = -alg.lscov_finite(jacob,res,W_init(:));
-        params = params + delta_params;        
-         
-        % Make sure point doesnt go outside of bounding box
-        if ~alg.is_p_in_bb(params(3:4)',bb_array)
-            e = nan(5,1);
-            cov_e = nan(5);
-            return
-        end
-        
+        delta_params = -alg.lscov_finite(jacob, res, W_init(:));
+        params = params + delta_params;
+
         % Exit if change in distance is small
         if norm(delta_params) < opts.refine_ellipse_edges_norm_cutoff
             break
-        end        
+        end
     end
-        
+
     % Get ellipse
-    e = params(3:7);    
+    e = params(3:7);
 
     % Get covariance of center point
     [jacob, res] = calc_gauss_newton_params(params, ...
                                             array_grad_mag, ...
                                             xs, ...
                                             ys);
-    [~,~,~,cov_params] = alg.lscov_finite(jacob,res,W_init(:));
-    cov_e = cov_params(3:7,3:7);
+    [~, ~, ~, cov_params] = alg.lscov_finite(jacob, res, W_init(:));
+    cov_e = cov_params(3:7, 3:7);
 end
 
-function [jacob, res] = calc_gauss_newton_params(params,array_grad_mag,xs,ys)
-    % Sample edge function        
+function [jacob, res] = calc_gauss_newton_params(params, array_grad_mag, xs, ys)
+    % Sample edge function
     f = params(1).*exp(-params(2).^2.*(((params(4) - ys).^2 + (params(3) - xs).^2).^(1./2) - (params(5).*params(6).*((params(6).^2.*params(3).^2.*cos(params(7)).^2 + params(5).^2.*params(4).^2.*cos(params(7)).^2 + params(5).^2.*params(3).^2.*sin(params(7)).^2 + params(5).^2.*ys.^2.*cos(params(7)).^2 + params(6).^2.*xs.^2.*cos(params(7)).^2 + params(6).^2.*params(4).^2.*sin(params(7)).^2 + params(5).^2.*xs.^2.*sin(params(7)).^2 + params(6).^2.*ys.^2.*sin(params(7)).^2 - 2.*params(6).^2.*params(3).*xs.*cos(params(7)).^2 - params(5).^2.*params(3).*params(4).*sin(2.*params(7)) + params(6).^2.*params(3).*params(4).*sin(2.*params(7)) - 2.*params(5).^2.*params(4).*ys.*cos(params(7)).^2 - 2.*params(5).^2.*params(3).*xs.*sin(params(7)).^2 + params(5).^2.*params(3).*ys.*sin(2.*params(7)) - params(6).^2.*params(3).*ys.*sin(2.*params(7)) + params(5).^2.*params(4).*xs.*sin(2.*params(7)) - params(6).^2.*params(4).*xs.*sin(2.*params(7)) - 2.*params(6).^2.*params(4).*ys.*sin(params(7)).^2 - params(5).^2.*xs.*ys.*sin(2.*params(7)) + params(6).^2.*xs.*ys.*sin(2.*params(7)))./(params(3).^2 - 2.*params(3).*xs + params(4).^2 - 2.*params(4).*ys + xs.^2 + ys.^2)).^(1./2).*(params(3).^2 - 2.*params(3).*xs + params(4).^2 - 2.*params(4).*ys + xs.^2 + ys.^2))./(params(6).^2.*params(3).^2.*cos(params(7)).^2 + params(5).^2.*params(4).^2.*cos(params(7)).^2 + params(5).^2.*params(3).^2.*sin(params(7)).^2 + params(5).^2.*ys.^2.*cos(params(7)).^2 + params(6).^2.*xs.^2.*cos(params(7)).^2 + params(6).^2.*params(4).^2.*sin(params(7)).^2 + params(5).^2.*xs.^2.*sin(params(7)).^2 + params(6).^2.*ys.^2.*sin(params(7)).^2 - 2.*params(6).^2.*params(3).*xs.*cos(params(7)).^2 - params(5).^2.*params(3).*params(4).*sin(2.*params(7)) + params(6).^2.*params(3).*params(4).*sin(2.*params(7)) - 2.*params(5).^2.*params(4).*ys.*cos(params(7)).^2 - 2.*params(5).^2.*params(3).*xs.*sin(params(7)).^2 + params(5).^2.*params(3).*ys.*sin(2.*params(7)) - params(6).^2.*params(3).*ys.*sin(2.*params(7)) + params(5).^2.*params(4).*xs.*sin(2.*params(7)) - params(6).^2.*params(4).*xs.*sin(2.*params(7)) - 2.*params(6).^2.*params(4).*ys.*sin(params(7)).^2 - params(5).^2.*xs.*ys.*sin(2.*params(7)) + params(6).^2.*xs.*ys.*sin(2.*params(7)))).^2);
-    
+
     % Get residuals
     res = f-array_grad_mag(:);
 

@@ -1,21 +1,21 @@
-function test_stereo_calib_fp_dr        
+function test_stereo_calib_fp_dr
     % Get tests path
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
-    
+
     % Read calibration config
-    calib_config = util.read_calib_config(fullfile(tests_path,'data','stereo','stereo.conf'));
+    calib_config = util.read_calib_config(fullfile(tests_path, 'data', 'stereo', 'stereo.conf'));
 
     % Set images
-    path_cbs_L = {fullfile(tests_path,'data','stereo','left01.jpg'), ...
-                  fullfile(tests_path,'data','stereo','left02.jpg'), ...
-                  fullfile(tests_path,'data','stereo','left03.jpg'), ...
-                  fullfile(tests_path,'data','stereo','left04.jpg'), ...
-                  fullfile(tests_path,'data','stereo','left05.jpg')};
-    path_cbs_R = {fullfile(tests_path,'data','stereo','right01.jpg'), ...
-                  fullfile(tests_path,'data','stereo','right02.jpg'), ...
-                  fullfile(tests_path,'data','stereo','right03.jpg'), ...
-                  fullfile(tests_path,'data','stereo','right04.jpg'), ...
-                  fullfile(tests_path,'data','stereo','right05.jpg')};
+    path_cbs_L = {fullfile(tests_path, 'data', 'stereo', 'left01.jpg'), ...
+                  fullfile(tests_path, 'data', 'stereo', 'left02.jpg'), ...
+                  fullfile(tests_path, 'data', 'stereo', 'left03.jpg'), ...
+                  fullfile(tests_path, 'data', 'stereo', 'left04.jpg'), ...
+                  fullfile(tests_path, 'data', 'stereo', 'left05.jpg')};
+    path_cbs_R = {fullfile(tests_path, 'data', 'stereo', 'right01.jpg'), ...
+                  fullfile(tests_path, 'data', 'stereo', 'right02.jpg'), ...
+                  fullfile(tests_path, 'data', 'stereo', 'right03.jpg'), ...
+                  fullfile(tests_path, 'data', 'stereo', 'right04.jpg'), ...
+                  fullfile(tests_path, 'data', 'stereo', 'right05.jpg')};
 
     % Validate all calibration board images
     img_cbs.L = util.img.validate_similar_imgs(path_cbs_L);
@@ -25,7 +25,7 @@ function test_stereo_calib_fp_dr
     p_fp_p_dss.L{1} = [275 91
                        279 255
                        479 86
-                       476 264];                            
+                       476 264];
     p_fp_p_dss.R{1} = [155 107
                        161 266
                        344 93
@@ -52,7 +52,7 @@ function test_stereo_calib_fp_dr
     p_fp_p_dss.L{4} = [225 127
                        216 330
                        471 109
-                       476 338]; 
+                       476 338];
     p_fp_p_dss.R{4} = [87 145
                        75 339
                        309 119
@@ -61,19 +61,19 @@ function test_stereo_calib_fp_dr
     p_fp_p_dss.L{5} = [244 126
                        450 78
                        279 378
-                       542 313]; 
+                       542 313];
     p_fp_p_dss.R{5} = [100 144
                        295 87
                        99 385
                        352 330];
-    
+
     % Perform stereo calibration
     calib_test = alg.stereo_calib_fp_dr(img_cbs, ...
                                         p_fp_p_dss, ...
                                         calib_config);
 
     % Assert
-    load(fullfile(tests_path,'data','stereo','calib.mat'));
+    load(fullfile(tests_path, 'data', 'stereo', 'calib.mat'));
     assert(all(all(abs(calib_test.L.intrin.A - calib.L.intrin.A) < 1e-4)));
     assert(all(all(abs(calib_test.L.intrin.d - calib.L.intrin.d) < 1e-4)));
     assert(all(all(abs(calib_test.R.intrin.A - calib.R.intrin.A) < 1e-4)));

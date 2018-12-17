@@ -8,7 +8,7 @@ function vals = interp_vol(vol, ps, method)
     %
     % Outputs:
     %   vals - array; Rx1 vector of interpolated array points
-      
-    I = griddedInterpolant({1:size(vol,1),1:size(vol,2),1:size(vol,3)},vol,method,'none');
-    vals = I(ps(:,2),ps(:,1),ps(:,3));
+
+    I = griddedInterpolant({1:size(vol, 1), 1:size(vol, 2), 1:size(vol, 3)}, vol, method, 'none');
+    vals = I(ps(:, 2), ps(:, 1), ps(:, 3));
 end

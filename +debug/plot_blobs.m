@@ -1,19 +1,19 @@
-function plot_blobs(blobs,array,a)
+function plot_blobs(blobs, array, a)
     % Plots blobs
 
-    if ~exist('a','var')
-        f = figure(); 
+    if ~exist('a', 'var')
+        f = figure();
         a = axes(f);
     end
     cla(a);
-    
+
     % Plot background image
-    imshow(array,[],'parent',a);
-    hold(a,'on');
-    
-    % Plot blobs    
+    imshow(array, [], 'parent', a);
+    hold(a, 'on');
+
+    % Plot blobs
     axes(a);
-    for i = 1:numel(blobs)                
+    for i = 1:numel(blobs)
         % ellipse does not have an input argument for axes unfortunately
         external.ellipse(blobs(i).r, ...
                          blobs(i).r, ...
@@ -22,7 +22,7 @@ function plot_blobs(blobs,array,a)
                          blobs(i).y, ...
                          'r');
     end
-    
+
     % Remove hold
-    hold(a,'off');
+    hold(a, 'off');
 end

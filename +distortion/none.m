@@ -13,13 +13,13 @@ function sym_p_p2p_p_d = none()
     % Inputs:
     %   None
     %
-    % Outputs:    
-    %   sym_p_p2p_p_d - symbolic function; describes the mapping between 
+    % Outputs:
+    %   sym_p_p2p_p_d - symbolic function; describes the mapping between
     %       pixel coordinates and distorted pixel coordinates.
-    
+
     % Declare symbolic function
-    syms sym_p_p2p_p_d(x_p,y_p,a,x_o,y_o)
-        
+    syms sym_p_p2p_p_d(x_p, y_p, a, x_o, y_o)
+
     % Define symbolic function
-    sym_p_p2p_p_d(x_p,y_p,a,x_o,y_o) = [x_p, y_p];
+    sym_p_p2p_p_d(x_p, y_p, a, x_o, y_o) = [x_p, y_p];
 end

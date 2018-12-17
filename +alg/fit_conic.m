@@ -1,4 +1,4 @@
-function Aq = fit_conic(array_dx,array_dy)
+function Aq = fit_conic(array_dx, array_dy)
     % Given an input array containing a conic section, this will attempt to
     % find the parameters of the conic matrix.
     %
@@ -12,10 +12,10 @@ function Aq = fit_conic(array_dx,array_dy)
     %        B/2 C   E/2;
     %        D/2 E/2 F];
 
-    if ~isequal(size(array_dx),size(array_dy))
+    if ~isequal(size(array_dx), size(array_dy))
         error('Input gradient arrays must be equal in size');
     end
-        
+
     % Get bounding box
     bb_array = alg.bb_array(array_dx);
 
@@ -24,26 +24,26 @@ function Aq = fit_conic(array_dx,array_dy)
     array_dy(isnan(array_dy)) = 0;
 
     % Get coordinates of pixels
-    [ys,xs] = alg.ndgrid_bb(bb_array);
+    [ys, xs] = alg.ndgrid_bb(bb_array);
     ps = [xs(:) ys(:)];
 
     % Normalize coordinates; shift the origin of the coordinate system
     % to the center of the image, and then scale the axes such that the
-    % mean distance to the center becomes sqrt(2); this should be 
+    % mean distance to the center becomes sqrt(2); this should be
     % "good enough".
     T = norm_mat(ps);
-    p_augs = [ps ones(size(ps,1),1)]';
+    p_augs = [ps ones(size(ps, 1), 1)]';
     p_norms = T*p_augs;
 
     % Get homogeneous coordinates of lines
-    ls = [array_dx(:) array_dy(:) -(array_dx(:).*p_norms(1,:)' + array_dy(:).*p_norms(2,:)')];
+    ls = [array_dx(:) array_dy(:) -(array_dx(:).*p_norms(1, :)' + array_dy(:).*p_norms(2, :)')];
 
     % Form linear equations and solve for inverse conic
-    A = [ls(:,1).^2 ls(:,1).*ls(:,2) ls(:,2).^2 ls(:,1).*ls(:,3) ls(:,2).*ls(:,3)];
-    b = -ls(:,3).^2;
+    A = [ls(:, 1).^2 ls(:, 1).*ls(:, 2) ls(:, 2).^2 ls(:, 1).*ls(:, 3) ls(:, 2).*ls(:, 3)];
+    b = -ls(:, 3).^2;
 
     % Solve
-    aq = alg.lscov_finite(A,b);
+    aq = alg.lscov_finite(A, b);
 
     % Get conic matrix
     Aq_inv = [aq(1)   aq(2)/2 aq(4)/2;
@@ -56,11 +56,11 @@ function Aq = fit_conic(array_dx,array_dy)
 end
 
 function T_norm = norm_mat(ps)
-    xs = ps(:,1);
-    ys = ps(:,2);
+    xs = ps(:, 1);
+    ys = ps(:, 2);
     mean_x = mean(xs);
-    mean_y = mean(ys);    
-    s_m = sqrt(2)*size(ps,1)./sum(sqrt((xs-mean_x).^2+(ys-mean_y).^2));
+    mean_y = mean(ys);
+    s_m = sqrt(2)*size(ps, 1)./sum(sqrt((xs-mean_x).^2+(ys-mean_y).^2));
     T_norm = [s_m 0   -mean_x*s_m;
               0   s_m -mean_y*s_m;
               0   0    1];

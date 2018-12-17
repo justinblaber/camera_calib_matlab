@@ -8,22 +8,22 @@ function test_sample_ellipse
     % Sample theta
     theta_samples = linspace(0, 2*pi, 10)';
     theta_samples(end) = [];
-    
+
     % Sample ellipse
-    p_e = alg.sample_ellipse(e,theta_samples);
-    
+    p_e = alg.sample_ellipse(e, theta_samples);
+
     %{
     % Plot example
     f = figure;
-    array = zeros(62,57);
-    imshow(array,[]);
+    array = zeros(62, 57);
+    imshow(array, []);
     hold on;
-    external.ellipse(e(3),e(4),e(5),e(1),e(2),'r');
-    plot(p_e(:,1),p_e(:,2),'gs');
+    external.ellipse(e(3), e(4), e(5), e(1), e(2), 'r');
+    plot(p_e(:, 1), p_e(:, 2), 'gs');
     pause(1);
     close(f);
     %}
-    
+
     % Assert
     assert(all(all(abs(p_e - [19.171678323910342  25.078340599035219;
                               16.656437328914507  21.377184245566156;

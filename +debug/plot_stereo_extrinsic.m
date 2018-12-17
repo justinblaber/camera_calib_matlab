@@ -1,44 +1,44 @@
-function plot_stereo_extrinsic(rotations,translations,R_s,t_s,colors,alphas,calib_config,a)
+function plot_stereo_extrinsic(rotations, translations, R_s, t_s, colors, alphas, calib_config, a)
     % This will plot extrinsics for a stero camera rig
-    
+
     % Matlab's 3D plot is not very good; to get it in the orientation I want,
     % I've just switched the x, y, and z components with:
     %   x => y
     %   y => z
     %   z => x
-    
-    if ~exist('a','var')
-        f = figure(); 
+
+    if ~exist('a', 'var')
+        f = figure();
         a = axes(f);
     end
     cla(a);
-        
+
     % Hold
-    hold(a,'on');
+    hold(a, 'on');
 
     % Plot calibration boards
     % Note that xform is applied to get the calibration board in the coordinates
     % of the left camera
     height_offset = (calib_config.height_fp-calib_config.num_targets_height*calib_config.target_spacing)/2;
     width_offset = (calib_config.width_fp-calib_config.num_targets_width*calib_config.target_spacing)/2;
-    for i = 1:numel(rotations.L)    
+    for i = 1:numel(rotations.L)
         % Get affine xform
-        xform = [rotations.L{i} translations.L{i}; zeros(1,3) 1];
+        xform = [rotations.L{i} translations.L{i}; zeros(1, 3) 1];
 
         % Plot calibration board
         debug.plot_cb_board_3D(calib_config, ...
                                xform, ...
-                               colors(i,:), ...
+                               colors(i, :), ...
                                alphas(i), ...
                                a);
 
-        % Plot text   
+        % Plot text
         debug.plot_text_3D(num2str(i), ...
                            width_offset-calib_config.target_spacing/2, ...
                            height_offset-calib_config.target_spacing/2, ...
                            0, ...
                            xform, ...
-                           colors(i,:), ...
+                           colors(i, :), ...
                            10, ...
                            'bold', ...
                            a);
@@ -56,7 +56,7 @@ function plot_stereo_extrinsic(rotations,translations,R_s,t_s,colors,alphas,cali
                          a);
 
     % Plot right camera
-    xform_s_inv = inv([R_s t_s; zeros(1,3) 1]);
+    xform_s_inv = inv([R_s t_s; zeros(1, 3) 1]);
     debug.plot_camera_3D(xform_s_inv, ...
                          'k', ...
                          0.5, ...
@@ -68,13 +68,13 @@ function plot_stereo_extrinsic(rotations,translations,R_s,t_s,colors,alphas,cali
                          a);
 
     % Format plot
-    set(a,'Ydir','reverse');
-    set(a,'Zdir','reverse');
-    daspect(a,[1 1 1]);
-    grid(a,'on');
-    view(a,3)
-    axis(a,'tight');
-    
+    set(a, 'Ydir', 'reverse');
+    set(a, 'Zdir', 'reverse');
+    daspect(a, [1 1 1]);
+    grid(a, 'on');
+    view(a, 3)
+    axis(a, 'tight');
+
     % Remove hold
-    hold(a,'off');
+    hold(a, 'off');
 end

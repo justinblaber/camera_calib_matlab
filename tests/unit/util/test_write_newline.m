@@ -6,7 +6,7 @@ function test_write_newline
     util.write_newline(temp_path);
 
     % Check file contents
-    assert(strcmp(fileread(temp_path),newline));
+    assert(strcmp(fileread(temp_path), newline));
 
     % Remove temporary file
     delete(temp_path);

@@ -1,4 +1,4 @@
-function array = gauss_array(array,sigma)
+function array = gauss_array(array, sigma)
     % Applies gaussian kernel to input array at specified sigma.
     %
     % Inputs:
@@ -7,13 +7,13 @@ function array = gauss_array(array,sigma)
     %
     % Outputs:
     %   array - array; MxN gaussian filtered array
-    
+
     if ~alg.is_pos(sigma)
         error('Sigma must be positive.');
     end
-    
+
     % window must be odd so kernel is centered; this ensures it.
     window = 2*ceil(3*sigma)+1;
-    array = imfilter(array,fspecial('gaussian',[window window],sigma), ...
-                     'same','replicate');
+    array = imfilter(array, fspecial('gaussian', [window window], sigma), ...
+                     'same', 'replicate');
 end

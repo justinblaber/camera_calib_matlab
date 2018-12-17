@@ -1,19 +1,19 @@
 function write_data(data, file_path, suffix)
     % Writes data struct to file. Note that data struct fields must only
-    % contain: string, double, logical, and cell arrays. If a field 
+    % contain: string, double, logical, and cell arrays. If a field
     % contains a cell array, then the elements of the cell array must be a
-    % string, double, or logical array (i.e. cell arrays cant be nested 
+    % string, double, or logical array (i.e. cell arrays cant be nested
     % twice).
     %
     % Inputs:
     %   data - struct; struct to write to disk
     %   file_path - string; path to file to write to
     %   suffix - string; suffix to append to names
-    %   
+    %
     % Outputs:
     %   None
 
-    if ~exist('suffix','var')
+    if ~exist('suffix', 'var')
         suffix = '';
     end
 
@@ -24,7 +24,7 @@ function write_data(data, file_path, suffix)
         field = fields_data{i};
         param = data.(field);
         name = [field suffix];
-        
+
         % Write param to file
         switch class(param)
             case 'cell'

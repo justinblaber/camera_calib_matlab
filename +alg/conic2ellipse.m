@@ -11,43 +11,43 @@ function e = conic2ellipse(Aq)
     %   e - array; 5x1 ellipse matrix stored as:
     %       e(1) = h; x component of center of ellipse
     %       e(2) = k; y component of center of ellipse
-    %       e(3) = a; major axis length 
+    %       e(3) = a; major axis length
     %       e(4) = b; minor axis length
     %       e(5) = alpha; rotation of major axis
-        
+
     % Get conic polynomial coefficients
-    A = Aq(1,1);
-    B = 2*Aq(1,2);
-    C = Aq(2,2);
-    D = 2*Aq(1,3);
-    E = 2*Aq(2,3);
-    F = Aq(3,3);
-    
+    A = Aq(1, 1);
+    B = 2*Aq(1, 2);
+    C = Aq(2, 2);
+    D = 2*Aq(1, 3);
+    E = 2*Aq(2, 3);
+    F = Aq(3, 3);
+
     % Return NaNs if input conic is not ellipse
     if any(~isfinite(Aq(:))) || abs(B^2-4*A*C) < eps('single') || B^2-4*A*C > 0
-        e = nan(5,1);
+        e = nan(5, 1);
         return
     end
-    
+
     % Equations from https://math.stackexchange.com/a/820896/39581
-    
+
     % Get "coefficient of normalizing factor"
     q = 64*(F*(4*A*C-B^2)-A*E^2+B*D*E-C*D^2)/(4*A*C-B^2)^2;
-    
+
     % Get "distance between center and focal point"
     s = 1/4*sqrt(abs(q)*sqrt(B^2+(A-C)^2));
 
     % Get major axis
     a = 1/8*sqrt(2*abs(q)*sqrt(B^2+(A-C)^2)-2*q*(A+C));
-    
+
     % Get minor axis
     b = sqrt(a^2-s^2);
 
     % Get center of ellipse
     h = (B*E-2*C*D)/(4*A*C-B^2);
     k = (B*D-2*A*E)/(4*A*C-B^2);
-    
-    % Get alpha; note that range of alpha is [0,pi)
+
+    % Get alpha; note that range of alpha is [0, pi)
     if abs(q*A-q*C) < eps('single') && abs(q*B) < eps('single')
         % major and minor axes are equal (i.e. a circle)
         alpha = 0;
@@ -68,10 +68,10 @@ function e = conic2ellipse(Aq)
         alpha = 1/2*atan(B/(A-C)) + 1/2*pi;
     else
         % This should never happen
-        e = nan(5,1);
+        e = nan(5, 1);
         return
     end
-    
+
     % Store ellipse parameters
     e = [h k a b alpha]';
 end

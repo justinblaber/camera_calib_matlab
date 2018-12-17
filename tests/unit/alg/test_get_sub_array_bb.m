@@ -7,9 +7,9 @@ function test_get_sub_array_bb
 
     bb = [2 1;
           4 3];
-      
-    sub_array = array(bb(1,2):bb(2,2),bb(1,1):bb(2,1));
-    
+
+    sub_array = array(bb(1, 2):bb(2, 2), bb(1, 1):bb(2, 1));
+
     % Assert
-    assert(isequal(alg.get_sub_array_bb(array,bb), sub_array));
+    assert(isequal(alg.get_sub_array_bb(array, bb), sub_array));
 end

@@ -18,8 +18,8 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'num_targets_width'                             , 'required', true , 'default', []                             , 'validation_fun', @validate_pos_int);
     field_info(end+1) = struct('field', 'target_spacing'                                , 'required', true , 'default', []                             , 'validation_fun', @validate_pos_num);
     field_info(end+1) = struct('field', 'units'                                         , 'required', true , 'default', ''                             , 'validation_fun', @validate_string);
-    field_info(end+1) = struct('field', 'height_fp'                                     , 'required', true , 'default', []                             , 'validation_fun', @validate_pos_num);
-    field_info(end+1) = struct('field', 'width_fp'                                      , 'required', true , 'default', []                             , 'validation_fun', @validate_pos_num);
+    field_info(end+1) = struct('field', 'height_fp'                                     , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_num_or_nan);
+    field_info(end+1) = struct('field', 'width_fp'                                      , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_num_or_nan);
     field_info(end+1) = struct('field', 'target_mat'                                    , 'required', false, 'default', []                             , 'validation_fun', @validate_target_mat);
 
     % Verbosity
@@ -115,7 +115,7 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'four_points_detect_array_min_size'             , 'required', false, 'default', 400                            , 'validation_fun', @validate_int);
 
     % Plotting info
-    field_info(end+1) = struct('field', 'camera_size'                                   , 'required', false, 'default', 0                              , 'validation_fun', @validate_num);
+    field_info(end+1) = struct('field', 'camera_size'                                   , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_num_or_nan);
 
     % Create calib_config ------------------------------------------------%
 
@@ -184,6 +184,12 @@ end
 function calib_config = validate_pos_num(calib_config, field)
     if ~alg.is_pos(calib_config.(field))
         field_struct_class_error(field, calib_config, 'positive number');
+    end
+end
+
+function calib_config = validate_pos_num_or_nan(calib_config, field)
+    if ~alg.is_pos(calib_config.(field)) && ~isnan(calib_config.(field))
+        field_struct_class_error(field, calib_config, 'positive number or nan');
     end
 end
 

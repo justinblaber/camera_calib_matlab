@@ -336,7 +336,7 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array, opts)
         polar_patches{i} = reshape(polar_patch, numel(theta_samples), []);
         polar_patches{i} = alg.normalize_array(polar_patches{i}, 'mean-norm'); % cross correlation is performed, so do mean-norm normalization
         polar_patches{i} = polar_patches{i}(:, opts.four_points_detect_padding_radial+1: ...
-                                              end-opts.four_points_detect_padding_radial); % Trim according to padding
+                                               end-opts.four_points_detect_padding_radial); % Trim according to padding
     end
 
     % Initialize four point output ---------------------------------------%

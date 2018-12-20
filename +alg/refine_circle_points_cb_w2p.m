@@ -1,4 +1,4 @@
-function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points(array_cb, f_p_w2p_p, opts, idx_valid_init)
+function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points_cb_w2p(array_cb, f_p_w2p_p, opts, idx_valid_init)
     % Performs refinement of center of circle targets on a calibration
     % board image array.
     %
@@ -7,8 +7,6 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points(array_cb,
     %   f_p_w2p_p - function handle; function which transforms world
     %     coordinates to pixel coordinates
     %   opts - struct;
-    %       .height_fp - scalar; height of the "four point" box
-    %       .width_fp - scalar; width of the "four point" box
     %       .num_targets_height - int; number of targets in the "height"
     %           dimension
     %       .num_targets_width - int; number of targets in the "width"
@@ -21,8 +19,11 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points(array_cb,
     %       .refine_ellipse_edges_norm_cutoff - scalar; cutoff for the
     %           difference in norm of the parameter vector for "edges"
     %           ellipse refinement
-    %   idx_valid_init - array; logical indices which indicate which target
-    %       points are valid
+    %       .refine_circle_dualconic_edges_diff_norm_cutoff - scalar;
+    %           cutoff for the norm of difference of the points predicted
+    %           by dualconic and edges method
+    %   idx_valid_init - array; optional logical indices which indicate
+    %       which target points are valid
     %
     % Outputs:
     %   p_cb_ps - array; Px2 array of optimized subpixel ellipse points in
@@ -30,13 +31,7 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points(array_cb,
     %   cov_cb_ps - cell array; Px1 cell array of covariance matrices of
     %       ellipse points
     %   idx_valid - array; Px1 logical array of "valid" ellipse points
-    %   debug - cell array; Px1 cell array of structs containing:
-    %       .e_cb_p_dualconic - array; 5x1 array of ellipse found using
-    %           "dual conic" method
-    %       .e_cb_p_edges - array; 5x1 array of ellipse found using "edges"
-    %           method
-    %       .boundary_p - array; 4x2 array of boundary points used in
-    %           "edges" method
+    %   debug - cell array;
 
     if ~exist('idx_valid_init', 'var')
         idx_valid_init = true(opts.num_targets_height*opts.num_targets_width, 1);
@@ -151,18 +146,18 @@ function e_p = dualconic(p_p_init, array_dx, array_dy, boundary_p_center)
     bb_array = alg.bb_array(array_dx);
 
     % Get bounding box and mask of sub array
-    [bb_p_sub, mask_sub_array] = calc_bb_and_mask(p_p_init, boundary_p_center);
+    [bb_sub_p, mask_sub_array] = calc_bb_and_mask(p_p_init, boundary_p_center);
 
     % Check bounds
-    if ~alg.is_bb_in_bb(bb_p_sub, bb_array)
+    if ~alg.is_bb_in_bb(bb_sub_p, bb_array)
         % An output with nans indicates that this process failed
         e_p = nan(5, 1);
         return
     end
 
     % Get sub arrays
-    sub_array_dx = alg.get_sub_array_bb(array_dx, bb_p_sub);
-    sub_array_dy = alg.get_sub_array_bb(array_dy, bb_p_sub);
+    sub_array_dx = alg.get_sub_array_bb(array_dx, bb_sub_p);
+    sub_array_dy = alg.get_sub_array_bb(array_dy, bb_sub_p);
 
     % Apply masks
     sub_array_dx(~mask_sub_array) = nan;
@@ -174,24 +169,24 @@ function e_p = dualconic(p_p_init, array_dx, array_dy, boundary_p_center)
 
     % Get ellipse in array coordinates.
     e_p = e_p_sub;
-    e_p(1:2) = e_p_sub(1:2)' + bb_p_sub(1, :) - 1;
+    e_p(1:2) = e_p_sub(1:2) + bb_sub_p(1, :)' - 1;
 
     % Make sure p_p did not go outside of original window
-    if ~alg.is_p_in_bb(e_p(1:2)', bb_p_sub)
+    if ~alg.is_p_in_bb(e_p(1:2)', bb_sub_p)
         e_p = nan(5, 1);
         return
     end
 end
 
-function [e_p, cov_p, bb_p_sub] = edges(e_p_init, array_dx, array_dy, boundary_p_center, opts)
+function [e_p, cov_p, bb_sub_p] = edges(e_p_init, array_dx, array_dy, boundary_p_center, opts)
     % Get bb of array
     bb_array = alg.bb_array(array_dx);
 
     % Get bounding box and mask of sub arrays
-    [bb_p_sub, mask_sub_array] = calc_bb_and_mask(e_p_init(1:2)', boundary_p_center);
+    [bb_sub_p, mask_sub_array] = calc_bb_and_mask(e_p_init(1:2)', boundary_p_center);
 
     % Check bounds
-    if ~alg.is_bb_in_bb(bb_p_sub, bb_array)
+    if ~alg.is_bb_in_bb(bb_sub_p, bb_array)
         % An output with nans indicates that this process failed
         e_p = nan(5, 1);
         cov_p = nan(2);
@@ -199,8 +194,8 @@ function [e_p, cov_p, bb_p_sub] = edges(e_p_init, array_dx, array_dy, boundary_p
     end
 
     % Get sub arrays
-    sub_array_dx = alg.get_sub_array_bb(array_dx, bb_p_sub);
-    sub_array_dy = alg.get_sub_array_bb(array_dy, bb_p_sub);
+    sub_array_dx = alg.get_sub_array_bb(array_dx, bb_sub_p);
+    sub_array_dy = alg.get_sub_array_bb(array_dy, bb_sub_p);
 
     % Apply masks
     sub_array_dx(~mask_sub_array) = nan;
@@ -208,7 +203,7 @@ function [e_p, cov_p, bb_p_sub] = edges(e_p_init, array_dx, array_dy, boundary_p
 
     % Get refined ellipse; note that coordinates will be WRT sub_array.
     e_p_sub_init = e_p_init;
-    e_p_sub_init(1:2) = e_p_init(1:2) - bb_p_sub(1, :)' + 1;
+    e_p_sub_init(1:2) = e_p_init(1:2) - bb_sub_p(1, :)' + 1;
     [e_p_sub, cov_e] = alg.refine_ellipse_edges(sub_array_dx, ...
                                                 sub_array_dy, ...
                                                 e_p_sub_init, ...
@@ -219,10 +214,10 @@ function [e_p, cov_p, bb_p_sub] = edges(e_p_init, array_dx, array_dy, boundary_p
 
     % Get ellipse in array coordinates.
     e_p = e_p_sub;
-    e_p(1:2) = e_p_sub(1:2) + bb_p_sub(1, :)' - 1;
+    e_p(1:2) = e_p_sub(1:2) + bb_sub_p(1, :)' - 1;
 
     % Make sure p_p did not go outside of original window
-    if ~alg.is_p_in_bb(e_p(1:2)', bb_p_sub)
+    if ~alg.is_p_in_bb(e_p(1:2)', bb_sub_p)
         e_p = nan(5, 1);
         cov_p = nan(2);
         return

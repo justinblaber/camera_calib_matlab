@@ -31,8 +31,6 @@ function [params, cov_params] = refine_stereo_params(params, p_cb_p_dss, idx_val
     %       input arguments.
     %   optimization_type - string; describes type of optimization
     %   opts - struct;
-    %       .height_fp - scalar; height of the "four point" box
-    %       .width_fp - scalar; width of the "four point" box
     %       .num_targets_height - int; number of targets in the "height"
     %           dimension
     %       .num_targets_width - int; number of targets in the "width"
@@ -48,13 +46,11 @@ function [params, cov_params] = refine_stereo_params(params, p_cb_p_dss, idx_val
     %           difference of parameter vector for refinement of camera
     %           parameters.
     %       .verbose - int; level of verbosity
-    %   cov_cb_p_dss - struct;
-    %       .L - cell; optional Nx1 cell array of covariances of
-    %           calibration board points in distorted pixel coordinates of
-    %           left camera.
-    %       .R - cell; optional Nx1 cell array of covariances of
-    %           calibration board points in distorted pixel coordinates of
-    %           left camera.
+    %   cov_cb_p_dss - struct; optional
+    %       .L - cell; Nx1 cell array of covariances of calibration board
+    %           points in distorted pixel coordinates of left camera.
+    %       .R - cell; Nx1 cell array of covariances of calibration board
+    %           points in distorted pixel coordinates of right camera.
     %
     % Outputs:
     %   params - array; (6+2*M+6*(N+1))x1 array, where M is the number of

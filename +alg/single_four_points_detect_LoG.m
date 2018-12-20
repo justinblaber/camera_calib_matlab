@@ -34,7 +34,7 @@ function [p_fp_pss, debugs] = single_four_points_detect_LoG(img_cbs, calib_confi
         time = toc(t);
 
         % Scale four points
-        p_fp_pss{i} = p_fp_pss{i}/sf + 1/2*(1-1/sf); %#ok<AGROW>
+        p_fp_pss{i} = alg.imresize2p(p_fp_pss{i}, sf); %#ok<AGROW>
 
         util.verbose_fprintf(['Time ellapsed: %f seconds.' newline], time, 1, calib_config);
     end

@@ -23,8 +23,6 @@ function [params, cov_params] = refine_single_params(params, p_cb_p_dss, idx_val
     %       input arguments.
     %   optimization_type - string; describes type of optimization
     %   opts - struct;
-    %       .height_fp - scalar; height of the "four point" box
-    %       .width_fp - scalar; width of the "four point" box
     %       .num_targets_height - int; number of targets in the "height"
     %           dimension
     %       .num_targets_width - int; number of targets in the "width"

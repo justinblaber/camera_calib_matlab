@@ -300,8 +300,8 @@ function params = refine_LoG_maxima_params(params, I_stack_LoG, optimization_typ
         %   [d^2LoG/dx^2        d^2LoG/(dx*dy)      d^2LoG/(dx*didx_r)
         %    d^2LoG/(dy*dx)     d^2LoG/dy^2         d^2LoG/(dy*didx_r)
         %    d^2LoG/(didx_r*dx) d^2LoG/(didx_r*dy)  d^2LoG/(didx_r^2)]
-        hess = [LoG_fd(2, 3, 2)-2*LoG_fd(2, 2, 2)+LoG_fd(2, 1, 2),                         ((LoG_fd(3, 3, 2)-LoG_fd(1, 3, 2))/2-(LoG_fd(3, 1, 2)-LoG_fd(1, 1, 2))/2)/2, ((LoG_fd(2, 3, 3)-LoG_fd(2, 3, 1))/2-(LoG_fd(2, 1, 3)-LoG_fd(2, 1, 1))/2)/2;
-                ((LoG_fd(3, 3, 2)-LoG_fd(1, 3, 2))/2-(LoG_fd(3, 1, 2)-LoG_fd(1, 1, 2))/2)/2, LoG_fd(3, 2, 2)-2*LoG_fd(2, 2, 2)+LoG_fd(1, 2, 2),                         ((LoG_fd(3, 2, 3)-LoG_fd(3, 2, 1))/2-(LoG_fd(1, 2, 3)-LoG_fd(1, 2, 1))/2)/2;
+        hess = [LoG_fd(2, 3, 2)-2*LoG_fd(2, 2, 2)+LoG_fd(2, 1, 2),                           ((LoG_fd(3, 3, 2)-LoG_fd(1, 3, 2))/2-(LoG_fd(3, 1, 2)-LoG_fd(1, 1, 2))/2)/2, ((LoG_fd(2, 3, 3)-LoG_fd(2, 3, 1))/2-(LoG_fd(2, 1, 3)-LoG_fd(2, 1, 1))/2)/2;
+                ((LoG_fd(3, 3, 2)-LoG_fd(1, 3, 2))/2-(LoG_fd(3, 1, 2)-LoG_fd(1, 1, 2))/2)/2, LoG_fd(3, 2, 2)-2*LoG_fd(2, 2, 2)+LoG_fd(1, 2, 2),                           ((LoG_fd(3, 2, 3)-LoG_fd(3, 2, 1))/2-(LoG_fd(1, 2, 3)-LoG_fd(1, 2, 1))/2)/2;
                 ((LoG_fd(2, 3, 3)-LoG_fd(2, 3, 1))/2-(LoG_fd(2, 1, 3)-LoG_fd(2, 1, 1))/2)/2, ((LoG_fd(3, 2, 3)-LoG_fd(3, 2, 1))/2-(LoG_fd(1, 2, 3)-LoG_fd(1, 2, 1))/2)/2, LoG_fd(2, 2, 3)-2*LoG_fd(2, 2, 2)+LoG_fd(2, 2, 1)];
 
         % Get incremental parameters

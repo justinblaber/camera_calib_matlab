@@ -2,8 +2,6 @@ function test_refine_stereo_params
     % Do checker points with covariance ----------------------------------%
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
     load(fullfile(tests_path, 'data', 'refine_stereo_params_checker_cov.mat'));
-    opts.height_fp = 550;
-    opts.width_fp = 600;
     opts.num_targets_height = 6;
     opts.num_targets_width = 7;
     opts.target_spacing = 100;
@@ -32,8 +30,6 @@ function test_refine_stereo_params
     % Do checker points without covariance -------------------------------%
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
     load(fullfile(tests_path, 'data', 'refine_stereo_params_checker.mat'));
-    opts.height_fp = 550;
-    opts.width_fp = 600;
     opts.num_targets_height = 6;
     opts.num_targets_width = 7;
     opts.target_spacing = 100;

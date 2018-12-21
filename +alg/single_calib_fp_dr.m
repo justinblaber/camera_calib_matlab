@@ -68,9 +68,10 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
 
     % Get optimization type
     if exist('intrin', 'var')
+        optimization_type = 'extrinsic'; % Only optimize extrinsics
+        % Also parse intrinsics
         a = alg.A2a(intrin.A);
         d = intrin.d;
-        optimization_type = 'extrinsic'; % Only optimize extrinsics
     else
         optimization_type = 'full';      % Optimize intrinsics and extrinsics
     end

@@ -3,16 +3,16 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     % refinement" method.
     %
     % Inputs:
-    %   img_paths - struct;
+    %   img_cbs - struct;
     %       .L - util.img; Nx1 calibration board images
     %       .R - util.img; Nx1 calibration board images
     %   p_fp_p_dss - struct;
     %       .L - cell; Nx1 cell of four point boxes around the
-    %           calibration board images
+    %           calibration board images in distorted pixel coordinates.
     %       .R - cell; Nx1 cell of four point boxes around the
-    %           calibration board images
+    %           calibration board images in distorted pixel coordinates.
     %   calib_config -struct; struct returned by util.read_calib_config()
-    %   intrin - struct; optional, if passed in intrinsics will not be
+    %   intrin - struct; optional. If passed in, intrinsics will not be
     %       optimized.
     %       .L - struct;
     %           .A - array; 3x3 camera matrix
@@ -30,47 +30,44 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     %       .t_s - array; 3x1 translation vector describing translation
     %           from left to right camera
     %       .debug; struct;
-    %           .params - array; raw parameter vector returned by
-    %               alg.refine_stereo_params()
-    %           .cov_params - array; covariance of parameters returned by
-    %               alg.refine_stereo_params()
 
     util.verbose_disp('------------', 1, calib_config);
     util.verbose_disp('Performing stereo calibration with four point distortion refinement method...', 1, calib_config);
 
-    % Get distortion function
+    % Handle distortion function -----------------------------------------%
+
+    % Get symbolic function
     sym_p_p2p_p_d = eval(calib_config.sym_p_p2p_p_d);
 
-    % If intrinsics are passed in, don't optimize for them
-    num_params_d = alg.num_params_d(sym_p_p2p_p_d);
-    if exist('intrin', 'var')
-        a.L = alg.A2a(intrin.L.A);
-        a.R = alg.A2a(intrin.R.A);
-        d.L = intrin.L.d;
-        d.R = intrin.R.d;
-        optimization_type = 'extrinsic';
-    else
-        optimization_type = 'full';
-    end
-
-    % Get number of boards
-    num_boards = numel(img_cbs.L);
-
-    % Get function handle for distortion function
+    % Get function handle
     f_p_p2p_p_d = matlabFunction(sym_p_p2p_p_d);
+
+    % Get number of distortion params
+    num_params_d = alg.num_params_d(f_p_p2p_p_d);
 
     % Get function handles for distortion function partial derivatives
     args_p_p2p_p_d = argnames(sym_p_p2p_p_d);
     for i = 1:numel(args_p_p2p_p_d)
         % Differentiate
-        f_dp_p_d_dargs{i} = diff(sym_p_p2p_p_d, ...
-                                 args_p_p2p_p_d(i)); %#ok<AGROW>
+        f_dp_p_d_dargs{i} = diff(sym_p_p2p_p_d, args_p_p2p_p_d(i)); %#ok<AGROW>
+
         % Convert to function handle
         f_dp_p_d_dargs{i} = matlabFunction(f_dp_p_d_dargs{i}); %#ok<AGROW>
     end
 
-    % Perform single calibration on the left and right cameras -----------%
+    % Perform calibration ------------------------------------------------%
 
+    % Get number of boards
+    num_boards = numel(img_cbs.L);
+
+    % Get optimization type
+    if exist('intrin', 'var')
+        optimization_type = 'extrinsic'; % Only optimize extrinsics
+    else
+        optimization_type = 'full';      % Optimize intrinsics and extrinsics
+    end
+
+    % Calibrate left camera
     util.verbose_disp('---------', 1, calib_config);
     util.verbose_disp('Calibrating left camera...', 1, calib_config);
 
@@ -85,6 +82,7 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
                                          calib_config);
     end
 
+    % Calibrate right camera
     util.verbose_disp('---------', 1, calib_config);
     util.verbose_disp('Calibrating right camera...', 1, calib_config);
 
@@ -101,12 +99,13 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
 
     % Repackage initial guesses and other parameters ---------------------%
 
-    if ~exist('intrin', 'var')
-        a.L = alg.A2a(calib.L.intrin.A);
-        a.R = alg.A2a(calib.R.intrin.A);
-        d.L = calib.L.intrin.d;
-        d.R = calib.R.intrin.d;
-    end
+    % Get intrinsics
+    a.L = alg.A2a(calib.L.intrin.A);
+    a.R = alg.A2a(calib.R.intrin.A);
+    d.L = calib.L.intrin.d;
+    d.R = calib.R.intrin.d;
+
+    % Get extrinsics
     Rs.L = {calib.L.extrin.R};
     Rs.R = {calib.R.extrin.R};
     ts.L = {calib.L.extrin.t};
@@ -184,25 +183,25 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     % Refine params
     if calib_config.apply_covariance_optimization
         [params, cov_params] = alg.refine_stereo_params(params, ...
-                                                       p_cb_p_dss, ...
-                                                       idx_valids, ...
-                                                       f_p_w2p_p, ...
-                                                       f_dp_p_dh, ...
-                                                       f_p_p2p_p_d, ...
-                                                       f_dp_p_d_dargs, ...
-                                                       optimization_type, ...
-                                                       calib_config, ...
-                                                       cov_cb_p_dss);
+                                                        p_cb_p_dss, ...
+                                                        idx_valids, ...
+                                                        f_p_w2p_p, ...
+                                                        f_dp_p_dh, ...
+                                                        f_p_p2p_p_d, ...
+                                                        f_dp_p_d_dargs, ...
+                                                        optimization_type, ...
+                                                        calib_config, ...
+                                                        cov_cb_p_dss);
     else
         [params, cov_params] = alg.refine_stereo_params(params, ...
-                                                       p_cb_p_dss, ...
-                                                       idx_valids, ...
-                                                       f_p_w2p_p, ...
-                                                       f_dp_p_dh, ...
-                                                       f_p_p2p_p_d, ...
-                                                       f_dp_p_d_dargs, ...
-                                                       optimization_type, ...
-                                                       calib_config);
+                                                        p_cb_p_dss, ...
+                                                        idx_valids, ...
+                                                        f_p_w2p_p, ...
+                                                        f_dp_p_dh, ...
+                                                        f_p_p2p_p_d, ...
+                                                        f_dp_p_d_dargs, ...
+                                                        optimization_type, ...
+                                                        calib_config);
     end
 
     % Parse params
@@ -218,7 +217,7 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     t_s = params(10+2*num_params_d+6*num_boards:12+2*num_params_d+6*num_boards);
     for i = 1:num_boards
         Rs.R{i} = R_s*Rs.L{i};
-        ts.R{i} = R_s*ts.L{i}+t_s;
+        ts.R{i} = R_s*ts.L{i} + t_s;
     end
 
     % Print params

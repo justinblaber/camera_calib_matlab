@@ -3,11 +3,11 @@ function test_stereo_four_points_detect_LoG
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 
     % Read calibration config
-    calib_config = util.read_calib_config(fullfile(tests_path, 'data', 'stereo', 'checker.conf'));
+    calib_config = util.read_calib_config(fullfile(tests_path, 'data', 'stereo2', 'stereo2.conf'));
 
     % Set images
-    path_cbs.L = {fullfile(tests_path, 'data', 'stereo', 'IMG_1_L.JPG')};
-    path_cbs.R = {fullfile(tests_path, 'data', 'stereo', 'IMG_1_R.JPG')};
+    path_cbs.L = {fullfile(tests_path, 'data', 'stereo2', 'IMG_1_L.JPG')};
+    path_cbs.R = {fullfile(tests_path, 'data', 'stereo2', 'IMG_1_R.JPG')};
 
     % Validate all calibration board images
     img_cbs.L = util.img.validate_similar_imgs(path_cbs.L);

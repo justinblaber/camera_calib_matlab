@@ -3,8 +3,8 @@ function test_single_four_points_detect_LoG
     % Get tests path
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 
-    % Read calibration config
-    calib_config = util.read_calib_config(fullfile(tests_path, 'data', 'circle', 'circle.conf'));
+    % Load calibration config
+    calib_config = util.load_calib_config(fullfile(tests_path, 'data', 'circle', 'circle.conf'));
 
     % Set images
     path_cbs = {fullfile(tests_path, 'data', 'circle', '1.jpg'), ...
@@ -54,8 +54,8 @@ function test_single_four_points_detect_LoG
     % Get tests path
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 
-    % Read calibration config
-    calib_config = util.read_calib_config(fullfile(tests_path, 'data', 'checker', 'checker.conf'));
+    % Load calibration config
+    calib_config = util.load_calib_config(fullfile(tests_path, 'data', 'checker', 'checker.conf'));
 
     % Set images
     path_cbs = {fullfile(tests_path, 'data', 'checker', '1.jpg'), ...

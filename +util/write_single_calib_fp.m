@@ -1,9 +1,8 @@
-function write_single_calib_fp(calib, file_path, suffix, append_calib)
+function write_single_calib_fp(calib, file_path, suffix)
     % Writes a single four point calibration to file.
     %
     % Inputs:
     %   calib - struct;
-    %       .config - struct; calibration config
     %       .intrin - struct;
     %           .A - array; 3x3 camera matrix
     %           .d - array; Mx1 array of distortion coefficients
@@ -19,9 +18,7 @@ function write_single_calib_fp(calib, file_path, suffix, append_calib)
     %               points in distorted pixel coordinates
     %           .idx_valid - array; valid calibration board points
     %   file_path - string; path to calibration
-    %   suffix - string; optional suffix to add to names
-    %   append_calib - logical; optional parameter which indicates whether
-    %       or not to append this calibration to file.
+    %   suffix - string; optional. suffix to add to names
     %
     % Outputs:
     %   None
@@ -30,19 +27,7 @@ function write_single_calib_fp(calib, file_path, suffix, append_calib)
     if ~exist('suffix', 'var')
         suffix = '';
     end
-
-    % Write calib config -------------------------------------------------%
-
-    if ~exist('append_calib', 'var') || ~append_calib
-        % This will clear the file
-        fclose(fopen(file_path, 'w'));
-
-        % Write calib_config
-        util.write_comment('Calibration configuration', file_path);
-        util.write_data(calib.config, file_path);
-        util.write_newline(file_path);
-    end
-
+        
     % Write intrinsics ---------------------------------------------------%
 
     util.write_comment(['Intrinsics' suffix], file_path);

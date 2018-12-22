@@ -14,7 +14,6 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     %
     % Outputs:
     %   calib - struct;
-    %       .config - struct; copy of input calib_config
     %       .intrin - struct;
     %           .A - array; 3x3 camera matrix
     %           .d - array; Mx1 array of distortion coefficients
@@ -340,7 +339,6 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     end
 
     % Package outputs ----------------------------------------------------%
-    calib.config = calib_config;
     calib.intrin.A = alg.a2A(a);
     calib.intrin.d = d;
     for i = 1:num_boards

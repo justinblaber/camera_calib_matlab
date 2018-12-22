@@ -1,4 +1,4 @@
-function calib = read_single_calib_fp(file_path)
+function [calib, calib_config] = load_single_calib_fp(file_path)
     % Reads a four point single calibration from file path
     %
     % Inputs:
@@ -21,6 +21,7 @@ function calib = read_single_calib_fp(file_path)
     %           .cov_cb_p_ds - cell; covariances of calibration board
     %               points in distorted pixel coordinates
     %           .idx_valid - array; valid calibration board points
+    %   calib_config - struct; struct returned by util.read_calib_config()
 
     % Check to make sure data file exists
     if exist(file_path, 'file') ~= 2
@@ -30,11 +31,11 @@ function calib = read_single_calib_fp(file_path)
     % Read data
     data = util.read_data(file_path);
 
+    % Parse out single four point calibration
+    [calib, data] = util.parse_single_calib_fp(data);
+    
     % Parse out calib config
     [calib_config, data] = util.parse_calib_config(data);
-
-    % Parse out single four point calibration
-    [calib_tmp, data] = util.parse_single_calib_fp(data);
 
     % Display error if there are still fields existing in data
     fields_data = fields(data);
@@ -42,9 +43,4 @@ function calib = read_single_calib_fp(file_path)
         error(['When reading calibration, the following unknown ' ...
                'fields were found: "' strjoin(fields_data, ', ') '".']);
     end
-
-    % Package outputs
-    calib.config = calib_config;
-    calib.intrin = calib_tmp.intrin;
-    calib.extrin = calib_tmp.extrin;
 end

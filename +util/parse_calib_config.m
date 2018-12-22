@@ -17,10 +17,10 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'num_targets_height'                            , 'required', true , 'default', []                             , 'validation_fun', @validate_pos_int);
     field_info(end+1) = struct('field', 'num_targets_width'                             , 'required', true , 'default', []                             , 'validation_fun', @validate_pos_int);
     field_info(end+1) = struct('field', 'target_spacing'                                , 'required', true , 'default', []                             , 'validation_fun', @validate_pos_num);
-    field_info(end+1) = struct('field', 'units'                                         , 'required', true , 'default', ''                             , 'validation_fun', @validate_string);
     field_info(end+1) = struct('field', 'height_fp'                                     , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_num_or_nan);
     field_info(end+1) = struct('field', 'width_fp'                                      , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_num_or_nan);
     field_info(end+1) = struct('field', 'target_mat'                                    , 'required', false, 'default', []                             , 'validation_fun', @validate_target_mat);
+    field_info(end+1) = struct('field', 'units'                                         , 'required', false, 'default', ''                             , 'validation_fun', @validate_string);
 
     % Verbosity
     field_info(end+1) = struct('field', 'verbosity'                                     , 'required', false, 'default', 3                              , 'validation_fun', @validate_int);
@@ -125,13 +125,12 @@ function [calib_config, data] = parse_calib_config(data)
         % Check if field exists in data
         if any(strcmp(field_info(i).field, data_fields))
             % Field exists; get the value and remove it
-            [param, data] = util.read_and_remove(data, ...
-                                                 field_info(i).field);
+            [param, data] = util.read_and_remove(data, field_info(i).field);
 
             % Set value
             calib_config.(field_info(i).field) = param;
         else
-            % Field doesn't exist; check if its required or not
+            % Field doesn't exist; check if it's required or not
             if field_info(i).required
                 error(['Required field: "' field_info(i).field '" was ' ...
                        'not found.']);
@@ -166,12 +165,6 @@ end
 function calib_config = validate_int(calib_config, field)
     if ~alg.is_int(calib_config.(field))
         field_struct_class_error(field, calib_config, 'integer');
-    end
-end
-
-function calib_config = validate_num(calib_config, field)
-    if ~alg.is_num(calib_config.(field))
-        field_struct_class_error(field, calib_config, 'number');
     end
 end
 

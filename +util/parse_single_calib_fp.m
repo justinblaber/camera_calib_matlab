@@ -3,7 +3,7 @@ function [calib, data] = parse_single_calib_fp(data, suffix)
     %
     % Inputs:
     %   data - struct; struct containing calibration
-    %   suffix - string; optional suffix appended to names
+    %   suffix - string; optional. suffix appended to names
     %
     % Outputs:
     %   calib - struct;

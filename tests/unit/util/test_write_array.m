@@ -9,8 +9,8 @@ function test_write_array
 
     % Check file contents
     assert(strcmp(fileread(temp_path), [name ' = ' newline ...
-                                       num2str(array(1, 1)) ' ' num2str(array(1, 2)) newline ...
-                                       num2str(array(2, 1)) ' ' num2str(array(2, 2)) newline]));
+                                        num2str(array(1, 1)) ' ' num2str(array(1, 2)) newline ...
+                                        num2str(array(2, 1)) ' ' num2str(array(2, 2)) newline]));
 
     % Remove temporary file
     delete(temp_path);

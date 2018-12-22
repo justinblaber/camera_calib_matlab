@@ -1,5 +1,5 @@
 function [param, data] = read_and_remove(data, field)
-    % Reads input "field" from struct, and then removes it from struct.
+    % Reads input "field" from struct, and then removes it.
     %
     % Inputs:
     %   data - struct; struct containing "field"

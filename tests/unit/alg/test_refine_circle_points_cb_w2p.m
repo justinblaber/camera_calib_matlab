@@ -3,7 +3,7 @@ function test_refine_circle_points_cb_w2p
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 
     % Get circle points
-    array_cb = rgb2gray(im2double(imread(fullfile(tests_path, 'data', 'ellipse1.jpg'))));
+    array_cb = rgb2gray(im2double(imread(fullfile(tests_path, 'data', 'circle','1.jpg'))));
     opts.num_targets_height = 25;
     opts.num_targets_width = 25;
     opts.target_spacing = 50;
@@ -71,7 +71,7 @@ function test_refine_circle_points_cb_w2p
     %}
 
     % Assert
-    load(fullfile(tests_path, 'data', 'ellipse1_points.mat'));
+    load(fullfile(tests_path, 'data', 'circle','1_points.mat'));
 
     assert(all(all(abs(p_cb_ps - p_cb_ps_test) < 1e-4)));
     for i = 1:numel(cov_cb_ps_test)

@@ -4,7 +4,7 @@ function test_single_calib_fp_dr
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 
     % Read calibration config
-    calib_config = util.read_calib_config(fullfile(tests_path, 'data', 'circle', 'circle.conf'));
+    calib_config = util.load_calib_config(fullfile(tests_path, 'data', 'circle', 'circle.conf'));
 
     % Set images
     path_cbs = {fullfile(tests_path, 'data', 'circle', '1.jpg'), ...
@@ -48,7 +48,7 @@ function test_single_calib_fp_dr
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 
     % Read calibration config
-    calib_config = util.read_calib_config(fullfile(tests_path, 'data', 'checker', 'checker.conf'));
+    calib_config = util.load_calib_config(fullfile(tests_path, 'data', 'checker', 'checker.conf'));
 
     % Set images
     path_cbs = {fullfile(tests_path, 'data', 'checker', '1.jpg'), ...

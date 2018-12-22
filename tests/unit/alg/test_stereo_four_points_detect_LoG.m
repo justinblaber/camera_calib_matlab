@@ -2,8 +2,8 @@ function test_stereo_four_points_detect_LoG
     % Get tests path
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 
-    % Read calibration config
-    calib_config = util.read_calib_config(fullfile(tests_path, 'data', 'stereo2', 'stereo2.conf'));
+    % Load calibration config
+    calib_config = util.load_calib_config(fullfile(tests_path, 'data', 'stereo2', 'stereo2.conf'));
 
     % Set images
     path_cbs.L = {fullfile(tests_path, 'data', 'stereo2', 'IMG_1_L.JPG')};

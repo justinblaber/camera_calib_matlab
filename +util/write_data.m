@@ -2,13 +2,12 @@ function write_data(data, file_path, suffix)
     % Writes data struct to file. Note that data struct fields must only
     % contain: string, double, logical, and cell arrays. If a field
     % contains a cell array, then the elements of the cell array must be a
-    % string, double, or logical array (i.e. cell arrays cant be nested
-    % twice).
+    % string, double, or logical array (i.e. cell arrays cant be nested).
     %
     % Inputs:
     %   data - struct; struct to write to disk
     %   file_path - string; path to file to write to
-    %   suffix - string; suffix to append to names
+    %   suffix - string; optional. suffix to append to names
     %
     % Outputs:
     %   None

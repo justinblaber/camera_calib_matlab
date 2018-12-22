@@ -3,7 +3,7 @@ function test_stereo_calib_fp_dr
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 
     % Read calibration config
-    calib_config = util.read_calib_config(fullfile(tests_path, 'data', 'stereo1', 'stereo1.conf'));
+    calib_config = util.load_calib_config(fullfile(tests_path, 'data', 'stereo1', 'stereo1.conf'));
 
     % Set images
     path_cbs_L = {fullfile(tests_path, 'data', 'stereo1', 'left01.jpg'), ...

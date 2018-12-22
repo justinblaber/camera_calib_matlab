@@ -64,8 +64,7 @@ classdef img < handle
         function validate_colortype(obj)
             img_info = obj.get_imfinfo();
             switch img_info.ColorType
-                case 'grayscale'
-                case 'truecolor'
+                case {'grayscale', 'truecolor'}
                 otherwise
                     error(['Image: ' obj.get_path() ' has invalid ' ...
                            'ColorType of: ' img_info.ColorType ', ' ...

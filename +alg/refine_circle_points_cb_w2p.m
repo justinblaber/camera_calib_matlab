@@ -49,6 +49,7 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points_cb_w2p(ar
     p_cb_ps = zeros(size(p_cb_ws));
     cov_cb_ps = cell(size(p_cb_ws, 1), 1);
     idx_valid = false(size(p_cb_ws, 1), 1);
+    debug = cell(size(p_cb_ws, 1), 1);
     for i = 1:size(p_cb_ws, 1)
         if ~idx_valid_init(i)
             continue
@@ -98,9 +99,9 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points_cb_w2p(ar
             p_cb_ps(i, :) = e_cb_p_edges(1:2)';
             cov_cb_ps{i} = cov_cb_p_edges;
             idx_valid(i) = true;
-            debug{i}.e_cb_p_dualconic = e_cb_p_dualconic; %#ok<AGROW>
-            debug{i}.e_cb_p_edges = e_cb_p_edges; %#ok<AGROW>
-            debug{i}.boundary_p = boundary_p_center + e_cb_p_dualconic(1:2)'; %#ok<AGROW>
+            debug{i}.e_cb_p_dualconic = e_cb_p_dualconic;
+            debug{i}.e_cb_p_edges = e_cb_p_edges;
+            debug{i}.boundary_p = boundary_p_center + e_cb_p_dualconic(1:2)';
         end
     end
 end

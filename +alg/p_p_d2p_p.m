@@ -36,7 +36,7 @@ function p_ps = p_p_d2p_p(p_p_ds, p_p_inits, f_p_p2p_p_d, f_dp_p_d_dx_p, f_dp_p_
         res = reshape(alg.p_p2p_p_d(p_ps, f_p_p2p_p_d, a, d)', [], 1) - reshape(p_p_ds', [], 1);
 
         % Get and store update
-        delta_params = -alg.lscov_finite(jacob, res);
+        delta_params = -alg.safe_lscov(jacob, res);
         params = params + delta_params;
 
         % Exit if change in distance is small

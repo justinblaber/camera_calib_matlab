@@ -42,9 +42,9 @@ function [calib, data] = parse_single_calib_fp(data, suffix)
         % Image - read path and then convert to util.img
         [calib.extrin(i).img_cb, data] = util.read_and_remove(data, ['img_path_' num2str(i) suffix]);
         calib.extrin(i).img_cb = util.img(calib.extrin(i).img_cb);
-        
+
         % TODO: maybe issue warning if image cant be found?
-        
+
         % Rotation
         [calib.extrin(i).R, data] = util.read_and_remove(data, ['R_' num2str(i) suffix]);
 

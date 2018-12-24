@@ -41,7 +41,7 @@ function calib = load_stereo_calib_fp(file_path)
         error(['When reading calibration, the following unknown ' ...
                'fields were found: "' strjoin(fields_data, ', ') '".']);
     end
-    
+
     % Package outputs
     calib.config = calib_config;
     calib.L = calib_L;

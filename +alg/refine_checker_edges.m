@@ -74,13 +74,13 @@ function [p, cov_p] = refine_checker_edges(array_dx, array_dy, l1, l2, opts)
                                                 ys);
 
         % Update weights
-        kernel_gauss = alg.mvnpdf_pos_def([xs ys], params(5:6)', cov_gauss);
+        kernel_gauss = alg.safe_mvnpdf([xs ys], params(5:6)', cov_gauss);
         kernel_gauss = reshape(kernel_gauss, [s s]);
         kernel_gauss = alg.normalize_array(kernel_gauss, 'min-max');
         W = kernel_gauss.*W_init;
 
         % Get and store update
-        delta_params = -alg.lscov_finite(jacob, res, W(:));
+        delta_params = -alg.safe_lscov(jacob, res, W(:));
         params = params + delta_params;
 
         % Exit if change in distance is small
@@ -99,13 +99,13 @@ function [p, cov_p] = refine_checker_edges(array_dx, array_dy, l1, l2, opts)
                                             ys);
 
     % Update weights
-    kernel_gauss = alg.mvnpdf_pos_def([xs ys], params(5:6)', cov_gauss);
+    kernel_gauss = alg.safe_mvnpdf([xs ys], params(5:6)', cov_gauss);
     kernel_gauss = reshape(kernel_gauss, [s s]);
     kernel_gauss = alg.normalize_array(kernel_gauss, 'min-max');
     W = kernel_gauss.*W_init;
 
     % Get covaraince
-    [~, ~, ~, cov_params] = alg.lscov_finite(jacob, res, W(:));
+    [~, ~, ~, cov_params] = alg.safe_lscov(jacob, res, W(:));
     cov_p = cov_params(5:6, 5:6);
 end
 

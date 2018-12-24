@@ -82,7 +82,7 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
                                          p_fp_p_dss.L, ...
                                          calib_config);
     end
-    
+
     % Remove config
     calib_L = rmfield(calib_L, 'config');
 
@@ -103,7 +103,7 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
 
     % Remove config
     calib_R = rmfield(calib_R, 'config');
-    
+
     % Repackage initial guesses and other parameters ---------------------%
 
     % Get intrinsics
@@ -137,7 +137,7 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     end
 
     % Get least squares approximation
-    R_s_init = reshape(alg.lscov_finite(R, r), 3, 3);
+    R_s_init = reshape(alg.safe_lscov(R, r), 3, 3);
     R_s_init = alg.approx_rot(R_s_init); % Get best rotational approximation
 
     % Get least squares linear guess for t_s
@@ -149,7 +149,7 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     end
 
     % Get least squares approximation
-    t_s_init = alg.lscov_finite(T, t);
+    t_s_init = alg.safe_lscov(T, t);
 
     % Perform nonlinear refinement of all parameters ---------------------%
 

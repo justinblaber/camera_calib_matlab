@@ -6,9 +6,9 @@ function test_load_stereo_calib_fp
     calib = util.load_stereo_calib_fp(fullfile(tests_path, 'data', 'stereo1', 'calib.txt'));
 
     % Config -------------------------------------------------------------%
-    
+
     assert(isfield(calib, 'config'));
-        
+
     % Left ---------------------------------------------------------------%
 
     % Assert calib

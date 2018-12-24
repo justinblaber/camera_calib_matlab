@@ -4,10 +4,10 @@ function test_load_single_calib_fp
 
     % Read calibration
     calib = util.load_single_calib_fp(fullfile(tests_path, 'data', 'checker', 'calib.txt'));
-    
-    % Assert config    
+
+    % Assert config
     assert(isfield(calib, 'config'));
-    
+
     % Assert intrin
     assert(isfield(calib, 'intrin'));
     assert(isfield(calib.intrin, 'A'));

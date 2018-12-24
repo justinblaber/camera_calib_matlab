@@ -333,7 +333,7 @@ end
 
 function W = weight_array(e, xs, ys)
     [cov, p] = alg.ellipse2cov(e);
-    W = alg.mvnpdf_pos_def([xs(:) ys(:)], p, cov);
+    W = alg.safe_mvnpdf([xs(:) ys(:)], p, cov);
     W = reshape(W, size(xs));
 end
 

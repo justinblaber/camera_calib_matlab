@@ -42,7 +42,7 @@ function test_single_calib_fp_dr
     end
 
     clear
-    
+
     % Circle -------------------------------------------------------------%
     % Get tests path
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));

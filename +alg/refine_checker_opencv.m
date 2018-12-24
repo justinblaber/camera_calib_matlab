@@ -36,7 +36,7 @@ function [p, cov_p] = refine_checker_opencv(array_dx, array_dy, p_init)
     sigma_gauss = (s-1)/4;
     cov_gauss = [sigma_gauss^2 0; ...
                  0             sigma_gauss^2];
-    kernel_gauss = alg.mvnpdf_pos_def([xs ys], p_init, cov_gauss);
+    kernel_gauss = alg.safe_mvnpdf([xs ys], p_init, cov_gauss);
     kernel_gauss = reshape(kernel_gauss, [s s]);
     kernel_gauss = alg.normalize_array(kernel_gauss, 'min-max');
 
@@ -49,6 +49,6 @@ function [p, cov_p] = refine_checker_opencv(array_dx, array_dy, p_init)
 
     % Solve for center point and center point covariance using gaussian
     % kernel as weights
-    [p, ~, ~, cov_p] = alg.lscov_finite(A, b, W(:));
+    [p, ~, ~, cov_p] = alg.safe_lscov(A, b, W(:));
     p = p';
 end

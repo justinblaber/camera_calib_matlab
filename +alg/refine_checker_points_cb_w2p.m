@@ -58,6 +58,7 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points_cb_w2p(a
     p_cb_ps = zeros(size(p_cb_ws));
     cov_cb_ps = cell(size(p_cb_ws, 1), 1);
     idx_valid = false(size(p_cb_ws, 1), 1);
+    debug = cell(size(p_cb_ws, 1), 1);
     for i = 1:size(p_cb_ws, 1)
         if ~idx_valid_init(i)
             continue
@@ -110,7 +111,7 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_checker_points_cb_w2p(a
             p_cb_ps(i, :) = p_cb_p_edges;
             cov_cb_ps{i} = cov_cb_p_edges;
             idx_valid(i) = true;
-            debug{i} = bb_sub_p_edges; %#ok<AGROW>
+            debug{i} = bb_sub_p_edges;
         end
     end
 end

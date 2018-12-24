@@ -46,9 +46,9 @@ function H_12 = homography_p2p_nonlin(p_1s, p_2s, H_12_init, opts, cov)
 
         % Get and store update
         if ~exist('cov', 'var')
-            delta_params = -alg.lscov_finite(jacob, res);
+            delta_params = -alg.safe_lscov(jacob, res);
         else
-            delta_params = -alg.lscov_finite(jacob, res, cov);
+            delta_params = -alg.safe_lscov(jacob, res, cov);
         end
         params = params + delta_params;
 

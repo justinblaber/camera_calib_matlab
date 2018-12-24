@@ -14,11 +14,12 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     %
     % Outputs:
     %   calib - struct;
+    %       .config - struct; copy of input calib_config
     %       .intrin - struct;
     %           .A - array; 3x3 camera matrix
     %           .d - array; Mx1 array of distortion coefficients
     %       .extrin - struct; Nx1 struct containing extrinsics
-    %           .img_path - string; path to calibration board image
+    %           .img_cb - util.img; calibration board image
     %           .R - array; 3x3 rotation matrix
     %           .t - array; 3x1 translation vector
     %           .p_fp_p_ds - array; four point box around the calibration
@@ -339,10 +340,14 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     end
 
     % Package outputs ----------------------------------------------------%
+    % Config
+    calib.config = calib_config;
+    % Intrinsics
     calib.intrin.A = alg.a2A(a);
     calib.intrin.d = d;
+    % Extrinsics
     for i = 1:num_boards
-        calib.extrin(i).img_path = img_cbs(i).get_path();
+        calib.extrin(i).img_cb = img_cbs(i);
         calib.extrin(i).R = Rs{i};
         calib.extrin(i).t = ts{i};
         calib.extrin(i).p_fp_p_ds = p_fp_p_dss{i};
@@ -351,6 +356,7 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
         calib.extrin(i).idx_valid = idx_valids{i};
         calib.extrin(i).debug = debugs{i};
     end
+    % Debugging stuff
     calib.debug.params = params;
     calib.debug.cov_params = cov_params;
 end

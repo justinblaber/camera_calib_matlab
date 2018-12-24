@@ -3,12 +3,12 @@ function test_parse_calib_config
     data.num_targets_height = 10;
     data.num_targets_width = 20;
     data.target_spacing = 1;
-        
+
     [calib_config, data] = util.parse_calib_config(data); %#ok<ASGLU>
-    
-    % calib_config is subject to a lot of change... so assert weakly or not
-    % at all
-    
+
+    % calib_config is subject to a lot of change... so only include a very
+    % weak test here.
+
     % Assert
     assert(numel(fields(data)) == 0);
 end

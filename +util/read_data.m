@@ -30,7 +30,7 @@ function data = read_data(file_path)
     % simplicity) and "uncell" names with single entries afterwards.
     f = fopen(file_path);
     line = fgetl(f);
-    line_num = 1;
+    num_line = 1;
     in_array = false; % Gets set to true for lines in array
     while ischar(line)
         % Trim leading and trailing white spaces
@@ -73,44 +73,44 @@ function data = read_data(file_path)
                 if in_array
                     % Use name from previous iteration; attempt to
                     % concatenate array row.
-                    num_line = str2doubleorlogical(line);
+                    row = str2doubleorlogical(line);
 
                     % Check to make sure line contains double or logical
-                    if ~isempty(num_line)
+                    if ~isempty(row)
                         % Check to make sure number of elements allows it
                         % to be vertically concatenated
                         if isempty(data.(name){end}) || ...
-                           size(data.(name){end}, 2) == size(num_line, 2)
+                           size(data.(name){end}, 2) == size(row, 2)
                             data.(name){end} = vertcat(data.(name){end}, ...
-                                                       num_line);
+                                                       row);
                         else
                             error(['Failed to concatenate line: "' ...
-                                    num2str(line_num) '" for array with ' ...
+                                    num2str(num_line) '" for array with ' ...
                                    'name: "' name '" and value: "' line ...
                                    '" because the number of elements do ' ...
                                    'not match the previous row.']);
                         end
                     else
                         error(['Failed to concatenate line: "' ...
-                                num2str(line_num) '" for array with ' ...
+                                num2str(num_line) '" for array with ' ...
                                'name: "' name '" and value: "' line ...
                                '" because it is not a double or logical ' ...
                                'number.']);
                     end
                 else
-                    error(['Unknown line: "' num2str(line_num) '" ' ...
+                    error(['Unknown line: "' num2str(num_line) '" ' ...
                            'with value: "' line '". A line without an ' ...
                            '"=" is only valid for an array.']);
                 end
             else
-                error(['Multiple assignments on line: "' num2str(line_num) ...
+                error(['Multiple assignments on line: "' num2str(num_line) ...
                        '" with value: "' line '".']);
             end
         end
 
         % Get next line
         line = fgetl(f);
-        line_num = line_num+1;
+        num_line = num_line+1;
     end
     fclose(f);
 

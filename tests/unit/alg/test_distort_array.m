@@ -3,7 +3,7 @@ function test_distort_array
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 
     % Load image data
-    array = rgb2gray(im2double(imread(fullfile(tests_path, 'data', 'checker','1.jpg'))));
+    array = rgb2gray(im2double(imread(fullfile(tests_path, 'data', 'checker', '1.jpg'))));
 
     % Distort
     f_p_p2p_p_d = @(x_p, y_p, a, x_o, y_o, k1, k2, p1, p2)[x_o+a.*(p2.*(1.0./a.^2.*(x_o-x_p).^2.*3.0+1.0./a.^2.*(y_o-y_p).^2)-((x_o-x_p).*(k1.*(1.0./a.^2.*(x_o-x_p).^2+1.0./a.^2.*(y_o-y_p).^2)+k2.*(1.0./a.^2.*(x_o-x_p).^2+1.0./a.^2.*(y_o-y_p).^2).^2+1.0))./a+1.0./a.^2.*p1.*(x_o-x_p).*(y_o-y_p).*2.0), y_o+a.*(p1.*(1.0./a.^2.*(x_o-x_p).^2+1.0./a.^2.*(y_o-y_p).^2.*3.0)-((y_o-y_p).*(k1.*(1.0./a.^2.*(x_o-x_p).^2+1.0./a.^2.*(y_o-y_p).^2)+k2.*(1.0./a.^2.*(x_o-x_p).^2+1.0./a.^2.*(y_o-y_p).^2).^2+1.0))./a+1.0./a.^2.*p2.*(x_o-x_p).*(y_o-y_p).*2.0)];
@@ -17,6 +17,6 @@ function test_distort_array
     array_d = alg.distort_array(array, f_p_p2p_p_d, f_dp_p_d_dx_p, f_dp_p_d_dy_p, a, d, opts);
 
     % Assert
-    load(fullfile(tests_path, 'data', 'checker','1_d.mat'));
+    load(fullfile(tests_path, 'data', 'checker', '1_d.mat'));
     assert(all(all(abs(checker1_d - array_d) < 1e-4)));
 end

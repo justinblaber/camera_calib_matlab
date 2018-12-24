@@ -11,7 +11,7 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     %           calibration board images in distorted pixel coordinates.
     %       .R - cell; Nx1 cell of four point boxes around the
     %           calibration board images in distorted pixel coordinates.
-    %   calib_config -struct; struct returned by util.read_calib_config()
+    %   calib_config - struct; struct returned by util.read_calib_config()
     %   intrin - struct; optional. If passed in, intrinsics will not be
     %       optimized.
     %       .L - struct;
@@ -23,6 +23,7 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     %
     % Outputs:
     %   calib - struct;
+    %       .config - struct; copy of input calib_config
     %       .L - struct; calibration for left camera
     %       .R - struct; calibration for right camera
     %       .R_s - array; 3x3 rotation matrix describing rotation from
@@ -72,50 +73,56 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     util.verbose_disp('Calibrating left camera...', 1, calib_config);
 
     if exist('intrin', 'var')
-        calib.L = alg.single_calib_fp_dr(img_cbs.L, ...
+        calib_L = alg.single_calib_fp_dr(img_cbs.L, ...
                                          p_fp_p_dss.L, ...
                                          calib_config, ...
                                          intrin.L);
     else
-        calib.L = alg.single_calib_fp_dr(img_cbs.L, ...
+        calib_L = alg.single_calib_fp_dr(img_cbs.L, ...
                                          p_fp_p_dss.L, ...
                                          calib_config);
     end
+    
+    % Remove config
+    calib_L = rmfield(calib_L, 'config');
 
     % Calibrate right camera
     util.verbose_disp('---------', 1, calib_config);
     util.verbose_disp('Calibrating right camera...', 1, calib_config);
 
     if exist('intrin', 'var')
-        calib.R = alg.single_calib_fp_dr(img_cbs.R, ...
+        calib_R = alg.single_calib_fp_dr(img_cbs.R, ...
                                          p_fp_p_dss.R, ...
                                          calib_config, ...
                                          intrin.R);
     else
-        calib.R = alg.single_calib_fp_dr(img_cbs.R, ...
+        calib_R = alg.single_calib_fp_dr(img_cbs.R, ...
                                          p_fp_p_dss.R, ...
                                          calib_config);
     end
 
+    % Remove config
+    calib_R = rmfield(calib_R, 'config');
+    
     % Repackage initial guesses and other parameters ---------------------%
 
     % Get intrinsics
-    a.L = alg.A2a(calib.L.intrin.A);
-    a.R = alg.A2a(calib.R.intrin.A);
-    d.L = calib.L.intrin.d;
-    d.R = calib.R.intrin.d;
+    a.L = alg.A2a(calib_L.intrin.A);
+    a.R = alg.A2a(calib_R.intrin.A);
+    d.L = calib_L.intrin.d;
+    d.R = calib_R.intrin.d;
 
     % Get extrinsics
-    Rs.L = {calib.L.extrin.R};
-    Rs.R = {calib.R.extrin.R};
-    ts.L = {calib.L.extrin.t};
-    ts.R = {calib.R.extrin.t};
-    p_cb_p_dss.L = {calib.L.extrin.p_cb_p_ds};
-    p_cb_p_dss.R = {calib.R.extrin.p_cb_p_ds};
-    cov_cb_p_dss.L = {calib.L.extrin.cov_cb_p_ds};
-    cov_cb_p_dss.R = {calib.R.extrin.cov_cb_p_ds};
-    idx_valids.L = {calib.L.extrin.idx_valid};
-    idx_valids.R = {calib.R.extrin.idx_valid};
+    Rs.L = {calib_L.extrin.R};
+    Rs.R = {calib_R.extrin.R};
+    ts.L = {calib_L.extrin.t};
+    ts.R = {calib_R.extrin.t};
+    p_cb_p_dss.L = {calib_L.extrin.p_cb_p_ds};
+    p_cb_p_dss.R = {calib_R.extrin.p_cb_p_ds};
+    cov_cb_p_dss.L = {calib_L.extrin.cov_cb_p_ds};
+    cov_cb_p_dss.R = {calib_R.extrin.cov_cb_p_ds};
+    idx_valids.L = {calib_L.extrin.idx_valid};
+    idx_valids.R = {calib_R.extrin.idx_valid};
 
     % Get initial guesses for transform between left and right cameras ---%
 
@@ -246,6 +253,12 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     print_param('z',       12+2*num_params_d+6*num_boards, params, cov_params, newline, calib_config);
 
     % Repackage outputs --------------------------------------------------%
+    % Config
+    calib.config = calib_config;
+    % Store individual calibrations directly
+    calib.L = calib_L;
+    calib.R = calib_R;
+    % Overwrite intrinsics and extrinsics with stereo optimized values
     calib.L.intrin.A = alg.a2A(a.L);
     calib.L.intrin.d = d.L;
     calib.R.intrin.A = alg.a2A(a.R);
@@ -256,8 +269,10 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
         calib.R.extrin(i).R = Rs.R{i};
         calib.R.extrin(i).t = ts.R{i};
     end
+    % Store relative extrinsics
     calib.R_s = R_s;
     calib.t_s = t_s;
+    % Debugging stuff
     calib.debug.params = params;
     calib.debug.cov_params = cov_params;
 end

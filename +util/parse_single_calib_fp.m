@@ -11,11 +11,11 @@ function [calib, data] = parse_single_calib_fp(data, suffix)
     %           .A - array; 3x3 camera matrix
     %           .d - array; Mx1 array of distortion coefficients
     %       .extrin - struct; Nx1 struct containing extrinsics
-    %           .img_path - string; path to calibration board image
+    %           .img_cb - util.img; calibration board image
     %           .R - array; 3x3 rotation matrix
     %           .t - array; 3x1 translation vector
-    %           .p_fp_p_ds - array; four point box around the
-    %               calibration board image in distorted pixel coordinates
+    %           .p_fp_p_ds - array; four point box around the calibration
+    %               board image in distorted pixel coordinates
     %           .p_cb_p_ds - array; calibration board points in distorted
     %               pixel coordinates
     %           .cov_cb_p_ds - cell; covariances of calibration board
@@ -39,9 +39,12 @@ function [calib, data] = parse_single_calib_fp(data, suffix)
 
     i = 1;
     while isfield(data, ['img_path_' num2str(i) suffix])
-        % Image path
-        [calib.extrin(i).img_path, data] = util.read_and_remove(data, ['img_path_' num2str(i) suffix]);
-
+        % Image - read path and then convert to util.img
+        [calib.extrin(i).img_cb, data] = util.read_and_remove(data, ['img_path_' num2str(i) suffix]);
+        calib.extrin(i).img_cb = util.img(calib.extrin(i).img_cb);
+        
+        % TODO: maybe issue warning if image cant be found?
+        
         % Rotation
         [calib.extrin(i).R, data] = util.read_and_remove(data, ['R_' num2str(i) suffix]);
 

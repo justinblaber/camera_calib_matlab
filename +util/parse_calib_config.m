@@ -59,13 +59,13 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'distort_array_interp'                          , 'required', false, 'default', 'spline'                       , 'validation_fun', @validate_interp);
 
     % Distortion refinement
-    field_info(end+1) = struct('field', 'distortion_refinement_it_cutoff'               , 'required', false, 'default', 5                              , 'validation_fun', @validate_pos_int);
+    field_info(end+1) = struct('field', 'distortion_refinement_it_cutoff'               , 'required', false, 'default', 1                              , 'validation_fun', @validate_pos_int);
 
     % Covariance optimization
     field_info(end+1) = struct('field', 'apply_covariance_optimization'                 , 'required', false, 'default', true                           , 'validation_fun', @validate_logical);
 
     % sym_p_p2p_p_d
-    field_info(end+1) = struct('field', 'sym_p_p2p_p_d'                                 , 'required', false, 'default', 'distortion.wang08'            , 'validation_fun', @validate_distortion);
+    field_info(end+1) = struct('field', 'sym_p_p2p_p_d'                                 , 'required', false, 'default', 'distortion.heikkila97'        , 'validation_fun', @validate_distortion);
 
     % Single calibration
     field_info(end+1) = struct('field', 'refine_single_params_it_cutoff'                , 'required', false, 'default', 200                            , 'validation_fun', @validate_pos_int);

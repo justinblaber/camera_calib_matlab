@@ -362,5 +362,5 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
 end
 
 function print_param(s_param, idx, params, cov_params, suffix, calib_config)
-    util.verbose_fprintf([pad(['    ' s_param ': '], 13) sprintf('% 9.4f', params(idx)) ' +- ' sprintf('% 6.4f', 3*sqrt(cov_params(idx, idx))) suffix], 1, calib_config);
+    util.verbose_fprintf([pad(['    ' s_param ': '], 13) sprintf('% 10.4f', params(idx)) ' +- ' sprintf('% 8.4f', 3*sqrt(cov_params(idx, idx))) suffix], 1, calib_config);
 end

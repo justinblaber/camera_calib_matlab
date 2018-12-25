@@ -230,14 +230,14 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     % Print params
     util.verbose_disp('------', 1, calib_config);
     util.verbose_disp('Stereo intrinsic params (+- 3*sigma):', 1, calib_config);
-    util.verbose_disp('  -Camera (L):                       -Camera (R): ', 1, calib_config);
+    util.verbose_disp('  -Camera (L):                         -Camera (R): ', 1, calib_config);
     print_param('alpha', 1             , params, cov_params, '  '   , calib_config);
     print_param('alpha', 4+num_params_d, params, cov_params, newline, calib_config);
     print_param('x_o',   2             , params, cov_params, '  '   , calib_config);
     print_param('x_o',   5+num_params_d, params, cov_params, newline, calib_config);
     print_param('y_o',   3             , params, cov_params, '  '   , calib_config);
     print_param('y_o',   6+num_params_d, params, cov_params, newline, calib_config);
-    util.verbose_disp('  -Distortion (L):                   -Distortion (R): ', 1, calib_config);
+    util.verbose_disp('  -Distortion (L):                     -Distortion (R): ', 1, calib_config);
     for i = 1:num_params_d
         print_param(char(args_p_p2p_p_d(i+5)), i+3,              params, cov_params, '  '   , calib_config);
         print_param(char(args_p_p2p_p_d(i+5)), i+6+num_params_d, params, cov_params, newline, calib_config);
@@ -278,5 +278,5 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
 end
 
 function print_param(s_param, idx, params, cov_params, suffix, calib_config)
-    util.verbose_fprintf([pad(['    ' s_param ': '], 13) sprintf('% 9.4f', params(idx)) ' +- ' sprintf('% 6.4f', 3*sqrt(cov_params(idx, idx))) suffix], 1, calib_config);
+    util.verbose_fprintf([pad(['    ' s_param ': '], 13) sprintf('% 10.4f', params(idx)) ' +- ' sprintf('% 8.4f', 3*sqrt(cov_params(idx, idx))) suffix], 1, calib_config);
 end

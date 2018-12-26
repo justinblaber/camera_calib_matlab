@@ -250,24 +250,33 @@ function calib_config = validate_circle_radius(calib_config, field)
 end
 
 function calib_config = validate_distortion(calib_config, field)
-    % Make sure field is a string starting with "distortion."
-    if ~ischar(calib_config.(field)) || ~startsWith(calib_config.(field), 'distortion.')
-        field_struct_class_error(field, calib_config, 'value; it must start with "distortion."');
+    % field needs to be a string
+    if ~ischar(calib_config.(field))
+        field_struct_class_error(field, calib_config, 'string');
     end
 
-    % This will convert string to symbolic function
-    sym_distortion = eval(calib_config.(field));
+    % If it starts with "distortion.", then its assumed to be a function in
+    % +distortion, so just load it. Otherwise, its assumed to be a
+    % "symbolic function string", so convert it.
+    if startsWith(calib_config.(field), 'distortion.')
+        [~, sym_distortion] = evalc(calib_config.(field));
 
-    % Validate that this is indeed a symbolic function
-    if ~isa(sym_distortion, 'symfun')
-        field_struct_class_error(field, calib_config, 'symbolic function');
+        % Validate that this is indeed a symbolic function
+        if ~isa(sym_distortion, 'symfun')
+            field_struct_class_error(field, calib_config, 'symbolic function');
+        end
+    else
+        sym_distortion = util.str2sym(calib_config.(field));
     end
 
-    % Validate that this is a valid distortion function
+    % Validate arguments of distortion function
     args = arrayfun(@char, argnames(sym_distortion), 'UniformOutput', false);
     if ~all(strcmp(args(1:5), {'x_p', 'y_p', 'a', 'x_o', 'y_o'}))
         field_struct_class_error(field, calib_config, 'distortion function; it must have arguments which start with (x_p, y_p, a, x_o, y_o)');
     end
+
+    % Assign value
+    calib_config.(field) = sym_distortion;
 end
 
 function calib_config = validate_file(calib_config, field)

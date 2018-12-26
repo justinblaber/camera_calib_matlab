@@ -37,20 +37,17 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
 
     % Handle distortion function -----------------------------------------%
 
-    % Get symbolic function
-    sym_p_p2p_p_d = eval(calib_config.sym_p_p2p_p_d);
-
     % Get function handle
-    f_p_p2p_p_d = matlabFunction(sym_p_p2p_p_d);
+    f_p_p2p_p_d = matlabFunction(calib_config.sym_p_p2p_p_d);
 
     % Get number of distortion params
     num_params_d = alg.num_params_d(f_p_p2p_p_d);
 
     % Get function handles for distortion function partial derivatives
-    args_p_p2p_p_d = argnames(sym_p_p2p_p_d);
+    args_p_p2p_p_d = argnames(calib_config.sym_p_p2p_p_d);
     for i = 1:numel(args_p_p2p_p_d)
         % Differentiate
-        f_dp_p_d_dargs{i} = diff(sym_p_p2p_p_d, args_p_p2p_p_d(i)); %#ok<AGROW>
+        f_dp_p_d_dargs{i} = diff(calib_config.sym_p_p2p_p_d, args_p_p2p_p_d(i)); %#ok<AGROW>
 
         % Convert to function handle
         f_dp_p_d_dargs{i} = matlabFunction(f_dp_p_d_dargs{i}); %#ok<AGROW>

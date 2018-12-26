@@ -1,8 +1,13 @@
 function write_data(data, file_path, suffix)
     % Writes data struct to file. Note that data struct fields must only
-    % contain: string, double, logical, and cell arrays. If a field
-    % contains a cell array, then the elements of the cell array must be a
-    % string, double, or logical array (i.e. cell arrays cant be nested).
+    % contain:
+    %   string
+    %   double
+    %   logical
+    %   symbolic function
+    %   cell
+    %
+    % Also note that cell arrays can't be nested.
     %
     % Inputs:
     %   data - struct; struct to write to disk
@@ -48,6 +53,9 @@ function write_param(param, name, file_path)
             else
                 util.write_array(param, name, file_path);
             end
+        case 'symfun'
+            % Convert symbolic function to string, then write to disk
+            util.write_string(util.sym2str(param), name, file_path);
         otherwise
             error(['A param: "' name '" was ' ...
                    'found in calibration config that has ' ...

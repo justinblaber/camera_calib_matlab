@@ -38,18 +38,19 @@ function data = read_data(file_path)
 
         % Make sure line isn't blank or a comment
         if ~isempty(line) && line(1) ~= '%'
-            % Splitting string with equal sign should either result in 2 or
-            % 1 parts.
-            line_split = strsplit(line, '=');
-            if numel(line_split) == 2
-                % This line has a name; initialize cell if name doesn't exist
-                name = strtrim(line_split{1});
+            % Find equal sign(s)
+            line_find = strfind(line, '=');
+            if numel(line_find) > 0
+                % One or more equal sign; get name and param
+                name = strtrim(line(1:line_find(1)-1));
+                param = strtrim(line(line_find(1)+1:end));
+
+                % Initialize cell if name doesn't exist
                 if ~isfield(data, name)
                     data.(name) = {};
                 end
 
-                % Test if name is a num, string, or array
-                param = strtrim(line_split{2});
+                % Param is either a num, string, or array
                 if ~isempty(param)
                     % This is either a num or string
                     num = str2doubleorlogical(param);
@@ -68,8 +69,9 @@ function data = read_data(file_path)
                     data.(name){end+1} = [];
                     in_array = true;
                 end
-            elseif numel(line_split) == 1
-                % We must be "in" an array for this to be the case.
+            else
+                % No equal sign. We must be "in" an array for this to be
+                % the case.
                 if in_array
                     % Use name from previous iteration; attempt to
                     % concatenate array row.
@@ -102,9 +104,6 @@ function data = read_data(file_path)
                            'with value: "' line '". A line without an ' ...
                            '"=" is only valid for an array.']);
                 end
-            else
-                error(['Multiple assignments on line: "' num2str(num_line) ...
-                       '" with value: "' line '".']);
             end
         end
 

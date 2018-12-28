@@ -31,7 +31,7 @@ function jacob = dp_p_d_dextrinsic(p_ws, f_p_w2p_p, f_dp_p_dh, R, t, f_dp_p_d_da
     %       dy_p_d_N
 
     % Get homography
-    H = alg.a2A(a)*[R(:, 1) R(:, 2) t];
+    H = alg.ARt2H(alg.a2A(a), R, t);
 
     % Get p_p
     p_ps = f_p_w2p_p(p_ws, H);

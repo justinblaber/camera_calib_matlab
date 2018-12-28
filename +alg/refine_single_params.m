@@ -295,7 +295,7 @@ function [jacob, res] = calc_gauss_newton_params(params, p_ws, p_p_dss, idx_vali
                    3+num_params_d+6*(i-1)+6);
 
         % Get homography
-        H = alg.a2A(a)*[R(:, 1) R(:, 2) t];
+        H = alg.ARt2H(alg.a2A(a), R, t);
 
         % Get distorted pixel points
         p_p_d_ms = alg.p_w2p_p_d(p_ws, f_p_w2p_p, H, f_p_p2p_p_d, a, d);

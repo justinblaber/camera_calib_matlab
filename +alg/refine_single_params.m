@@ -297,11 +297,8 @@ function [jacob, res] = calc_gauss_newton_params(params, p_ws, p_p_dss, idx_vali
         % Get homography
         H = alg.a2A(a)*[R(:, 1) R(:, 2) t];
 
-        % Get pixel points
-        p_ps = f_p_w2p_p(p_ws, H);
-
         % Get distorted pixel points
-        p_p_d_ms = alg.p_p2p_p_d(p_ps, f_p_p2p_p_d, a, d);
+        p_p_d_ms = alg.p_w2p_p_d(p_ws, f_p_w2p_p, H, f_p_p2p_p_d, a, d);
 
         % Store residuals - take valid indices into account
         res(2*sum(vertcat(idx_valids{1:i-1}))+1:2*sum(vertcat(idx_valids{1:i}))) = ...

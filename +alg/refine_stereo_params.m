@@ -306,11 +306,8 @@ function [jacob, res] = calc_gauss_newton_params(params, p_ws, p_p_dss, idx_vali
         R_L = alg.euler2rot(params(7+2*num_params_d+6*(i-1):9+2*num_params_d+6*(i-1)));
         t_L = params(10+2*num_params_d+6*(i-1):12+2*num_params_d+6*(i-1));
 
-        % Get homography
-        H_L = alg.ARt2H(alg.a2A(a_L), R_L, t_L);
-
         % Get distorted pixel points
-        p_p_d_m_Ls = alg.p_w2p_p_d(p_ws, f_p_w2p_p, H_L, f_p_p2p_p_d, a_L, d_L);
+        p_p_d_m_Ls = alg.p_w2p_p_d(p_ws, f_p_w2p_p, R_L, t_L, f_p_p2p_p_d, a_L, d_L);
 
         % Store residuals - take valid indices into account
         res_L(2*sum(vertcat(idx_valids.L{1:i-1}))+1:2*sum(vertcat(idx_valids.L{1:i}))) = ...
@@ -351,11 +348,8 @@ function [jacob, res] = calc_gauss_newton_params(params, p_ws, p_p_dss, idx_vali
         R_R = R_s*R_L;
         t_R = R_s*t_L+t_s;
 
-        % Get homography
-        H_R = alg.ARt2H(alg.a2A(a_R), R_R, t_R);
-
         % Get distorted pixel points
-        p_p_d_m_Rs = alg.p_w2p_p_d(p_ws, f_p_w2p_p, H_R, f_p_p2p_p_d, a_R, d_R);
+        p_p_d_m_Rs = alg.p_w2p_p_d(p_ws, f_p_w2p_p, R_R, t_R, f_p_p2p_p_d, a_R, d_R);
 
         % Store residuals - take valid indices into account
         res_R(2*sum(vertcat(idx_valids.R{1:i-1}))+1:2*sum(vertcat(idx_valids.R{1:i}))) = ...

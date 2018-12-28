@@ -107,12 +107,12 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'ellipse_detect_d_cluster'                      , 'required', false, 'default', 2                              , 'validation_fun', @validate_pos_num);
     field_info(end+1) = struct('field', 'ellipse_detect_r1_cluster'                     , 'required', false, 'default', 2                              , 'validation_fun', @validate_pos_num);
     field_info(end+1) = struct('field', 'ellipse_detect_r2_cluster'                     , 'required', false, 'default', 2                              , 'validation_fun', @validate_pos_num);
-    field_info(end+1) = struct('field', 'four_points_detect_marker_templates_path'      , 'required', false, 'default', '+markers/marker_templates.txt', 'validation_fun', @validate_file);
-    field_info(end+1) = struct('field', 'four_points_detect_marker_config_path'         , 'required', false, 'default', '+markers/marker.conf'         , 'validation_fun', @validate_file);
-    field_info(end+1) = struct('field', 'four_points_detect_num_cutoff'                 , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_int);
-    field_info(end+1) = struct('field', 'four_points_detect_mse_cutoff'                 , 'required', false, 'default', 0.2                            , 'validation_fun', @validate_pos_num);
-    field_info(end+1) = struct('field', 'four_points_detect_padding_radial'             , 'required', false, 'default', 5                              , 'validation_fun', @validate_pos_int);
-    field_info(end+1) = struct('field', 'four_points_detect_array_min_size'             , 'required', false, 'default', 400                            , 'validation_fun', @validate_int);
+    field_info(end+1) = struct('field', 'fp_detect_marker_templates_path'               , 'required', false, 'default', '+markers/marker_templates.txt', 'validation_fun', @validate_file);
+    field_info(end+1) = struct('field', 'fp_detect_marker_config_path'                  , 'required', false, 'default', '+markers/marker.conf'         , 'validation_fun', @validate_file);
+    field_info(end+1) = struct('field', 'fp_detect_num_cutoff'                          , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_int);
+    field_info(end+1) = struct('field', 'fp_detect_mse_cutoff'                          , 'required', false, 'default', 0.2                            , 'validation_fun', @validate_pos_num);
+    field_info(end+1) = struct('field', 'fp_detect_padding_radial'                      , 'required', false, 'default', 5                              , 'validation_fun', @validate_pos_int);
+    field_info(end+1) = struct('field', 'fp_detect_array_min_size'                      , 'required', false, 'default', 400                            , 'validation_fun', @validate_int);
 
     % Plotting info
     field_info(end+1) = struct('field', 'camera_size'                                   , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_num_or_nan);

@@ -332,7 +332,7 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
         % Update homographies --------------------------------------------%
 
         for i = 1:num_boards
-            H_w2ps{i} = alg.a2A(a)*[Rs{i}(:, 1) Rs{i}(:, 2) ts{i}];
+            H_w2ps{i} = alg.ARt2H(alg.a2A(a), Rs{i}, ts{i});
         end
     end
 

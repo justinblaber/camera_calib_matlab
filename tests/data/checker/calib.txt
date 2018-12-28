@@ -89,12 +89,12 @@ ellipse_detect_lambda_factor = 2
 ellipse_detect_d_cluster = 2
 ellipse_detect_r1_cluster = 2
 ellipse_detect_r2_cluster = 2
-four_points_detect_marker_templates_path = +markers/marker_templates.txt
-four_points_detect_marker_config_path = +markers/marker.conf
-four_points_detect_num_cutoff = 20
-four_points_detect_mse_cutoff = 0.2
-four_points_detect_padding_radial = 5
-four_points_detect_array_min_size = 400
+fp_detect_marker_templates_path = +markers/marker_templates.txt
+fp_detect_marker_config_path = +markers/marker.conf
+fp_detect_num_cutoff = 20
+fp_detect_mse_cutoff = 0.2
+fp_detect_padding_radial = 5
+fp_detect_array_min_size = 400
 camera_size = NaN
 
 % Intrinsics

@@ -1,4 +1,4 @@
-function [p_fp_ps, debug] = four_points_detect_LoG(array, opts)
+function [p_fp_ps, debug] = fp_detect_LoG(array, opts)
     % Obtains the locations of the four points (fiducial markers) around
     % the calibration board.
     %
@@ -52,16 +52,16 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array, opts)
     %           distance of each other are clustered.
     %       .ellipse_detect_r2_cluster - scalar; ellipses within r2
     %           distance of each other are clustered.
-    %       .four_points_detect_marker_templates_path - path; path to
-    %           marker templates.
-    %       .four_points_detect_marker_config_path - path; path to marker
-    %           template config.
-    %       .four_points_detect_num_cutoff - scalar; mse cutoff for fast
+    %       .fp_detect_marker_templates_path - path; path to marker
+    %           templates.
+    %       .fp_detect_marker_config_path - path; path to marker template
+    %           config.
+    %       .fp_detect_num_cutoff - scalar; mse cutoff for fast template
+    %           thresholding.
+    %       .fp_detect_mse_cutoff - int; max number of ellipses for fast
     %           template thresholding.
-    %       .four_points_detect_mse_cutoff - int; max number of ellipses
-    %           for fast template thresholding.
-    %       .four_points_detect_padding_radial - int; radial padding used
-    %           for marker detection.
+    %       .fp_detect_padding_radial - int; radial padding used for marker
+    %           detection.
     %
     % Outputs:
     %   p_fp_ps - array; 4x2 array of four points in pixel coordinates
@@ -231,13 +231,13 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array, opts)
 
     % Load marker templates and normalize them with mean-norm normalization
     % since cross correlation is performed
-    marker_templates = util.read_data(opts.four_points_detect_marker_templates_path);
+    marker_templates = util.read_data(opts.fp_detect_marker_templates_path);
     for i = 1:4
         marker_templates.polar_patches{i} = alg.normalize_array(marker_templates.polar_patches{i}, 'mean-norm');
     end
 
     % Read marker config
-    marker_config = util.read_data(opts.four_points_detect_marker_config_path);
+    marker_config = util.read_data(opts.fp_detect_marker_config_path);
 
     % For theta, sample 1 more and then remove it; this allows [0 2*pi)
     theta_samples = linspace(0, 2*pi, marker_config.num_samples_theta+1)';
@@ -303,8 +303,8 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array, opts)
     % Get most powerful marker responses specified by num_cutoff and
     % mse_cutoff
     [~, idx_c_sorted] = sort(c_ft);
-    idx_c_sorted = idx_c_sorted(1:min(opts.four_points_detect_num_cutoff, end));
-    idx_c_sorted = idx_c_sorted(c_ft(idx_c_sorted) < opts.four_points_detect_mse_cutoff);
+    idx_c_sorted = idx_c_sorted(1:min(opts.fp_detect_num_cutoff, end));
+    idx_c_sorted = idx_c_sorted(c_ft(idx_c_sorted) < opts.fp_detect_mse_cutoff);
     ellipses = ellipses(idx_c_sorted, :);
 
     % Do more refined matching to distinguish four markers ---------------%
@@ -335,8 +335,8 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array, opts)
         polar_patch = alg.interp_array(array, p_polar_patch, marker_config.interp);
         polar_patches{i} = reshape(polar_patch, numel(theta_samples), []);
         polar_patches{i} = alg.normalize_array(polar_patches{i}, 'mean-norm'); % cross correlation is performed, so do mean-norm normalization
-        polar_patches{i} = polar_patches{i}(:, opts.four_points_detect_padding_radial+1: ...
-                                               end-opts.four_points_detect_padding_radial); % Trim according to padding
+        polar_patches{i} = polar_patches{i}(:, opts.fp_detect_padding_radial+1: ...
+                                               end-opts.fp_detect_padding_radial); % Trim according to padding
     end
 
     % Initialize four point output ---------------------------------------%
@@ -364,8 +364,8 @@ function [p_fp_ps, debug] = four_points_detect_LoG(array, opts)
         % Compare to four templates with circular cross correlation over
         % theta and slide over radius if padding is provided.
         for j = 1:4
-            cc_buf = zeros(numel(theta_samples), 2*opts.four_points_detect_padding_radial+1);
-            for m = 1:2*opts.four_points_detect_padding_radial+1
+            cc_buf = zeros(numel(theta_samples), 2*opts.fp_detect_padding_radial+1);
+            for m = 1:2*opts.fp_detect_padding_radial+1
                 for n = 1:size(polar_patches{i}, 2)
                     cc_buf(:, m) = cc_buf(:, m) + ifft(fft(polar_patches{i}(:, n)).*conj(fft(marker_templates.polar_patches{j}(:, m+n-1))));
                 end

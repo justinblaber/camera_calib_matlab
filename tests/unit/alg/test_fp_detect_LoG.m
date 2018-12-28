@@ -1,4 +1,4 @@
-function test_four_points_detect_LoG
+function test_fp_detect_LoG
     % Circle -------------------------------------------------------------%
     % Get tests path
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
@@ -29,11 +29,11 @@ function test_four_points_detect_LoG
     opts.ellipse_detect_d_cluster = 2;
     opts.ellipse_detect_r1_cluster = 2;
     opts.ellipse_detect_r2_cluster = 2;
-    opts.four_points_detect_marker_templates_path = '+markers/marker_templates.txt';
-    opts.four_points_detect_marker_config_path = '+markers/marker.conf';
-    opts.four_points_detect_num_cutoff = 20;
-    opts.four_points_detect_mse_cutoff = 0.2;
-    opts.four_points_detect_padding_radial = 5;
+    opts.fp_detect_marker_templates_path = '+markers/marker_templates.txt';
+    opts.fp_detect_marker_config_path = '+markers/marker.conf';
+    opts.fp_detect_num_cutoff = 20;
+    opts.fp_detect_mse_cutoff = 0.2;
+    opts.fp_detect_padding_radial = 5;
 
     % Set images
     path_cbs = {fullfile(tests_path, 'data', 'circle', '1.jpg'), ...
@@ -59,7 +59,7 @@ function test_four_points_detect_LoG
 
     for i = 1:3
         array = img_cbs(i).get_array_gs();
-        p_fp_ps = alg.four_points_detect_LoG(array, opts);
+        p_fp_ps = alg.fp_detect_LoG(array, opts);
 
         %{
         % Plot example
@@ -110,11 +110,11 @@ function test_four_points_detect_LoG
     opts.ellipse_detect_d_cluster = 2;
     opts.ellipse_detect_r1_cluster = 2;
     opts.ellipse_detect_r2_cluster = 2;
-    opts.four_points_detect_marker_templates_path = '+markers/marker_templates.txt';
-    opts.four_points_detect_marker_config_path = '+markers/marker.conf';
-    opts.four_points_detect_num_cutoff = 20;
-    opts.four_points_detect_mse_cutoff = 0.2;
-    opts.four_points_detect_padding_radial = 5;
+    opts.fp_detect_marker_templates_path = '+markers/marker_templates.txt';
+    opts.fp_detect_marker_config_path = '+markers/marker.conf';
+    opts.fp_detect_num_cutoff = 20;
+    opts.fp_detect_mse_cutoff = 0.2;
+    opts.fp_detect_padding_radial = 5;
 
     % Set images
     path_cbs = {fullfile(tests_path, 'data', 'checker', '1.jpg'), ...
@@ -140,7 +140,7 @@ function test_four_points_detect_LoG
 
     for i = 1:3
         array = img_cbs(i).get_array_gs();
-        p_fp_ps = alg.four_points_detect_LoG(array, opts);
+        p_fp_ps = alg.fp_detect_LoG(array, opts);
 
         %{
         % Plot example

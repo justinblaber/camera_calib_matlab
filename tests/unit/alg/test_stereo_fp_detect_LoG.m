@@ -1,4 +1,4 @@
-function test_stereo_four_points_detect_LoG
+function test_stereo_fp_detect_LoG
     % Get tests path
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 
@@ -23,7 +23,7 @@ function test_stereo_four_points_detect_LoG
                                 1.306646622571941   1.686530504572421;
                                 1.279088248919651   0.837305546570473];
 
-    p_fp_p_ss_test = alg.stereo_four_points_detect_LoG(img_cbs, calib_config);
+    p_fp_p_ss_test = alg.stereo_fp_detect_LoG(img_cbs, calib_config);
 
     %{
     % Plot example

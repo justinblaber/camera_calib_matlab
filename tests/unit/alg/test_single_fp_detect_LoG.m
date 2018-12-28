@@ -1,4 +1,4 @@
-function test_single_four_points_detect_LoG
+function test_single_fp_detect_LoG
     % Circle -------------------------------------------------------------%
     % Get tests path
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
@@ -28,7 +28,7 @@ function test_single_four_points_detect_LoG
                               2.761711229540450   0.855223708793761;
                               4.745691979350179   1.308546811147698];
 
-    p_fp_p_ss_test = alg.single_four_points_detect_LoG(img_cbs, calib_config);
+    p_fp_p_ss_test = alg.single_fp_detect_LoG(img_cbs, calib_config);
 
     for i = 1:3
         %{
@@ -79,7 +79,7 @@ function test_single_four_points_detect_LoG
                               2.825616445648377   1.274264610508025;
                               5.224669577204049   1.485639129893151];
 
-    p_fp_p_ss_test = alg.single_four_points_detect_LoG(img_cbs, calib_config);
+    p_fp_p_ss_test = alg.single_fp_detect_LoG(img_cbs, calib_config);
 
     for i = 1:3
         %{

@@ -1,4 +1,4 @@
-function [p_fp_ps, debug] = fp_detect_LoG(array, opts)
+function [p_fps, debug] = fp_detect_LoG(array, opts)
     % Obtains the locations of the four points (fiducial markers) around
     % the calibration board.
     %
@@ -64,8 +64,8 @@ function [p_fp_ps, debug] = fp_detect_LoG(array, opts)
     %           detection.
     %
     % Outputs:
-    %   p_fp_ps - array; 4x2 array of four points in pixel coordinates
-    %   debug - struct; used for debugging purposes
+    %   p_fps - array; 4x2 array of four points
+    %   debug - struct;
 
     % Get bounding box of array
     bb_array = alg.bb_array(array);
@@ -341,7 +341,7 @@ function [p_fp_ps, debug] = fp_detect_LoG(array, opts)
 
     % Initialize four point output ---------------------------------------%
 
-    p_fp_ps = nan(4, 2);
+    p_fps = nan(4, 2);
     debug = struct('blobs', [], 'ellipses', [], 'patch_matches', []);
 
     % Make sure there are at least four non-empty polar patches
@@ -390,7 +390,7 @@ function [p_fp_ps, debug] = fp_detect_LoG(array, opts)
         [idx_i_max, idx_j_max] = find(cc_mat == max(cc_mat(:)), 1);
 
         % Set coordinates
-        p_fp_ps(idx_j_max, :) = [ellipses(idx_i_max, 1) ellipses(idx_i_max, 2)];
+        p_fps(idx_j_max, :) = [ellipses(idx_i_max, 1) ellipses(idx_i_max, 2)];
 
         % Store best patch matches
         patch_matches(idx_j_max).patch = circshift(polar_patches{idx_i_max}, ...

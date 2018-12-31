@@ -10,9 +10,11 @@ function success = is_pos_def(A)
     % Initialize to false
     success = false;
 
-    % Do cholesky factorization
-    [~, p] = chol(A);
-    if p == 0
-        success = true;
+    if ~isempty(A)
+        % Do cholesky factorization
+        [~, p] = chol(A);
+        if p == 0
+            success = true;
+        end
     end
 end

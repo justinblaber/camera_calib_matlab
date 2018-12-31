@@ -6,7 +6,7 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     %   img_cbs - util.img; Nx1 calibration board images
     %   p_fp_p_dss - cell; Nx1 cell of four point boxes around the
     %       calibration board images in distorted pixel coordinates.
-    %   calib_config - struct; struct returned by util.read_calib_config()
+    %   calib_config - struct; struct returned by util.load_calib_config()
     %   intrin - struct; optional. If passed in, intrinsics will not be
     %       optimized.
     %       .A - array; 3x3 camera matrix
@@ -24,13 +24,13 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     %           .t - array; 3x1 translation vector
     %           .p_fp_p_ds - array; four point box around the calibration
     %               board image in distorted pixel coordinates
-    %           .p_cb_p_ds - array; calibration board points in distorted
-    %               pixel coordinates
+    %           .p_cb_p_ds - array; calibration board distorted pixel
+    %               points
     %           .cov_cb_p_ds - cell; covariances of calibration board
-    %               points in distorted pixel coordinates
+    %               distorted pixel points
     %           .idx_valid - array; valid calibration board points
     %           .debug - cell;
-    %       .debug; struct;
+    %       .debug - struct;
 
     util.verbose_disp('------', 1, calib_config);
     util.verbose_disp('Performing single calibration with four point distortion refinement method...', 1, calib_config);
@@ -53,10 +53,35 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
         f_dp_p_d_dargs{i} = matlabFunction(f_dp_p_d_dargs{i}); %#ok<AGROW>
     end
 
+    % --------------------------------------------------------------------%
+    % Get the following:
+    %   1) transform that converts calibration board world points to
+    %       calibration board pixel points
+    %   2) derivative of 1) wrt homography parameters
+    %   3) calibration board point refinement function
+    %   4) calibration board homography estimation function using
+    %       calibration board world points and calibration board pixel
+    %       points
+
+    switch calib_config.target_type
+        case 'checker'
+            f_p_cb_w2p_cb_p = @(p, H)alg.apply_homography_p2p(p, H);                             % 1)
+            f_dp_cb_p_dh = @(p, H)alg.dp_dh_p2p(p, H);                                           % 2)
+            f_refine_points_cb_w2p = @alg.refine_checker_points_cb_w2p;                          % 3)
+            f_homography_cb_w2p = @alg.homography_p2p;                                           % 4)
+        case 'circle'
+            f_p_cb_w2p_cb_p = @(p, H)alg.apply_homography_c2e(p, H, calib_config.circle_radius); % 1)
+            f_dp_cb_p_dh = @(p, H)alg.dp_dh_c2e(p, H, calib_config.circle_radius);               % 2)
+            f_refine_points_cb_w2p = @alg.refine_circle_points_cb_w2p;                           % 3)
+            f_homography_cb_w2p = @alg.homography_c2e;                                           % 4)
+        otherwise
+            error(['Unknown target type: "' calib_config.target_type '"']);
+    end
+
     % Perform calibration ------------------------------------------------%
 
-    % Get the calibration board points and the four point box on the
-    % calibration board in world coordinates.
+    % Get the calibration board points and the four point box in world
+    % coordinates
     p_cb_ws = alg.p_cb_w(calib_config);
     p_fp_ws = alg.p_fp_w(calib_config);
 
@@ -76,7 +101,7 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     % Get distortion refinement iterations
     if exist('intrin', 'var') || num_params_d == 0
         % Do not perform distortion refinement if intrinsics are already
-        % passed in or distortion function has no distortion parameters.
+        % passed in or if distortion function has no distortion parameters.
         distortion_refinement_it_cutoff = 1;
     else
         distortion_refinement_it_cutoff = calib_config.distortion_refinement_it_cutoff;
@@ -87,7 +112,7 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
         util.verbose_disp('---', 1, calib_config);
         util.verbose_disp(['Performing distortion refinement iteration: ' num2str(it) '...'], 1, calib_config);
 
-        % Get sub pixel calibration board points -------------------------%
+        % Get calibration board pixel points -----------------------------%
 
         % For first iteration, initialize homographies from world to pixel
         % coordinates using four point boxes
@@ -109,7 +134,7 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
                     p_fp_ps = p_fp_p_dss{i};
                 end
 
-                % Compute homography
+                % Compute homography - use direct p2p method
                 H_w2ps{i} = alg.homography_p2p(p_fp_ws, ...
                                                p_fp_ps, ...
                                                calib_config); %#ok<AGROW>
@@ -135,24 +160,11 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
                 array_cb = img_cbs(i).get_array_gs();
             end
 
-            % Get transform from world to pixel coordinates.
-            f_p_w2p_p = @(p)(alg.apply_homography_p2p(p, H_w2ps{i}));
-
-            % Get point refinement function
-            switch calib_config.target_type
-                case 'checker'
-                    f_refine_points = @alg.refine_checker_points_cb_w2p;
-                case 'circle'
-                    f_refine_points = @alg.refine_circle_points_cb_w2p;
-                otherwise
-                    error(['Unknown target type: "' calib_config.target_type '"']);
-            end
-
             % Refine points
-            [p_cb_pss{i}, cov_cb_pss{i}, idx_valids{i}, debugs{i}] = f_refine_points(array_cb, ...
-                                                                                     f_p_w2p_p, ...
-                                                                                     calib_config, ...
-                                                                                     calib_config.target_mat(:)); %#ok<AGROW>
+            [p_cb_pss{i}, cov_cb_pss{i}, idx_valids{i}, debug{i}] = f_refine_points_cb_w2p(array_cb, ...
+                                                                                           @(p)f_p_cb_w2p_cb_p(p, H_w2ps{i}), ...
+                                                                                           calib_config, ...
+                                                                                           calib_config.target_mat(:)); %#ok<AGROW>
 
             time = toc(t);
             util.verbose_fprintf(['Time ellapsed: %f seconds.' newline], time, 2, calib_config);
@@ -161,35 +173,21 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
         % Get initial intrinsic and extrinsic parameters -----------------%
 
         if it == 1
-            % Update homographies using refined points
+            % First, update homographies using calibration board pixel points
             for i = 1:num_boards
-                % Get the homography estimation function
-                switch calib_config.target_type
-                    case 'checker'
-                        % Use "point to point" method
-                        f_homography = @alg.homography_p2p;
-                    case 'circle'
-                        % Use "circle to ellipse" method
-                        f_homography = @alg.homography_c2e;
-                    otherwise
-                        error(['Unknown target type: "' calib_config.target_type '"']);
-                end
-
-                % Compute homography
                 if calib_config.apply_covariance_optimization
                     % Get sparse covariance matrix
                     cov_cb_p_sparse = cellfun(@sparse, cov_cb_pss{i}(idx_valids{i}), 'UniformOutput', false);
                     cov_cb_p_sparse = blkdiag(cov_cb_p_sparse{:});
 
-                    % Use covariance matrix in homography estimation
-                    H_w2ps{i} = f_homography(p_cb_ws(idx_valids{i}, :), ...
-                                             p_cb_pss{i}(idx_valids{i}, :), ...
-                                             calib_config, ...
-                                             cov_cb_p_sparse);
+                    H_w2ps{i} = f_homography_cb_w2p(p_cb_ws(idx_valids{i}, :), ...
+                                                    p_cb_pss{i}(idx_valids{i}, :), ...
+                                                    calib_config, ...
+                                                    cov_cb_p_sparse);
                 else
-                    H_w2ps{i} = f_homography(p_cb_ws(idx_valids{i}, :), ...
-                                             p_cb_pss{i}(idx_valids{i}, :), ...
-                                             calib_config);
+                    H_w2ps{i} = f_homography_cb_w2p(p_cb_ws(idx_valids{i}, :), ...
+                                                    p_cb_pss{i}(idx_valids{i}, :), ...
+                                                    calib_config);
                 end
             end
 
@@ -211,15 +209,15 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
             end
         end
 
-        % Apply distortion to points and covariances ---------------------%
+        % ----------------------------------------------------------------%
+        % Apply distortion to calibration board pixel points and
+        % covariances
 
-        % Update points
         for i = 1:num_boards
+            % Update points
             p_cb_p_dss{i} = alg.p_p2p_p_d(p_cb_pss{i}, f_p_p2p_p_d, a, d); %#ok<AGROW>
-        end
 
-        % Update covariances
-        for i = 1:num_boards
+            % Update covariances
             for j = 1:numel(cov_cb_pss{i})
                 % Initialize updated covariance - this ensures number of
                 % elements match cov_cb_pss
@@ -254,21 +252,6 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
         util.verbose_disp('---', 3, calib_config);
         util.verbose_disp('Refining single parameters...', 3, calib_config);
 
-        % Get transform that converts world points to pixel points and its
-        % corresponding derivatives wrt homography
-        switch calib_config.target_type
-            case 'checker'
-                % Use "point to point" method
-                f_p_w2p_p = @(p, H)alg.apply_homography_p2p(p, H);
-                f_dp_p_dh = @(p, H)alg.dp_dh_p2p(p, H);
-            case 'circle'
-                % Use "circle to ellipse" method
-                f_p_w2p_p = @(p, H)alg.apply_homography_c2e(p, H, calib_config.circle_radius);
-                f_dp_p_dh = @(p, H)alg.dp_dh_c2e(p, H, calib_config.circle_radius);
-            otherwise
-                error(['Unknown target type: "' calib_config.target_type '"']);
-        end
-
         % Gather params
         num_params = 3+num_params_d+6*num_boards;
         params = zeros(num_params, 1);
@@ -288,8 +271,8 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
             [params, cov_params] = alg.refine_single_params(params, ...
                                                             p_cb_p_dss, ...
                                                             idx_valids, ...
-                                                            f_p_w2p_p, ...
-                                                            f_dp_p_dh, ...
+                                                            f_p_cb_w2p_cb_p, ...
+                                                            f_dp_cb_p_dh, ...
                                                             f_p_p2p_p_d, ...
                                                             f_dp_p_d_dargs, ...
                                                             optimization_type, ...
@@ -299,8 +282,8 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
             [params, cov_params] = alg.refine_single_params(params, ...
                                                             p_cb_p_dss, ...
                                                             idx_valids, ...
-                                                            f_p_w2p_p, ...
-                                                            f_dp_p_dh, ...
+                                                            f_p_cb_w2p_cb_p, ...
+                                                            f_dp_cb_p_dh, ...
                                                             f_p_p2p_p_d, ...
                                                             f_dp_p_d_dargs, ...
                                                             optimization_type, ...
@@ -351,7 +334,7 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
         calib.extrin(i).p_cb_p_ds = p_cb_p_dss{i};
         calib.extrin(i).cov_cb_p_ds = cov_cb_p_dss{i};
         calib.extrin(i).idx_valid = idx_valids{i};
-        calib.extrin(i).debug = debugs{i};
+        calib.extrin(i).debug = debug{i};
     end
     % Debugging stuff
     calib.debug.params = params;

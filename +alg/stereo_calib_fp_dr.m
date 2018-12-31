@@ -11,7 +11,7 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     %           calibration board images in distorted pixel coordinates.
     %       .R - cell; Nx1 cell of four point boxes around the
     %           calibration board images in distorted pixel coordinates.
-    %   calib_config - struct; struct returned by util.read_calib_config()
+    %   calib_config - struct; struct returned by util.load_calib_config()
     %   intrin - struct; optional. If passed in, intrinsics will not be
     %       optimized.
     %       .L - struct;
@@ -30,7 +30,7 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     %           left to right camera
     %       .t_s - array; 3x1 translation vector describing translation
     %           from left to right camera
-    %       .debug; struct;
+    %       .debug - struct;
 
     util.verbose_disp('------------', 1, calib_config);
     util.verbose_disp('Performing stereo calibration with four point distortion refinement method...', 1, calib_config);
@@ -51,6 +51,23 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
 
         % Convert to function handle
         f_dp_p_d_dargs{i} = matlabFunction(f_dp_p_d_dargs{i}); %#ok<AGROW>
+    end
+
+    % --------------------------------------------------------------------%
+    % Get the following:
+    %   1) transform that converts calibration board world points to
+    %       calibration board pixel points
+    %   2) derivative of 1) wrt homography parameters
+
+    switch calib_config.target_type
+        case 'checker'
+            f_p_cb_w2p_cb_p = @(p, H)alg.apply_homography_p2p(p, H);                             % 1)
+            f_dp_cb_p_dh = @(p, H)alg.dp_dh_p2p(p, H);                                           % 2)
+        case 'circle'
+            f_p_cb_w2p_cb_p = @(p, H)alg.apply_homography_c2e(p, H, calib_config.circle_radius); % 1)
+            f_dp_cb_p_dh = @(p, H)alg.dp_dh_c2e(p, H, calib_config.circle_radius);               % 2)
+        otherwise
+            error(['Unknown target type: "' calib_config.target_type '"']);
     end
 
     % Perform calibration ------------------------------------------------%
@@ -153,21 +170,6 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     util.verbose_disp('---------', 1, calib_config);
     util.verbose_disp('Refining stereo parameters...', 1, calib_config);
 
-    % Get transform that converts world points to pixel points and its
-    % corresponding derivatives wrt homography
-    switch calib_config.target_type
-        case 'checker'
-            % Use "point to point" method
-            f_p_w2p_p = @(p, H)alg.apply_homography_p2p(p, H);
-            f_dp_p_dh = @(p, H)alg.dp_dh_p2p(p, H);
-        case 'circle'
-            % Use "circle to ellipse" method
-            f_p_w2p_p = @(p, H)alg.apply_homography_c2e(p, H, calib_config.circle_radius);
-            f_dp_p_dh = @(p, H)alg.dp_dh_c2e(p, H, calib_config.circle_radius);
-        otherwise
-            error(['Unknown target type: "' calib_config.target_type '"']);
-    end
-
     % Gather params
     num_params = 6+2*num_params_d+6*(num_boards+1);
     params = zeros(num_params, 1);
@@ -189,8 +191,8 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
         [params, cov_params] = alg.refine_stereo_params(params, ...
                                                         p_cb_p_dss, ...
                                                         idx_valids, ...
-                                                        f_p_w2p_p, ...
-                                                        f_dp_p_dh, ...
+                                                        f_p_cb_w2p_cb_p, ...
+                                                        f_dp_cb_p_dh, ...
                                                         f_p_p2p_p_d, ...
                                                         f_dp_p_d_dargs, ...
                                                         optimization_type, ...
@@ -200,8 +202,8 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
         [params, cov_params] = alg.refine_stereo_params(params, ...
                                                         p_cb_p_dss, ...
                                                         idx_valids, ...
-                                                        f_p_w2p_p, ...
-                                                        f_dp_p_dh, ...
+                                                        f_p_cb_w2p_cb_p, ...
+                                                        f_dp_cb_p_dh, ...
                                                         f_p_p2p_p_d, ...
                                                         f_dp_p_d_dargs, ...
                                                         optimization_type, ...

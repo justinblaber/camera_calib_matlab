@@ -1,14 +1,14 @@
-function [p_fp_pss, debugs] = single_fp_detect_LoG(img_cbs, calib_config)
+function [p_fp_pss, debug] = single_fp_detect_LoG(img_cbs, calib_config)
     % Obtains the locations of the four points (fiducial markers) around
     % the calibration board images.
     %
     % Inputs:
     %   img_cbs - util.img; Nx1 calibration board images
-    %   calib_config - struct; struct returned by util.read_calib_config()
+    %   calib_config - struct; struct returned by util.load_calib_config()
     %
     % Outputs:
     %   p_fp_pss - cell; Mx1 cell array of four points in pixel coordinates
-    %   debugs - struct; used for debugging purposes
+    %   debug - struct;
 
     util.verbose_disp('---', 1, calib_config);
 
@@ -30,7 +30,7 @@ function [p_fp_pss, debugs] = single_fp_detect_LoG(img_cbs, calib_config)
 
         % Get four points
         t = tic;
-        [p_fp_pss{i}, debugs(i)] = alg.fp_detect_LoG(array, calib_config); %#ok<AGROW>
+        [p_fp_pss{i}, debug(i)] = alg.fp_detect_LoG(array, calib_config); %#ok<AGROW>
         time = toc(t);
 
         % Scale four points

@@ -1,4 +1,4 @@
-function [y, x] = ndgrid_bb(bb)
+function [ys, xs] = ndgrid_bb(bb)
     % Given a bounding box, this will return the ndgrid of it.
     %
     % Inputs:
@@ -7,9 +7,9 @@ function [y, x] = ndgrid_bb(bb)
     %        bottom-right point]
     %
     % Outputs:
-    %   y - array; y coordinates returned by ndgrid
-    %   x - array; x coordinates returned by ndgrid
+    %   ys - array; y coordinates returned by ndgrid
+    %   xs - array; x coordinates returned by ndgrid
 
-    [y, x] = ndgrid(bb(1, 2):bb(2, 2), ...
-                    bb(1, 1):bb(2, 1));
+    [ys, xs] = ndgrid(bb(1, 2):bb(2, 2), ...
+                      bb(1, 1):bb(2, 1));
 end

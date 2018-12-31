@@ -1,5 +1,5 @@
 function array = normalize_array(array, type)
-    % Takes an input array and normalizes it between 0 and 1.
+    % Takes an input array and normalizes it.
     %
     % Inputs:
     %   array - array; MxN array

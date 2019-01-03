@@ -2,15 +2,8 @@ function test_refine_stereo_params
     % Do checker points with covariance ----------------------------------%
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
     load(fullfile(tests_path, 'data', 'refine_stereo_params_checker_cov.mat'));
-    opts.num_targets_height = 6;
-    opts.num_targets_width = 7;
-    opts.target_spacing = 100;
-    opts.refine_stereo_params_lambda_init = 0.010000000000000;
-    opts.refine_stereo_params_lambda_factor = 10;
-    opts.refine_stereo_params_it_cutoff = 200;
-    opts.refine_stereo_params_norm_cutoff = 1.000000000000000e-06;
-    opts.verbosity = 0;
     [params_test, cov_params_test] = alg.refine_stereo_params(params_init, ...
+                                                              p_cb_ws, ...
                                                               p_cb_p_dss, ...
                                                               idx_valids, ...
                                                               f_p_w2p_p, ...
@@ -30,15 +23,8 @@ function test_refine_stereo_params
     % Do checker points without covariance -------------------------------%
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
     load(fullfile(tests_path, 'data', 'refine_stereo_params_checker.mat'));
-    opts.num_targets_height = 6;
-    opts.num_targets_width = 7;
-    opts.target_spacing = 100;
-    opts.refine_stereo_params_lambda_init = 0.010000000000000;
-    opts.refine_stereo_params_lambda_factor = 10;
-    opts.refine_stereo_params_it_cutoff = 200;
-    opts.refine_stereo_params_norm_cutoff = 1.000000000000000e-06;
-    opts.verbosity = 0;
     [params_test, cov_params_test] = alg.refine_stereo_params(params_init, ...
+                                                              p_cb_ws, ...
                                                               p_cb_p_dss, ...
                                                               idx_valids, ...
                                                               f_p_w2p_p, ...

@@ -2,15 +2,8 @@ function test_refine_single_params
     % Do checker points with covariance ----------------------------------%
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
     load(fullfile(tests_path, 'data', 'refine_single_params_checker_cov.mat'));
-    opts.num_targets_height = 24;
-    opts.num_targets_width = 24;
-    opts.target_spacing = 50;
-    opts.refine_single_params_lambda_init = 0.010000000000000;
-    opts.refine_single_params_lambda_factor = 10;
-    opts.refine_single_params_it_cutoff = 200;
-    opts.refine_single_params_norm_cutoff = 1.000000000000000e-06;
-    opts.verbosity = 0;
     [params_test, cov_params_test] = alg.refine_single_params(params_init, ...
+                                                              p_cb_ws, ...
                                                               p_cb_p_dss, ...
                                                               idx_valids, ...
                                                               f_p_w2p_p, ...
@@ -30,15 +23,8 @@ function test_refine_single_params
     % Do checker points without covariance -------------------------------%
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
     load(fullfile(tests_path, 'data', 'refine_single_params_checker.mat'));
-    opts.num_targets_height = 24;
-    opts.num_targets_width = 24;
-    opts.target_spacing = 50;
-    opts.refine_single_params_lambda_init = 0.010000000000000;
-    opts.refine_single_params_lambda_factor = 10;
-    opts.refine_single_params_it_cutoff = 200;
-    opts.refine_single_params_norm_cutoff = 1.000000000000000e-06;
-    opts.verbosity = 0;
     [params_test, cov_params_test] = alg.refine_single_params(params_init, ...
+                                                              p_cb_ws, ...
                                                               p_cb_p_dss, ...
                                                               idx_valids, ...
                                                               f_p_w2p_p, ...
@@ -57,15 +43,8 @@ function test_refine_single_params
     % Do circle points with covariance -----------------------------------%
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
     load(fullfile(tests_path, 'data', 'refine_single_params_circle_cov.mat'));
-    opts.num_targets_height = 25;
-    opts.num_targets_width = 25;
-    opts.target_spacing = 50;
-    opts.refine_single_params_lambda_init = 0.010000000000000;
-    opts.refine_single_params_lambda_factor = 10;
-    opts.refine_single_params_it_cutoff = 200;
-    opts.refine_single_params_norm_cutoff = 1.000000000000000e-06;
-    opts.verbosity = 0;
     [params_test, cov_params_test] = alg.refine_single_params(params_init, ...
+                                                              p_cb_ws, ...
                                                               p_cb_p_dss, ...
                                                               idx_valids, ...
                                                               f_p_w2p_p, ...
@@ -85,15 +64,8 @@ function test_refine_single_params
     % Do circle points without covariance --------------------------------%
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
     load(fullfile(tests_path, 'data', 'refine_single_params_circle.mat'));
-    opts.num_targets_height = 25;
-    opts.num_targets_width = 25;
-    opts.target_spacing = 50;
-    opts.refine_single_params_lambda_init = 0.010000000000000;
-    opts.refine_single_params_lambda_factor = 10;
-    opts.refine_single_params_it_cutoff = 200;
-    opts.refine_single_params_norm_cutoff = 1.000000000000000e-06;
-    opts.verbosity = 0;
     [params_test, cov_params_test] = alg.refine_single_params(params_init, ...
+                                                              p_cb_ws, ...
                                                               p_cb_p_dss, ...
                                                               idx_valids, ...
                                                               f_p_w2p_p, ...

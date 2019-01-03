@@ -1,4 +1,4 @@
-function [params, cov_params] = refine_single_params(params, p_cb_p_dss, idx_valids, f_p_cb_w2p_cb_p, f_dp_cb_p_dh, f_p_p2p_p_d, f_dp_p_d_dargs, optimization_type, opts, cov_cb_p_dss)
+function [params, cov_params] = refine_single_params(params, p_cb_ws, p_cb_p_dss, idx_valids, f_p_cb_w2p_cb_p, f_dp_cb_p_dh, f_p_p2p_p_d, f_dp_p_d_dargs, optimization_type, opts, cov_cb_p_dss)
     % This will compute nonlinear refinement of intrinsic and extrinsic
     % camera parameters.
     %
@@ -9,6 +9,7 @@ function [params, cov_params] = refine_single_params(params, p_cb_p_dss, idx_val
     %           [alpha; x_o; y_o; d_1; ... d_M; ...
     %            theta_x1; theta_y1; theta_z1; t_x1; t_y1; t_z1; ...
     %            theta_xN; theta_yN; theta_zN; t_xN; t_yN; t_zN]
+    %   p_cb_ws - array; Nx2 array of calibration board world points
     %   p_cb_p_dss - cell; Nx1 cell array of calibration board distorted
     %       pixel points
     %   idx_valids - cell; Nx1 cell array of "valid" calibration board
@@ -23,11 +24,6 @@ function [params, cov_params] = refine_single_params(params, p_cb_p_dss, idx_val
     %       input arguments.
     %   optimization_type - string; describes type of optimization
     %   opts - struct;
-    %       .num_targets_height - int; number of targets in the "height"
-    %           dimension
-    %       .num_targets_width - int; number of targets in the "width"
-    %           dimension
-    %       .target_spacing - scalar; space between targets
     %       .refine_single_params_lambda_init - scalar; initial lambda for
     %           Levenberg-Marquardt method
     %       .refine_single_params_lambda_factor - scalar; scaling factor
@@ -50,9 +46,6 @@ function [params, cov_params] = refine_single_params(params, p_cb_p_dss, idx_val
     %            theta_xN; theta_yN; theta_zN; t_xN; t_yN; t_zN]
     %   cov_params - array; (3+M+6*N)x(3+M+6*N) array of covariances of
     %       intrinsic and extrinsic parameters
-
-    % Get calibration board world points
-    p_cb_ws = alg.p_cb_w(opts);
 
     % Get number of boards
     num_boards = numel(p_cb_p_dss);

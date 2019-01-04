@@ -8,6 +8,7 @@ function test_parse_single_calib_fp
     data.p_fp_p_ds_1 = [];
     data.p_cb_p_ds_1 = [];
     data.cov_cb_p_ds_1 = [];
+    data.p_cb_p_d_ms_1 = [];
     data.idx_valid_1 = [];
 
     data.img_path_2 = '';
@@ -16,6 +17,7 @@ function test_parse_single_calib_fp
     data.p_fp_p_ds_2 = [];
     data.p_cb_p_ds_2 = [];
     data.cov_cb_p_ds_2 = [];
+    data.p_cb_p_d_ms_2 = [];
     data.idx_valid_2 = [];
 
     [calib, data] = util.parse_single_calib_fp(data);
@@ -37,5 +39,6 @@ function test_parse_single_calib_fp
     assert(isfield(calib.extrin, 'p_fp_p_ds'));
     assert(isfield(calib.extrin, 'p_cb_p_ds'));
     assert(isfield(calib.extrin, 'cov_cb_p_ds'));
+    assert(isfield(calib.extrin, 'p_cb_p_d_ms'));
     assert(isfield(calib.extrin, 'idx_valid'));
 end

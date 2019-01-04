@@ -28,6 +28,7 @@ function test_load_stereo_calib_fp
     assert(isfield(calib.L.extrin, 'p_fp_p_ds'));
     assert(isfield(calib.L.extrin, 'p_cb_p_ds'));
     assert(isfield(calib.L.extrin, 'cov_cb_p_ds'));
+    assert(isfield(calib.L.extrin, 'p_cb_p_d_ms'));
     assert(isfield(calib.L.extrin, 'idx_valid'));
 
     % Right --------------------------------------------------------------%
@@ -49,6 +50,7 @@ function test_load_stereo_calib_fp
     assert(isfield(calib.R.extrin, 'p_fp_p_ds'));
     assert(isfield(calib.R.extrin, 'p_cb_p_ds'));
     assert(isfield(calib.R.extrin, 'cov_cb_p_ds'));
+    assert(isfield(calib.R.extrin, 'p_cb_p_d_ms'));
     assert(isfield(calib.R.extrin, 'idx_valid'));
 
     % R_s and t_s --------------------------------------------------------%

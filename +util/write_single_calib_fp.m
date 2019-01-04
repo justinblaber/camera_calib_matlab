@@ -12,10 +12,12 @@ function write_single_calib_fp(calib, file_path, suffix)
     %           .t - array; 3x1 translation vector
     %           .p_fp_p_ds - array; four point box around the calibration
     %               board image in distorted pixel coordinates
-    %           .p_cb_p_ds - array; calibration board points in distorted
-    %               pixel coordinates
+    %           .p_cb_p_ds - array; calibration board distorted pixel
+    %               points
     %           .cov_cb_p_ds - cell; covariances of calibration board
-    %               points in distorted pixel coordinates
+    %               distorted pixel points
+    %           .p_cb_p_d_ms - array; calibration board model distorted
+    %               pixel points
     %           .idx_valid - array; valid calibration board points
     %   file_path - string; path to calibration
     %   suffix - string; optional. suffix to add to names
@@ -32,11 +34,11 @@ function write_single_calib_fp(calib, file_path, suffix)
 
     util.write_comment(['Intrinsics' suffix], file_path);
 
-    % Write A
+    % Camera matrix
     util.write_array(calib.intrin.A, ['A' suffix], file_path);
     util.write_newline(file_path);
 
-    % Write distortion
+    % Distortion coefficients
     util.write_array(calib.intrin.d, ['d' suffix], file_path);
     util.write_newline(file_path);
 
@@ -45,7 +47,7 @@ function write_single_calib_fp(calib, file_path, suffix)
     for i = 1:numel(calib.extrin)
         util.write_comment(['Extrinsics_' num2str(i) suffix], file_path);
 
-        % Image - write path
+        % Calibration board image - write path
         util.write_string(calib.extrin(i).img_cb.get_path(), ['img_path_' num2str(i) suffix], file_path);
         util.write_newline(file_path);
 
@@ -57,18 +59,22 @@ function write_single_calib_fp(calib, file_path, suffix)
         util.write_array(calib.extrin(i).t, ['t_' num2str(i) suffix], file_path);
         util.write_newline(file_path);
 
-        % Four points in distorted pixel coordinates
+        % Four point box around the calibration board image in distorted pixel coordinates
         util.write_array(calib.extrin(i).p_fp_p_ds, ['p_fp_p_ds_' num2str(i) suffix], file_path);
         util.write_newline(file_path);
 
-        % Calibration board points in distorted pixel coordinates
+        % Calibration board distorted pixel points
         util.write_array(calib.extrin(i).p_cb_p_ds, ['p_cb_p_ds_' num2str(i) suffix], file_path);
         util.write_newline(file_path);
 
-        % Covariances of board points in distorted pixel coordinates
+        % Covariances of calibration board distorted pixel points
         for j = 1:numel(calib.extrin(i).cov_cb_p_ds)
             util.write_array(calib.extrin(i).cov_cb_p_ds{j}, ['cov_cb_p_ds_' num2str(i) suffix], file_path);
         end
+        util.write_newline(file_path);
+        
+        % Calibration board model distorted pixel points
+        util.write_array(calib.extrin(i).p_cb_p_d_ms, ['p_cb_p_d_ms_' num2str(i) suffix], file_path);
         util.write_newline(file_path);
 
         % Valid calibration board points

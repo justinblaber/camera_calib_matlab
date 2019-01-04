@@ -74,7 +74,7 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
 
     % Get calibration board world points
     p_cb_ws = alg.p_cb_w(calib_config);
-    
+
     % Get number of boards
     num_boards = numel(img_cbs.L);
 
@@ -270,8 +270,10 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     for i = 1:num_boards
         calib.L.extrin(i).R = Rs.L{i};
         calib.L.extrin(i).t = ts.L{i};
+        calib.L.extrin(i).p_cb_p_d_ms = alg.p_cb_w2p_cb_p_d(p_cb_ws, f_p_cb_w2p_cb_p, Rs.L{i}, ts.L{i}, f_p_p2p_p_d, a.L, d.L);
         calib.R.extrin(i).R = Rs.R{i};
         calib.R.extrin(i).t = ts.R{i};
+        calib.R.extrin(i).p_cb_p_d_ms = alg.p_cb_w2p_cb_p_d(p_cb_ws, f_p_cb_w2p_cb_p, Rs.R{i}, ts.R{i}, f_p_p2p_p_d, a.R, d.R);
     end
     % Store relative extrinsics
     calib.R_s = R_s;

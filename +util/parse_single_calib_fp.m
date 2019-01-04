@@ -16,10 +16,12 @@ function [calib, data] = parse_single_calib_fp(data, suffix)
     %           .t - array; 3x1 translation vector
     %           .p_fp_p_ds - array; four point box around the calibration
     %               board image in distorted pixel coordinates
-    %           .p_cb_p_ds - array; calibration board points in distorted
-    %               pixel coordinates
+    %           .p_cb_p_ds - array; calibration board distorted pixel
+    %               points
     %           .cov_cb_p_ds - cell; covariances of calibration board
-    %               points in distorted pixel coordinates
+    %               distorted pixel points
+    %           .p_cb_p_d_ms - array; calibration board model distorted
+    %               pixel points
     %           .idx_valid - array; valid calibration board points
     %   data - struct; input data with calibration removed.
 
@@ -29,17 +31,17 @@ function [calib, data] = parse_single_calib_fp(data, suffix)
 
     % Read intrinsics ----------------------------------------------------%
 
-    % Read A
+    % Camera matrix
     [calib.intrin.A, data] = util.read_and_remove(data, ['A' suffix]);
 
-    % Read distortion
+    % Distortion coefficients
     [calib.intrin.d, data] = util.read_and_remove(data, ['d' suffix]);
 
     % Read extrinsics ----------------------------------------------------%
 
     i = 1;
     while isfield(data, ['img_path_' num2str(i) suffix])
-        % Image - read path and then convert to util.img
+        % Calibration board image - read path and then convert to util.img
         [calib.extrin(i).img_cb, data] = util.read_and_remove(data, ['img_path_' num2str(i) suffix]);
         calib.extrin(i).img_cb = util.img(calib.extrin(i).img_cb);
 
@@ -51,17 +53,21 @@ function [calib, data] = parse_single_calib_fp(data, suffix)
         % Translation
         [calib.extrin(i).t, data] = util.read_and_remove(data, ['t_' num2str(i) suffix]);
 
-        % Four points in distorted pixel coordinates
+        % Four point box around the calibration board image in distorted pixel coordinates
         [calib.extrin(i).p_fp_p_ds, data] = util.read_and_remove(data, ['p_fp_p_ds_' num2str(i) suffix]);
 
-        % Calibration board points in distorted pixel coordinates
+        % Calibration board distorted pixel points
         [calib.extrin(i).p_cb_p_ds, data] = util.read_and_remove(data, ['p_cb_p_ds_' num2str(i) suffix]);
 
-        % Covariances of board points in distorted pixel coordinates
+        % Covariances of calibration board distorted pixel points
         [calib.extrin(i).cov_cb_p_ds, data] = util.read_and_remove(data, ['cov_cb_p_ds_' num2str(i) suffix]);
 
-        % Valid calibration board points
+        % Calibration board model distorted pixel points
+        [calib.extrin(i).p_cb_p_d_ms, data] = util.read_and_remove(data, ['p_cb_p_d_ms_' num2str(i) suffix]);
+        
+        % Valid calibration board points - convert to logical
         [calib.extrin(i).idx_valid, data] = util.read_and_remove(data, ['idx_valid_' num2str(i) suffix]);
+        calib.extrin(i).idx_valid = logical(calib.extrin(i).idx_valid);
 
         % Increment
         i = i + 1;

@@ -13,10 +13,12 @@ function save_single_calib_fp(calib, file_path)
     %           .t - array; 3x1 translation vector
     %           .p_fp_p_ds - array; four point box around the calibration
     %               board image in distorted pixel coordinates
-    %           .p_cb_p_ds - array; calibration board points in distorted
-    %               pixel coordinates
+    %           .p_cb_p_ds - array; calibration board distorted pixel
+    %               points
     %           .cov_cb_p_ds - cell; covariances of calibration board
-    %               points in distorted pixel coordinates
+    %               distorted pixel points
+    %           .p_cb_p_d_ms - array; calibration board model distorted
+    %               pixel points
     %           .idx_valid - array; valid calibration board points
     %   file_path - string; path to calibration
     %

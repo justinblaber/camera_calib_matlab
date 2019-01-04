@@ -28,6 +28,8 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     %               points
     %           .cov_cb_p_ds - cell; covariances of calibration board
     %               distorted pixel points
+    %           .p_cb_p_d_ms - array; calibration board model distorted
+    %               pixel points
     %           .idx_valid - array; valid calibration board points
     %           .debug - cell;
     %       .debug - struct;
@@ -335,6 +337,7 @@ function calib = single_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
         calib.extrin(i).p_fp_p_ds = p_fp_p_dss{i};
         calib.extrin(i).p_cb_p_ds = p_cb_p_dss{i};
         calib.extrin(i).cov_cb_p_ds = cov_cb_p_dss{i};
+        calib.extrin(i).p_cb_p_d_ms = alg.p_cb_w2p_cb_p_d(p_cb_ws, f_p_cb_w2p_cb_p, Rs{i}, ts{i}, f_p_p2p_p_d, a, d);
         calib.extrin(i).idx_valid = idx_valids{i};
         calib.extrin(i).debug = debug{i};
     end

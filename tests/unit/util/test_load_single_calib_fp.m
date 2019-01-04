@@ -22,5 +22,6 @@ function test_load_single_calib_fp
     assert(isfield(calib.extrin, 'p_fp_p_ds'));
     assert(isfield(calib.extrin, 'p_cb_p_ds'));
     assert(isfield(calib.extrin, 'cov_cb_p_ds'));
+    assert(isfield(calib.extrin, 'p_cb_p_d_ms'));
     assert(isfield(calib.extrin, 'idx_valid'));
 end

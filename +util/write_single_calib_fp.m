@@ -72,7 +72,7 @@ function write_single_calib_fp(calib, file_path, suffix)
             util.write_array(calib.extrin(i).cov_cb_p_ds{j}, ['cov_cb_p_ds_' num2str(i) suffix], file_path);
         end
         util.write_newline(file_path);
-        
+
         % Calibration board model distorted pixel points
         util.write_array(calib.extrin(i).p_cb_p_d_ms, ['p_cb_p_d_ms_' num2str(i) suffix], file_path);
         util.write_newline(file_path);

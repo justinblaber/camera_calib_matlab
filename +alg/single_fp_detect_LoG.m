@@ -13,7 +13,7 @@ function [p_fp_pss, debug] = single_fp_detect_LoG(img_cbs, calib_config)
     util.verbose_disp('---', 1, calib_config);
 
     % Get scale factor
-    if calib_config.fp_detect_array_min_size == 0
+    if isnan(calib_config.fp_detect_array_min_size)
         sf = 1;
     else
         size_array = [img_cbs(1).get_height() img_cbs(1).get_width()];

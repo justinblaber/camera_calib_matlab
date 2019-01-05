@@ -64,7 +64,7 @@ function [calib, data] = parse_single_calib_fp(data, suffix)
 
         % Calibration board model distorted pixel points
         [calib.extrin(i).p_cb_p_d_ms, data] = util.read_and_remove(data, ['p_cb_p_d_ms_' num2str(i) suffix]);
-        
+
         % Valid calibration board points - convert to logical
         [calib.extrin(i).idx_valid, data] = util.read_and_remove(data, ['idx_valid_' num2str(i) suffix]);
         calib.extrin(i).idx_valid = logical(calib.extrin(i).idx_valid);

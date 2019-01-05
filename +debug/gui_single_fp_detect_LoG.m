@@ -1,5 +1,5 @@
-function gui_single_four_points_detect(four_points_ps, four_points_debugs, cb_imgs, calib_config, f)
-    % GUI for debugging four point detection
+function gui_single_fp_detect_LoG(p_fpss, debug_single_fp_detect_LoG, img_cbs, calib_config, f)
+    % GUI for debugging four point LoG detection
 
     if ~exist('f', 'var')
         f = figure();
@@ -12,13 +12,13 @@ function gui_single_four_points_detect(four_points_ps, four_points_debugs, cb_im
     % Initialize parameters
     mode = 'whole';
     idx_board = 1;
-    num_boards = numel(cb_imgs);
-    axes_cal_board = matlab.graphics.axis.Axes.empty();
+    num_boards = numel(img_cbs);
+    axes_cb = matlab.graphics.axis.Axes.empty();
 
     % Set axes parameters
     padding_height = 0.075;
     padding_width = 0.025;
-    cal_board_width = 0.7;
+    width_cb = 0.7;
 
     % Initialize plot
     plot_gui();
@@ -116,38 +116,36 @@ function gui_single_four_points_detect(four_points_ps, four_points_debugs, cb_im
             clf(f);
 
             % Set axes
-            single_patch_height = (1-5*padding_height)/4;
-            single_patch_width = 1-cal_board_width-3*padding_width;
+            height_patch = (1-5*padding_height)/4;
+            width_patch = 1-width_cb-3*padding_width;
 
-            pos_cal_board = [1-cal_board_width-padding_width padding_height cal_board_width 1-2*padding_height];
-            axes_cal_board = axes('Position', pos_cal_board, 'Parent', f);
+            pos_cb = [1-width_cb-padding_width padding_height width_cb 1-2*padding_height];
+            axes_cb = axes('Position', pos_cb, 'Parent', f);
 
             axes_patches = matlab.graphics.axis.Axes.empty();
             for i = 1:4
                 pos_patch = [padding_width ...
-                             padding_height+(4-i)*(single_patch_height+padding_height)  ...
-                             single_patch_width ...
-                             single_patch_height];
+                             padding_height+(4-i)*(height_patch+padding_height)  ...
+                             width_patch ...
+                             height_patch];
                 axes_patches(i) = axes('Position', pos_patch, 'Parent', f);
             end
 
             % Plot debugging info
-            debug.plot_four_point_debug(four_points_ps{idx_board}, ...
-                                        four_points_debugs(idx_board), ...
-                                        cb_imgs(idx_board), ...
-                                        calib_config, ...
-                                        axes_cal_board);
-            title(axes_cal_board, 'Blobs, ellipses, and four points', 'FontSize', 10);
-            xlabel(axes_cal_board, ['Path: ' cb_imgs(idx_board).get_path()], ...
+            debug.plot_debug_single_fp_detect_LoG(p_fpss{idx_board}, ...
+                                                  debug_single_fp_detect_LoG(idx_board), ...
+                                                  img_cbs(idx_board), ...
+                                                  calib_config, ...
+                                                  axes_cb);
+            title(axes_cb, 'Blobs, ellipses, and four points', 'FontSize', 10);
+            xlabel(axes_cb, ['Path: ' img_cbs(idx_board).get_path()], ...
                    'FontSize', 8, 'Interpreter', 'none');
 
             % Plot patches
             for i = 1:4
-                debug.plot_patch(four_points_debugs(idx_board).patch_matches(i).patch, ...
-                                 four_points_debugs(idx_board).patch_matches(i).template, ...
-                                 i, ...
-                                 four_points_debugs(idx_board).patch_matches(i).cc_val, ...
-                                 axes_patches(i));
+                debug.plot_patch_match(debug_single_fp_detect_LoG(idx_board).patch_matches(i), ...
+                                       i, ...
+                                       axes_patches(i));
             end
         catch e
             if ishandle(f)
@@ -164,23 +162,22 @@ function gui_single_four_points_detect(four_points_ps, four_points_debugs, cb_im
             % Set bounding box
             switch mode
                 case 'whole'
-                    [l, r, t, b] = img_bb(cb_imgs(idx_board), calib_config);
+                    bb = bb_img(img_cbs(idx_board), calib_config);
                 case '1'
-                    [l, r, t, b] = ellipse_bb(four_points_debugs(idx_board).patch_matches(1).ellipse);
+                    bb = bb_ellipse(debug_single_fp_detect_LoG(idx_board).patch_matches(1).ellipse);
                 case '2'
-                    [l, r, t, b] = ellipse_bb(four_points_debugs(idx_board).patch_matches(2).ellipse);
+                    bb = bb_ellipse(debug_single_fp_detect_LoG(idx_board).patch_matches(2).ellipse);
                 case '3'
-                    [l, r, t, b] = ellipse_bb(four_points_debugs(idx_board).patch_matches(3).ellipse);
+                    bb = bb_ellipse(debug_single_fp_detect_LoG(idx_board).patch_matches(3).ellipse);
                 case '4'
-                    [l, r, t, b] = ellipse_bb(four_points_debugs(idx_board).patch_matches(4).ellipse);
+                    bb = bb_ellipse(debug_single_fp_detect_LoG(idx_board).patch_matches(4).ellipse);
                 case 'worst'
                     % Get the worst patch
-                    [~, idx] = min([four_points_debugs(idx_board).patch_matches.cc_val]);
-                    [l, r, t, b] = ellipse_bb(four_points_debugs(idx_board).patch_matches(idx).ellipse);
+                    [~, idx] = min([debug_single_fp_detect_LoG(idx_board).patch_matches.val_cc]);
+                    bb = bb_ellipse(debug_single_fp_detect_LoG(idx_board).patch_matches(idx).ellipse);
             end
-            set(axes_cal_board, ...
-                'Xlim', [l r], ...
-                'Ylim', [t b]);
+
+            set(axes_cb, 'Xlim', bb(:, 1), 'Ylim', bb(:, 2));
         catch e
             if ishandle(f)
                 rethrow(e);
@@ -189,27 +186,37 @@ function gui_single_four_points_detect(four_points_ps, four_points_debugs, cb_im
     end
 end
 
-function [l, r, t, b] = img_bb(cb_img, calib_config)
-    img_height = cb_img.get_height();
-    img_width = cb_img.get_width();
-    if calib_config.four_point_detect_scaled_array_min_size == realmax
-        scale_factor = 1;
+function bb = bb_img(img_cb, calib_config)
+    % Get size of image
+    height_img = img_cb.get_height();
+    width_img = img_cb.get_width();
+
+    % Get scale factor
+    if isnan(calib_config.fp_detect_array_min_size)
+        sf = 1;
     else
-        scale_factor = calib_config.four_point_detect_scaled_array_min_size/min([img_height img_width]);
+        sf = calib_config.fp_detect_array_min_size/min([height_img width_img]);
     end
-    l = 0.5;
-    r = img_width*scale_factor+0.5;
-    t = 0.5;
-    b = img_height*scale_factor+0.5;
+
+    % Set bounding box
+    bb = [0.5 0.5; ...
+          width_img*sf+0.5 height_img*sf+0.5];
 end
 
-function [l, r, t, b] = ellipse_bb(ellipse)
-    zoom_factor = 10;
-    width_ellipse = sqrt(ellipse.r1^2*cos(ellipse.rot)^2 + ellipse.r2^2*sin(ellipse.rot)^2);
-    height_ellipse = sqrt(ellipse.r1^2*sin(ellipse.rot)^2 + ellipse.r2^2*cos(ellipse.rot)^2);
-    max_size = max(width_ellipse, height_ellipse);
-    l = ellipse.x-zoom_factor*max_size;
-    r = ellipse.x+zoom_factor*max_size;
-    t = ellipse.y-zoom_factor*max_size;
-    b = ellipse.y+zoom_factor*max_size;
+function bb = bb_ellipse(e)
+    % Apply scale factor to ellipse
+    sf = 10;
+    e(3:4) = sf*e(3:4);
+
+    % Get bounding box
+    bb = alg.bb_ellipse(e);
+
+    % Get height and width
+    h = bb(2, 2) - bb(1, 2);
+    w = bb(2, 1) - bb(1, 1);
+
+    % Set bounding box to max size to make it square
+    max_size = max(h, w);
+    bb = [e(1)-max_size/2 e(2)-max_size/2;
+          e(1)+max_size/2 e(2)+max_size/2];
 end

@@ -112,7 +112,7 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'fp_detect_num_cutoff'                          , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_int);
     field_info(end+1) = struct('field', 'fp_detect_mse_cutoff'                          , 'required', false, 'default', 0.2                            , 'validation_fun', @validate_pos_num);
     field_info(end+1) = struct('field', 'fp_detect_padding_radial'                      , 'required', false, 'default', 5                              , 'validation_fun', @validate_pos_int);
-    field_info(end+1) = struct('field', 'fp_detect_array_min_size'                      , 'required', false, 'default', 400                            , 'validation_fun', @validate_int);
+    field_info(end+1) = struct('field', 'fp_detect_array_min_size'                      , 'required', false, 'default', 400                            , 'validation_fun', @validate_pos_int_or_nan);
 
     % Plotting info
     field_info(end+1) = struct('field', 'camera_size'                                   , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_num_or_nan);
@@ -171,6 +171,13 @@ end
 function calib_config = validate_pos_int(calib_config, field)
     if ~alg.is_pos(calib_config.(field)) || ~alg.is_int(calib_config.(field))
         field_struct_class_error(field, calib_config, 'positive integer');
+    end
+end
+
+function calib_config = validate_pos_int_or_nan(calib_config, field)
+    if (~alg.is_pos(calib_config.(field)) || ~alg.is_int(calib_config.(field))) && ...
+       ~isnan(calib_config.(field))
+        field_struct_class_error(field, calib_config, 'positive integer or nan');
     end
 end
 

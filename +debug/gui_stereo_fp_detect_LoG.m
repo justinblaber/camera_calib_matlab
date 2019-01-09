@@ -16,6 +16,13 @@ function gui_stereo_fp_detect_LoG(p_fpss, debug_stereo_fp_detect_LoG, img_cbs, c
     axes_cb_L = matlab.graphics.axis.Axes.empty();
     axes_cb_R = matlab.graphics.axis.Axes.empty();
 
+    % Get scale factor
+    if isnan(calib_config.fp_detect_array_min_size)
+        sf = 1;
+    else
+        sf = calib_config.fp_detect_array_min_size/min([img_cbs.L(1).get_height() img_cbs.L(1).get_width()]);
+    end
+
     % Set axes parameters
     padding_height = 0.075;
     padding_width = 0.025;
@@ -141,35 +148,58 @@ function gui_stereo_fp_detect_LoG(p_fpss, debug_stereo_fp_detect_LoG, img_cbs, c
                 axes_patches_R(i) = axes('Position', pos_patch_R, 'Parent', f);
             end
 
-            % Plot debugging info
-            debug.plot_debug_single_fp_detect_LoG(p_fpss.L{idx_board}, ...
-                                                  debug_stereo_fp_detect_LoG.L(idx_board), ...
-                                                  img_cbs.L(idx_board), ...
-                                                  calib_config, ...
-                                                  axes_cb_L);
+            % Plot debugging info for left -------------------------------%
+
+            % Resize array
+            array_L = img_cbs.L(idx_board).get_array_gs();
+            array_L = imresize(array_L, sf);
+
+            % Rescale four points
+            p_fps_L = alg.p2imresize(p_fpss.L{idx_board}, sf);
+
+            % Plot
+            debug.plot_single_fp_detect_LoG(array_L, ...
+                                            p_fps_L, ...
+                                            debug_stereo_fp_detect_LoG.L(idx_board).blobs, ...
+                                            debug_stereo_fp_detect_LoG.L(idx_board).ellipses, ...
+                                            axes_cb_L);
             title(axes_cb_L, 'Blobs, ellipses, and four points (L)', 'FontSize', 10);
             xlabel(axes_cb_L, ['Path: ' img_cbs.L(idx_board).get_path()], ...
                    'FontSize', 8, 'Interpreter', 'none');
 
-            debug.plot_debug_single_fp_detect_LoG(p_fpss.R{idx_board}, ...
-                                                  debug_stereo_fp_detect_LoG.R(idx_board), ...
-                                                  img_cbs.R(idx_board), ...
-                                                  calib_config, ...
-                                                  axes_cb_R);
+            % Plot debugging info for right ------------------------------%
+
+            % Resize array
+            array_R = img_cbs.R(idx_board).get_array_gs();
+            array_R = imresize(array_R, sf);
+
+            % Rescale four points
+            p_fps_R = alg.p2imresize(p_fpss.R{idx_board}, sf);
+
+            % Plot
+            debug.plot_single_fp_detect_LoG(array_R, ...
+                                            p_fps_R, ...
+                                            debug_stereo_fp_detect_LoG.R(idx_board).blobs, ...
+                                            debug_stereo_fp_detect_LoG.R(idx_board).ellipses, ...
+                                            axes_cb_R);
             title(axes_cb_R, 'Blobs, ellipses, and four points (R)', 'FontSize', 10);
             xlabel(axes_cb_R, ['Path: ' img_cbs.R(idx_board).get_path()], ...
                    'FontSize', 8, 'Interpreter', 'none');
 
-            % Plot patch matches
+            % Plot patch matches -----------------------------------------%
+
             for i = 1:4
-                debug.plot_patch_match(debug_stereo_fp_detect_LoG.L(idx_board).patch_matches(i), ...
-                                       i, ...
+                % Left
+                debug.plot_patch_match(debug_stereo_fp_detect_LoG.L(idx_board).patch_matches(i).patch, ...
+                                       debug_stereo_fp_detect_LoG.L(idx_board).patch_matches(i).template, ...
                                        axes_patches_L(i));
-            end
-            for i = 1:4
-                debug.plot_patch_match(debug_stereo_fp_detect_LoG.R(idx_board).patch_matches(i), ...
-                                       i, ...
+                title(axes_patches_L(i), [num2str(i) ' (CC val: ' num2str(debug_stereo_fp_detect_LoG.L(idx_board).patch_matches(i).val_cc) ')'], 'FontSize', 7);
+
+                % Right
+                debug.plot_patch_match(debug_stereo_fp_detect_LoG.R(idx_board).patch_matches(i).patch, ...
+                                       debug_stereo_fp_detect_LoG.R(idx_board).patch_matches(i).template, ...
                                        axes_patches_R(i));
+                title(axes_patches_R(i), [num2str(i) ' (CC val: ' num2str(debug_stereo_fp_detect_LoG.R(idx_board).patch_matches(i).val_cc) ')'], 'FontSize', 7);
             end
         catch e
             if ishandle(f)
@@ -186,8 +216,8 @@ function gui_stereo_fp_detect_LoG(p_fpss, debug_stereo_fp_detect_LoG, img_cbs, c
             % Set bounding box
             switch mode
                 case 'whole'
-                    bb_L = bb_img(img_cbs.L(idx_board), calib_config);
-                    bb_R = bb_img(img_cbs.R(idx_board), calib_config);
+                    bb_L = bb_img(img_cbs.L(idx_board), sf);
+                    bb_R = bb_img(img_cbs.R(idx_board), sf);
                 case '1'
                     bb_L = bb_ellipse(debug_stereo_fp_detect_LoG.L(idx_board).patch_matches(1).ellipse);
                     bb_R = bb_ellipse(debug_stereo_fp_detect_LoG.R(idx_board).patch_matches(1).ellipse);
@@ -218,17 +248,10 @@ function gui_stereo_fp_detect_LoG(p_fpss, debug_stereo_fp_detect_LoG, img_cbs, c
     end
 end
 
-function bb = bb_img(img_cb, calib_config)
+function bb = bb_img(img_cb, sf)
     % Get size of image
     height_img = img_cb.get_height();
     width_img = img_cb.get_width();
-
-    % Get scale factor
-    if isnan(calib_config.fp_detect_array_min_size)
-        sf = 1;
-    else
-        sf = calib_config.fp_detect_array_min_size/min([height_img width_img]);
-    end
 
     % Set bounding box
     bb = [0.5 0.5; ...

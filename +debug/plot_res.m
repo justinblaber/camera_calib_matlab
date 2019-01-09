@@ -1,4 +1,4 @@
-function plot_res(res, colors, alphas, lim, a)
+function plot_res(ress, colors, alphas, lim, a)
     % This plots residuals
 
     if ~exist('a', 'var')
@@ -7,14 +7,15 @@ function plot_res(res, colors, alphas, lim, a)
     end
     cla(a);
 
-    % Show image
+    % Hold
     hold(a, 'on');
 
-    % Plot points; plot highest alpha last
+    % Plot residuals; plot highest alpha last
     [~, idx_sorted] = sort(alphas);
-    for i = 1:numel(res)
+    for i = 1:numel(ress)
         idx = idx_sorted(i);
-        scatter(res{idx}(:, 1), res{idx}(:, 2), 12, ...
+        res = ress{idx};
+        scatter(res(:, 1), res(:, 2), 12, ...
                 'MarkerFaceColor', colors(idx, :), 'MarkerFaceAlpha', alphas(idx), ...
                 'MarkerEdgeAlpha', 0, 'parent', a);
     end

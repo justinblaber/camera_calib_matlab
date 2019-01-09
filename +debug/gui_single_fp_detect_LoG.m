@@ -15,6 +15,13 @@ function gui_single_fp_detect_LoG(p_fpss, debug_single_fp_detect_LoG, img_cbs, c
     num_boards = numel(img_cbs);
     axes_cb = matlab.graphics.axis.Axes.empty();
 
+    % Get scale factor
+    if isnan(calib_config.fp_detect_array_min_size)
+        sf = 1;
+    else
+        sf = calib_config.fp_detect_array_min_size/min([img_cbs(1).get_height() img_cbs(1).get_width()]);
+    end
+
     % Set axes parameters
     padding_height = 0.075;
     padding_width = 0.025;
@@ -131,21 +138,32 @@ function gui_single_fp_detect_LoG(p_fpss, debug_single_fp_detect_LoG, img_cbs, c
                 axes_patches(i) = axes('Position', pos_patch, 'Parent', f);
             end
 
-            % Plot debugging info
-            debug.plot_debug_single_fp_detect_LoG(p_fpss{idx_board}, ...
-                                                  debug_single_fp_detect_LoG(idx_board), ...
-                                                  img_cbs(idx_board), ...
-                                                  calib_config, ...
-                                                  axes_cb);
+            % Plot debugging info ----------------------------------------%
+
+            % Resize array
+            array = img_cbs(idx_board).get_array_gs();
+            array = imresize(array, sf);
+
+            % Rescale four points
+            p_fps = alg.p2imresize(p_fpss{idx_board}, sf);
+
+            % Plot
+            debug.plot_single_fp_detect_LoG(array, ...
+                                            p_fps, ...
+                                            debug_single_fp_detect_LoG(idx_board).blobs, ...
+                                            debug_single_fp_detect_LoG(idx_board).ellipses, ...
+                                            axes_cb);
             title(axes_cb, 'Blobs, ellipses, and four points', 'FontSize', 10);
             xlabel(axes_cb, ['Path: ' img_cbs(idx_board).get_path()], ...
                    'FontSize', 8, 'Interpreter', 'none');
 
-            % Plot patches
+            % Plot patches -----------------------------------------------%
+
             for i = 1:4
-                debug.plot_patch_match(debug_single_fp_detect_LoG(idx_board).patch_matches(i), ...
-                                       i, ...
+                debug.plot_patch_match(debug_single_fp_detect_LoG(idx_board).patch_matches(i).patch, ...
+                                       debug_single_fp_detect_LoG(idx_board).patch_matches(i).template, ...
                                        axes_patches(i));
+                title(axes_patches(i), [num2str(i) ' (CC val: ' num2str(debug_single_fp_detect_LoG(idx_board).patch_matches(i).val_cc) ')'], 'FontSize', 7);
             end
         catch e
             if ishandle(f)
@@ -162,7 +180,7 @@ function gui_single_fp_detect_LoG(p_fpss, debug_single_fp_detect_LoG, img_cbs, c
             % Set bounding box
             switch mode
                 case 'whole'
-                    bb = bb_img(img_cbs(idx_board), calib_config);
+                    bb = bb_img(img_cbs(idx_board), sf);
                 case '1'
                     bb = bb_ellipse(debug_single_fp_detect_LoG(idx_board).patch_matches(1).ellipse);
                 case '2'
@@ -186,17 +204,10 @@ function gui_single_fp_detect_LoG(p_fpss, debug_single_fp_detect_LoG, img_cbs, c
     end
 end
 
-function bb = bb_img(img_cb, calib_config)
+function bb = bb_img(img_cb, sf)
     % Get size of image
     height_img = img_cb.get_height();
     width_img = img_cb.get_width();
-
-    % Get scale factor
-    if isnan(calib_config.fp_detect_array_min_size)
-        sf = 1;
-    else
-        sf = calib_config.fp_detect_array_min_size/min([height_img width_img]);
-    end
 
     % Set bounding box
     bb = [0.5 0.5; ...

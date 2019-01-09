@@ -16,8 +16,7 @@ function [p_fp_pss, debug] = single_fp_detect_LoG(img_cbs, calib_config)
     if isnan(calib_config.fp_detect_array_min_size)
         sf = 1;
     else
-        size_array = [img_cbs(1).get_height() img_cbs(1).get_width()];
-        sf = calib_config.fp_detect_array_min_size/min(size_array);
+        sf = calib_config.fp_detect_array_min_size/min([img_cbs(1).get_height() img_cbs(1).get_width()]);
     end
 
     % Cycle over images and get four points

@@ -4,8 +4,8 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     %
     % Inputs:
     %   img_cbs - struct;
-    %       .L - util.img; Nx1 calibration board images
-    %       .R - util.img; Nx1 calibration board images
+    %       .L - class.img; Nx1 calibration board images
+    %       .R - class.img; Nx1 calibration board images
     %   p_fp_p_dss - struct;
     %       .L - cell; Nx1 cell of four point boxes around the
     %           calibration board images in distorted pixel coordinates.

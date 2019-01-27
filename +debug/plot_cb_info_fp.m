@@ -1,4 +1,4 @@
-function plot_cb_info_fp(opts, a)
+function plot_cb_info_fp(p_fp_ws, p_cb_ws, boundary_ws, height_cb, width_cb, a)
     % This will plot calibration board info
 
     if ~exist('a', 'var')
@@ -7,16 +7,9 @@ function plot_cb_info_fp(opts, a)
     end
     cla(a);
 
-    % Get calibration world points and four points in world coordinates
-    p_cb_ws = alg.p_cb_w(opts);
-    p_fp_ws = alg.p_fp_w(opts);
-
     % Format axes
-    padding = opts.target_spacing/2;
-    bb_axes_w = [min([p_cb_ws; p_fp_ws]) - padding; ...
-                 max([p_cb_ws; p_fp_ws]) + padding];
     axis(a, 'equal');
-    set(a, 'Ydir', 'reverse', 'Xlim', bb_axes_w(:, 1), 'Ylim', bb_axes_w(:, 2));
+    set(a, 'Ydir', 'reverse', 'Xlim', [0 width_cb], 'Ylim', [0 height_cb]);
     hold(a, 'on');
 
     % Plot four points
@@ -31,6 +24,13 @@ function plot_cb_info_fp(opts, a)
     text(p_cb_ws(:, 1), p_cb_ws(:, 2), strtrim(cellstr(num2str([1:size(p_cb_ws, 1)]'))), ...
          'FontSize', 5, 'HorizontalAlignment', 'center', 'color', 'k', 'parent', a); %#ok<NBRAK>
 
+    % Plot boundaries
+    for i = 1:numel(boundary_ws)
+        plot(vertcat(boundary_ws{i}(:,1), boundary_ws{i}(1,1)), ...
+             vertcat(boundary_ws{i}(:,2), boundary_ws{i}(1,2)), ...
+             ':r', 'parent', a);
+    end
+     
     % Remove hold
     hold(a, 'off');
 end

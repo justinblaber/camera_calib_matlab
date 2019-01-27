@@ -1,4 +1,4 @@
-function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points_cb_w2p(array_cb, f_p_cb_w2p_cb_p, opts, idx_valid_init)
+function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points_cb_w2p(array_cb, f_p_cb_w2p_cb_p, opts)
     % Performs refinement of center of circle targets on a calibration
     % board image array.
     %
@@ -7,11 +7,7 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points_cb_w2p(ar
     %   f_p_cb_w2p_cb_p - function handle; function which transforms
     %       calibration world points to calibration pixel points
     %   opts - struct;
-    %       .num_targets_height - int; number of targets in the "height"
-    %           dimension
-    %       .num_targets_width - int; number of targets in the "width"
-    %           dimension
-    %       .target_spacing - scalar; space between targets
+    %       .cb_class - class.cb_pattern; calibration board object
     %       .refine_ellipse_edges_h2_init - scalar; initial value of h2
     %           parameter in "edges" ellipse refinement
     %       .refine_ellipse_edges_it_cutoff - int; max number of
@@ -22,8 +18,6 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points_cb_w2p(ar
     %       .refine_circle_dualconic_edges_diff_norm_cutoff - scalar;
     %           cutoff for the norm of difference of the points predicted
     %           by dualconic and edges method
-    %   idx_valid_init - array; optional logical indices which indicate
-    %       which target points are valid
     %
     % Outputs:
     %   p_cb_ps - array; Px2 array of optimized circle pixel points
@@ -32,12 +26,9 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points_cb_w2p(ar
     %   idx_valid - array; Px1 logical array of "valid" circle points
     %   debug - cell array;
 
-    if ~exist('idx_valid_init', 'var')
-        idx_valid_init = true(opts.num_targets_height*opts.num_targets_width, 1);
-    end
-
-    % Get calibration board world points
-    p_cb_ws = alg.p_cb_w(opts);
+    % Get calibration board world points and boundaries
+    p_cb_ws = opts.cb_class.get_p_cb_ws();
+    boundary_ws = opts.cb_class.get_p_cb_w_boundaries();
 
     % Get array gradients
     array_dx = alg.grad_array(array_cb, 'x');
@@ -50,20 +41,15 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points_cb_w2p(ar
     idx_valid = false(size(p_cb_ws, 1), 1);
     debug = cell(size(p_cb_ws, 1), 1);
     for i = 1:size(p_cb_ws, 1)
-        if ~idx_valid_init(i)
-            continue
-        end
-
-        % Get calibration board world point
+        % Get calibration board world point and boundary
         p_cb_w = p_cb_ws(i, :);
+        boundary_w = boundary_ws{i};
 
         % Get initial guess for calibration board pixel point
         p_cb_p_init = f_p_cb_w2p_cb_p(p_cb_w);
 
         % Get boundary in pixel coordinates centered around point
-        boundary_p_center = calc_boundary(p_cb_w, ...
-                                          f_p_cb_w2p_cb_p, ...
-                                          opts);
+        boundary_p_center = f_p_cb_w2p_cb_p(boundary_w) - p_cb_p_init;
 
         % Perform initial refinement with "dual conic" ellipse detection.
         e_cb_p_dualconic = dualconic(p_cb_p_init, ...
@@ -103,27 +89,6 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debug] = refine_circle_points_cb_w2p(ar
             debug{i}.boundary_p_edges = boundary_p_center + e_cb_p_dualconic(1:2)'; % Dual conic determines boundary offset for edges refinement
         end
     end
-end
-
-function boundary_p_center = calc_boundary(p_cb_w, f_p_cb_w2p_cb_p, opts)
-    % Get box around calibration board world point
-    % Note:
-    %    p1 ----- p4
-    %    |         |
-    %    |    p    |
-    %    |         |
-    %    p2 ----- p3
-    boundary_w = [p_cb_w(1)-opts.target_spacing/2 p_cb_w(2)-opts.target_spacing/2;
-                  p_cb_w(1)-opts.target_spacing/2 p_cb_w(2)+opts.target_spacing/2;
-                  p_cb_w(1)+opts.target_spacing/2 p_cb_w(2)+opts.target_spacing/2;
-                  p_cb_w(1)+opts.target_spacing/2 p_cb_w(2)-opts.target_spacing/2];
-
-    % Apply xform to bring to pixel coordinates
-    boundary_p = f_p_cb_w2p_cb_p(boundary_w);
-
-    % Subtract center point
-    p_cb_p = f_p_cb_w2p_cb_p(p_cb_w);
-    boundary_p_center = boundary_p - p_cb_p;
 end
 
 function [bb_p, mask] = calc_bb_and_mask(p_cb_p, boundary_p_center)

@@ -12,7 +12,7 @@ function test_single_fp_detect_LoG
                 fullfile(tests_path, 'data', 'circle', '3.jpg')};
 
     % Validate all calibration board images
-    img_cbs = util.img.validate_similar_imgs(path_cbs);
+    img_cbs = class.img.validate_similar_imgs(path_cbs);
 
     % Set ground truth
     p_fp_p_ss{1} = 1.0e+02 * [1.958093817366980   3.321367973803598;
@@ -63,7 +63,7 @@ function test_single_fp_detect_LoG
                 fullfile(tests_path, 'data', 'checker', '3.jpg')};
 
     % Validate all calibration board images
-    img_cbs = util.img.validate_similar_imgs(path_cbs);
+    img_cbs = class.img.validate_similar_imgs(path_cbs);
 
     % Set ground truth
     p_fp_p_ss{1} =    1.0e+02 * [2.478560080855610   3.128811574943620;

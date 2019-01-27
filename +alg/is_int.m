@@ -1,11 +1,11 @@
-function success = is_int(num)
-    % Determines if input is a real, finite, and integer number.
+function success = is_int(array)
+    % Determines if input is a real, finite, and integer
     %
     % Inputs:
-    %   num - scalar;
+    %   array - array;
     %
     % Outputs:
     %   success - logical;
 
-    success = alg.is_num(num) && round(num) == num;
+    success = alg.is_real_and_finite(array) & round(array) == array;
 end

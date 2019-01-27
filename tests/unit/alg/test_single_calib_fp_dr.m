@@ -12,7 +12,7 @@ function test_single_calib_fp_dr
                 fullfile(tests_path, 'data', 'checker', '3.jpg')};
 
     % Validate all calibration board images
-    img_cbs = util.img.validate_similar_imgs(path_cbs);
+    img_cbs = class.img.validate_similar_imgs(path_cbs);
 
     p_fp_p_dss{1} = [247 312;
                      502 321;
@@ -56,7 +56,7 @@ function test_single_calib_fp_dr
                 fullfile(tests_path, 'data', 'circle', '3.jpg')};
 
     % Validate all calibration board images
-    img_cbs = util.img.validate_similar_imgs(path_cbs);
+    img_cbs = class.img.validate_similar_imgs(path_cbs);
 
     p_fp_p_dss{1} = [195 331;
                      505 343;

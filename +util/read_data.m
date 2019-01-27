@@ -114,10 +114,10 @@ function data = read_data(file_path)
     fclose(f);
 
     % "Uncell" names with single entries.
-    data_fields = fields(data);
-    for i = 1:numel(data_fields)
-        if numel(data.(data_fields{i})) == 1
-            data.(data_fields{i}) = data.(data_fields{i}){1};
+    fields_data = fields(data);
+    for i = 1:numel(fields_data)
+        if numel(data.(fields_data{i})) == 1
+            data.(fields_data{i}) = data.(fields_data{i}){1};
         end
     end
 end

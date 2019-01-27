@@ -13,8 +13,8 @@ function test_apply_homography_c2e
     % Ground truth
     p_2s = zeros(size(p_1s));
     for i = 1:size(p_1s, 1)
-        Aqw = [ 1          0         -p_1s(i, 1);
-                0          1         -p_1s(i, 2);
+        Aqw = [ 1           0          -p_1s(i, 1);
+                0           1          -p_1s(i, 2);
                -p_1s(i, 1) -p_1s(i, 2)  p_1s(i, 1)^2 + p_1s(i, 2)^2 - r_1^2];
         Aqi = inv(H_12)'*Aqw*inv(H_12);
         p_prime = inv(Aqi)*[0; 0; 1]; %#ok<MINV>

@@ -10,7 +10,7 @@ function test_save_stereo_calib_fp()
     calib.L.intrin.A = eye(3);
     calib.L.intrin.d = ones(3, 1);
 
-    calib.L.extrin.img_cb = util.img('test');
+    calib.L.extrin.img_cb = class.img('test');
     calib.L.extrin.R = eye(3);
     calib.L.extrin.t = ones(3, 1);
     calib.L.extrin.p_fp_p_ds = ones(4, 2);
@@ -22,7 +22,7 @@ function test_save_stereo_calib_fp()
     calib.R.intrin.A = eye(3);
     calib.R.intrin.d = ones(3, 1);
 
-    calib.R.extrin.img_cb = util.img('test');
+    calib.R.extrin.img_cb = class.img('test');
     calib.R.extrin.R = eye(3);
     calib.R.extrin.t = ones(3, 1);
     calib.R.extrin.p_fp_p_ds = ones(4, 2);

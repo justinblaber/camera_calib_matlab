@@ -7,7 +7,7 @@ function write_single_calib_fp(calib, file_path, suffix)
     %           .A - array; 3x3 camera matrix
     %           .d - array; Mx1 array of distortion coefficients
     %       .extrin - struct; Nx1 struct containing extrinsics
-    %           .img_cb - util.img; calibration board image
+    %           .img_cb - class.img; calibration board image
     %           .R - array; 3x3 rotation matrix
     %           .t - array; 3x1 translation vector
     %           .p_fp_p_ds - array; four point box around the calibration

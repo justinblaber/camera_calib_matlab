@@ -3,7 +3,7 @@ function [p_fp_pss, debug] = single_fp_detect_LoG(img_cbs, calib_config)
     % the calibration board images.
     %
     % Inputs:
-    %   img_cbs - util.img; Nx1 calibration board images
+    %   img_cbs - class.img; Nx1 calibration board images
     %   calib_config - struct; struct returned by util.load_calib_config()
     %
     % Outputs:

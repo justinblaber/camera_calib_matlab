@@ -15,7 +15,7 @@ function plot_cam_3D(xform_12, face_color, face_alpha, edge_alpha, axes_color, a
     % If camera size is not set (i.e. nan), then set the camera size to the
     % calibration board target size.
     if isnan(opts.camera_size)
-        camera_size = opts.target_spacing;
+        camera_size = min(opts.cb_class.get_cb_height(), opts.cb_class.get_cb_width())/4;
     else
         camera_size = opts.camera_size;
     end

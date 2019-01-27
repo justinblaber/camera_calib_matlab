@@ -18,8 +18,8 @@ function test_stereo_calib_fp_dr
                   fullfile(tests_path, 'data', 'stereo1', 'right05.jpg')};
 
     % Validate all calibration board images
-    img_cbs.L = util.img.validate_similar_imgs(path_cbs_L);
-    img_cbs.R = util.img.validate_similar_imgs(path_cbs_R);
+    img_cbs.L = class.img.validate_similar_imgs(path_cbs_L);
+    img_cbs.R = class.img.validate_similar_imgs(path_cbs_R);
 
     % Get four points in pixel coordinates per calibration board image
     p_fp_p_dss.L{1} = [275 91

@@ -10,8 +10,8 @@ function test_stereo_fp_detect_LoG
     path_cbs.R = {fullfile(tests_path, 'data', 'stereo2', 'IMG_1_R.JPG')};
 
     % Validate all calibration board images
-    img_cbs.L = util.img.validate_similar_imgs(path_cbs.L);
-    img_cbs.R = util.img.validate_similar_imgs(path_cbs.R);
+    img_cbs.L = class.img.validate_similar_imgs(path_cbs.L);
+    img_cbs.R = class.img.validate_similar_imgs(path_cbs.R);
 
     % Set ground truth
     p_fp_p_ss.L{1} = 1.0e+03 * [1.745946902078161   1.339300845902316;

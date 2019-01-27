@@ -11,7 +11,7 @@ function [calib, data] = parse_single_calib_fp(data, suffix)
     %           .A - array; 3x3 camera matrix
     %           .d - array; Mx1 array of distortion coefficients
     %       .extrin - struct; Nx1 struct containing extrinsics
-    %           .img_cb - util.img; calibration board image
+    %           .img_cb - class.img; calibration board image
     %           .R - array; 3x3 rotation matrix
     %           .t - array; 3x1 translation vector
     %           .p_fp_p_ds - array; four point box around the calibration
@@ -41,9 +41,9 @@ function [calib, data] = parse_single_calib_fp(data, suffix)
 
     i = 1;
     while isfield(data, ['img_path_' num2str(i) suffix])
-        % Calibration board image - read path and then convert to util.img
+        % Calibration board image - read path and then convert to class.img
         [calib.extrin(i).img_cb, data] = util.read_and_remove(data, ['img_path_' num2str(i) suffix]);
-        calib.extrin(i).img_cb = util.img(calib.extrin(i).img_cb);
+        calib.extrin(i).img_cb = class.img(calib.extrin(i).img_cb);
 
         % TODO: maybe issue warning if image cant be found?
 

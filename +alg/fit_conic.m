@@ -1,29 +1,29 @@
-function Aq = fit_conic(array_dx, array_dy)
-    % Given an input array containing a conic section, this will attempt to
-    % find the parameters of the conic matrix.
+function Aq = fit_conic(array_dx, array_dy, W)
+    % Given input array gradients, this will attempt to find the parameters
+    % of a conic matrix.
     %
     % Inputs:
     %   array_dx - array; MxN array gradient in x direction
     %   array_dy - array; MxN array gradient in y direction
+    %   W - array; optional MxN weight array
     %
     % Outputs:
     %   Aq - array; 3x3 conic matrix matrix stored as:
-    %       [A   B/2 D/2;
+    %       [A   B/2 D/2;[[[
     %        B/2 C   E/2;
     %        D/2 E/2 F];
 
-    if ~isequal(size(array_dx), size(array_dy))
-        error('Input gradient arrays must be equal in size');
+    if ~exist('W', 'var')
+        W = ones(size(array_dx));
     end
 
-    % Get bounding box
-    bb_array = alg.bb_array(array_dx);
-
-    % Remove any NaNs from array gradient
-    array_dx(isnan(array_dx)) = 0;
-    array_dy(isnan(array_dy)) = 0;
+    % Remove any nans
+    mask = ~isnan(array_dx) & ~isnan(array_dy);
+    array_dx(~mask) = 0;
+    array_dy(~mask) = 0;
 
     % Get coordinates of pixels
+    bb_array = alg.bb_array(array_dx);
     [ys, xs] = alg.ndgrid_bb(bb_array);
     ps = [xs(:) ys(:)];
 
@@ -43,7 +43,7 @@ function Aq = fit_conic(array_dx, array_dy)
     b = -ls(:, 3).^2;
 
     % Solve
-    aq = alg.safe_lscov(A, b);
+    aq = alg.safe_lscov(A, b, W(:));
 
     % Get conic matrix
     Aq_inv = [aq(1)   aq(2)/2 aq(4)/2;

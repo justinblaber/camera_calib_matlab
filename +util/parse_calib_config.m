@@ -50,15 +50,13 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'refine_checker_edges_it_cutoff'                , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'refine_checker_edges_norm_cutoff'              , 'required', false, 'default', 0.001                          , 'validation_fun', @validate_pos_scalar);
     field_info(end+1) = struct('field', 'refine_checker_edges_h2_init'                  , 'required', false, 'default', 0.75                           , 'validation_fun', @validate_pos_scalar);
-    field_info(end+1) = struct('field', 'refine_checker_opencv_edges_diff_norm_cutoff'  , 'required', false, 'default', 2                              , 'validation_fun', @validate_pos_scalar);
-
+    
     % Ellipse refinement
     field_info(end+1) = struct('field', 'circle_radius'                                 , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_or_nan);
     field_info(end+1) = struct('field', 'refine_ellipse_edges_it_cutoff'                , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'refine_ellipse_edges_norm_cutoff'              , 'required', false, 'default', 0.001                          , 'validation_fun', @validate_pos_scalar);
     field_info(end+1) = struct('field', 'refine_ellipse_edges_h2_init'                  , 'required', false, 'default', 0.75                           , 'validation_fun', @validate_pos_scalar);
-    field_info(end+1) = struct('field', 'refine_circle_dualconic_edges_diff_norm_cutoff', 'required', false, 'default', 2                              , 'validation_fun', @validate_pos_scalar);
-
+    
     % p_p_d2p_p
     field_info(end+1) = struct('field', 'p_p_d2p_p_it_cutoff'                           , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'p_p_d2p_p_norm_cutoff'                         , 'required', false, 'default', 1e-6                           , 'validation_fun', @validate_pos_scalar);

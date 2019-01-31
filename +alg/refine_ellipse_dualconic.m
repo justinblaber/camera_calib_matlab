@@ -1,9 +1,10 @@
-function e = refine_ellipse_dualconic(array_dx, array_dy)
+function e = refine_ellipse_dualconic(array_dx, array_dy, W)
     % Performs "dual conic" refinement of an ellipse
     %
     % Inputs:
     %   array_dx - array; MxN array gradient in x direction
     %   array_dy - array; MxN array gradient in y direction
+    %   W - array; optional MxN weight array
     %
     % Outputs:
     %   e - array; 5x1 ellipse matrix stored as:
@@ -13,8 +14,12 @@ function e = refine_ellipse_dualconic(array_dx, array_dy)
     %       e(4) = b; minor axis length
     %       e(5) = alpha; rotation of major axis
 
+    if ~exist('W', 'var')
+        W = ones(size(array_dx));
+    end
+    
     % Fit conic
-    Aq = alg.fit_conic(array_dx, array_dy);
+    Aq = alg.fit_conic(array_dx, array_dy, W);
 
     % TODO: get covariance of ellipse parameters
 

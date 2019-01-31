@@ -1,4 +1,4 @@
-function [e, cov_e] = refine_ellipse_edges(array_dx, array_dy, e_init, opts)
+function [e, cov_e] = refine_ellipse_edges(array_dx, array_dy, e_init, opts, W)
     % Performs "edges" refinement of an ellipse.
     %
     % Inputs:
@@ -18,6 +18,7 @@ function [e, cov_e] = refine_ellipse_edges(array_dx, array_dy, e_init, opts)
     %       .refine_ellipse_edges_norm_cutoff - scalar; cutoff for the
     %           difference in norm of the parameter vector for "edges"
     %           ellipse refinement
+    %   W - array; optional MxN weight array
     %
     % Outputs:
     %   e - array; 5x1 refined ellipse matrix stored as:
@@ -28,21 +29,17 @@ function [e, cov_e] = refine_ellipse_edges(array_dx, array_dy, e_init, opts)
     %       e(5) = alpha; rotation of major axis
     %   cov_e - array; 5x5 covariance array
 
-    if ~isequal(size(array_dx), size(array_dy))
-        error('Input gradient arrays must be equal in size');
+    if ~exist('W', 'var')
+        W = ones(size(array_dx));
     end
 
-    % Initialize weights
-    W_init = double(~isnan(array_dx) & ~isnan(array_dy));
-
-    % Remove any NaNs from array gradient
-    array_dx(isnan(array_dx)) = 0;
-    array_dy(isnan(array_dy)) = 0;
-
-    % Get bounding box
-    bb_array = alg.bb_array(array_dx);
-
+    % Remove any nans
+    mask = ~isnan(array_dx) & ~isnan(array_dy);
+    array_dx(~mask) = 0;
+    array_dy(~mask) = 0;
+    
     % Get coordinates of pixels
+    bb_array = alg.bb_array(array_dx);
     [ys, xs] = alg.ndgrid_bb(bb_array);
     xs = xs(:);
     ys = ys(:);
@@ -68,7 +65,7 @@ function [e, cov_e] = refine_ellipse_edges(array_dx, array_dy, e_init, opts)
                                                 ys);
 
         % Get and store update
-        delta_params = -alg.safe_lscov(jacob, res, W_init(:));
+        delta_params = -alg.safe_lscov(jacob, res, W(:));
         params = params + delta_params;
 
         % Exit if change in distance is small
@@ -85,7 +82,9 @@ function [e, cov_e] = refine_ellipse_edges(array_dx, array_dy, e_init, opts)
                                             array_grad_mag, ...
                                             xs, ...
                                             ys);
-    [~, ~, ~, cov_params] = alg.safe_lscov(jacob, res, W_init(:));
+                                        
+    % Get covariance
+    [~, ~, ~, cov_params] = alg.safe_lscov(jacob, res, W(:));
     cov_e = cov_params(3:7, 3:7);
 end
 

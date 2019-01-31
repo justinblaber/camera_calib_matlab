@@ -1,4 +1,4 @@
-function angles = dominant_grad_angles(array_dx, array_dy, num_angles, opts)
+function angles = dominant_grad_angles(array_dx, array_dy, num_angles, opts, W)
     % Returns dominant angles found in input gradient array using hough
     % transform.
     %
@@ -10,15 +10,15 @@ function angles = dominant_grad_angles(array_dx, array_dy, num_angles, opts)
     %       .dominant_grad_angles_num_bins - int; number of bins used in
     %           hough transform
     %       .dominant_grad_angles_space_peaks - int; space between peaks
+    %   W - array; optional MxN weight array
     %
     % Outputs:
     %   angles - array; Px1 dominant angles
 
-    % Make sure gradients are equal in size
-    if ~isequal(size(array_dx), size(array_dy))
-        error('Input gradient arrays must be equal in size');
+    if ~exist('W', 'var')
+        W = ones(size(array_dx));
     end
-
+    
     % Get number of bins and space between peaks
     num_bins = opts.dominant_grad_angles_num_bins;
     space_peaks = opts.dominant_grad_angles_space_peaks;
@@ -29,17 +29,17 @@ function angles = dominant_grad_angles(array_dx, array_dy, num_angles, opts)
     % Get spacing
     spacing = pi/num_bins;
 
-    % Get magnitude array
-    array_mag = sqrt(array_dx.^2 + array_dy.^2);
+    % Get magnitude array - apply weights here
+    array_mag = sqrt(array_dx.^2 + array_dy.^2).*W;
 
     % Get angle array
     array_angle = atan(array_dy./array_dx);             % Between [-pi/2, pi/2]
 
-    % Get only finite values; note this converts arrays to column vectors
-    mask = isfinite(array_mag) & isfinite(array_angle);
+    % Remove any nans - note this will convert 2D array to vector
+    mask = ~isnan(array_mag) & ~isnan(array_angle);
     array_mag = array_mag(mask);
     array_angle = array_angle(mask);
-
+    
     % Get "index array"
     array_idx = (array_angle+pi/2+spacing/2)/spacing;   % Between [0.5, num_bins+0.5]
 

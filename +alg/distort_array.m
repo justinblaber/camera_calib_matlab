@@ -40,8 +40,6 @@ function array_d = distort_array(array, f_p_p2p_p_d, f_dp_p_d_dx_p, f_dp_p_d_dy_
                          opts);
 
     % Resample
-    array_d = alg.interp_array(array, ...
-                               p_ps, ...
-                               opts.distort_array_interp);
+    array_d = alg.interp_array(array, p_ps, opts.distort_array_interp);
     array_d = reshape(array_d, size(array));
 end

@@ -21,8 +21,8 @@ function jacob = dr_deuler(euler)
     %       dr23
     %       dr33
 
-    % TODO: Add checks for degenerate cases, although these shouldn't
-    % really happen with real data... I think...
+    % TODO: Add checks for degenerate cases (gimbal lock?), although this
+    % shouldn't really happen with real data... I think...
 
     c_x = cos(euler(1));
     c_y = cos(euler(2));

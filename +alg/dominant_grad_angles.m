@@ -18,7 +18,7 @@ function angles = dominant_grad_angles(array_dx, array_dy, num_angles, opts, W)
     if ~exist('W', 'var')
         W = ones(size(array_dx));
     end
-    
+
     % Get number of bins and space between peaks
     num_bins = opts.dominant_grad_angles_num_bins;
     space_peaks = opts.dominant_grad_angles_space_peaks;
@@ -39,7 +39,7 @@ function angles = dominant_grad_angles(array_dx, array_dy, num_angles, opts, W)
     mask = ~isnan(array_mag) & ~isnan(array_angle);
     array_mag = array_mag(mask);
     array_angle = array_angle(mask);
-    
+
     % Get "index array"
     array_idx = (array_angle+pi/2+spacing/2)/spacing;   % Between [0.5, num_bins+0.5]
 

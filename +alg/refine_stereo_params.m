@@ -6,12 +6,12 @@ function [params, cov_params] = refine_stereo_params(params, p_cb_ws, p_cb_p_dss
     %   params - array; (6+2*M+6*(N+1))x1 array, where M is the number of
     %       distortion parameters and N is the number of calibration
     %       boards. Contains:
-    %           [alpha_L; x_L_o; y_L_o; d_L_1; ... d_L_M; ...
-    %            alpha_R; x_R_o; y_R_o; d_R_1; ... d_R_M; ...
-    %            theta_L_x1; theta_L_y1; theta_L_z1; t_L_x1; t_L_y1; t_L_z1; ...
-    %            theta_L_xN; theta_L_yN; theta_L_zN; t_L_xN; t_L_yN; t_L_zN; ...
-    %            theta_s_x; theta_s_y; theta_s_z; t_s_x; t_s_y; t_s_z]
-    %   p_cb_ws - array; Nx2 array of calibration board world points
+    %           [alpha_L; x_o_L; y_o_L; d_1_L; ... d_M_L; ...
+    %            alpha_R; x_o_R; y_o_R; d_1_R; ... d_M_R; ...
+    %            theta_x1_L; theta_y1_L; theta_z1_L; t_x1_L; t_y1_L; t_z1_L; ...
+    %            theta_xN_L; theta_yN_L; theta_zN_L; t_xN_L; t_yN_L; t_zN_L; ...
+    %            theta_x_s; theta_y_s; theta_z_s; t_x_s; t_y_s; t_z_s]
+    %   p_cb_ws - array; Px2 array of calibration board world points
     %   p_cb_p_dss - struct;
     %       .L - cell; Nx1 cell array of calibration board distorted
     %           pixel points
@@ -25,7 +25,7 @@ function [params, cov_params] = refine_stereo_params(params, p_cb_ws, p_cb_p_dss
     %   f_p_cb_w2p_cb_p - function handle; function which transforms
     %       calibration world points to calibration pixel points
     %   f_dp_cb_p_dh - function handle; derivative of f_p_cb_w2p_cb_p wrt
-    %      homography parameters.
+    %      homography parameters
     %   f_p_p2p_p_d - function handle; describes the mapping between
     %       pixel coordinates and distorted pixel coordinates.
     %   f_dp_p_d_dargs - function handle; derivative of p_p2p_p_d wrt its
@@ -52,11 +52,11 @@ function [params, cov_params] = refine_stereo_params(params, p_cb_ws, p_cb_p_dss
     %   params - array; (6+2*M+6*(N+1))x1 array, where M is the number of
     %       distortion parameters and N is the number of calibration
     %       boards. Contains:
-    %           [alpha_L; x_L_o; y_L_o; d_L_1; ... d_L_M; ...
-    %            alpha_R; x_R_o; y_R_o; d_R_1; ... d_R_M; ...
-    %            theta_L_x1; theta_L_y1; theta_L_z1; t_L_x1; t_L_y1; t_L_z1; ...
-    %            theta_L_xN; theta_L_yN; theta_L_zN; t_L_xN; t_L_yN; t_L_zN; ...
-    %            theta_s_x; theta_s_y; theta_s_z; t_s_x; t_s_y; t_s_z]
+    %           [alpha_L; x_o_L; y_o_L; d_1_L; ... d_M_L; ...
+    %            alpha_R; x_o_R; y_o_R; d_1_R; ... d_M_R; ...
+    %            theta_x1_L; theta_y1_L; theta_z1_L; t_x1_L; t_y1_L; t_z1_L; ...
+    %            theta_xN_L; theta_yN_L; theta_zN_L; t_xN_L; t_yN_L; t_zN_L; ...
+    %            theta_x_s; theta_y_s; theta_z_s; t_x_s; t_y_s; t_z_s]
     %   cov_params - array; (6+2*M+6*(N+1))x(6+2*M+6*(N+1)) array of
     %       covariances of intrinsic and extrinsic parameters
 
@@ -82,22 +82,21 @@ function [params, cov_params] = refine_stereo_params(params, p_cb_ws, p_cb_p_dss
     % For single images, remove principle point from optimization
     if num_boards == 1
         idx_update(2:3) = false;
-        idx_update(9:10) = false;
+        idx_update(5+num_params_d:6+num_params_d) = false;
     end
 
-    % Get "weight matrix"
+    % Get covariance matrix
     if exist('cov_cb_p_dss', 'var')
-        % Do generalized least squares
-        % Get "weight" matrix (inverse of covariance)
-        cov = vertcat(cov_cb_p_dss.L{:}, cov_cb_p_dss.R{:});  % Concat
-        cov = cov(vertcat(idx_valids.L{:}, idx_valids.R{:})); % Apply valid indices
-        cov = cellfun(@sparse, cov, 'UniformOutput', false);  % Make sparse
-        cov = blkdiag(cov{:});                                % Create full covariance matrix
-        W = inv(cov);                                         % This might be slow...
+        cov = vertcat(cov_cb_p_dss.L{:}, cov_cb_p_dss.R{:});           % Concat
+        cov = cov(vertcat(idx_valids.L{:}, idx_valids.R{:}));          % Apply valid indices
+        cov = cellfun(@sparse, cov, 'UniformOutput', false);           % Make sparse
+        cov = blkdiag(cov{:});                                         % Create full covariance matrix
     else
-        % Identity weight matrix is just simple least squares
-        W = speye(2*sum(vertcat(idx_valids.L{:}, idx_valids.R{:})));
+        cov = speye(2*sum(vertcat(idx_valids.L{:}, idx_valids.R{:}))); % Identity matrix is just simple least squares
     end
+
+    % Precompute inverse covariance matrix; this might be slow...
+    cov_inv = cov;
 
     % Perform Levenberg–Marquardt iteration(s)
     % Initialize lambda
@@ -112,7 +111,7 @@ function [params, cov_params] = refine_stereo_params(params, p_cb_ws, p_cb_p_dss
                      f_p_p2p_p_d, ...
                      f_dp_p_d_dargs, ...
                      idx_update, ...
-                     W);
+                     cov_inv);
     for it = 1:opts.refine_stereo_params_it_cutoff
         % Store previous params and cost
         params_prev = params;
@@ -129,7 +128,7 @@ function [params, cov_params] = refine_stereo_params(params, p_cb_ws, p_cb_p_dss
                                          f_dp_p_d_dargs, ...
                                          idx_update, ...
                                          lambda, ...
-                                         W);
+                                         cov_inv);
 
         % update params and cost
         params(idx_update) = params_prev(idx_update) + delta_params;
@@ -142,7 +141,7 @@ function [params, cov_params] = refine_stereo_params(params, p_cb_ws, p_cb_p_dss
                          f_p_p2p_p_d, ...
                          f_dp_p_d_dargs, ...
                          idx_update, ...
-                         W);
+                         cov_inv);
 
         % If cost decreases, decrease lambda and store results; if cost
         % increases, then increase lambda until cost decreases
@@ -158,8 +157,8 @@ function [params, cov_params] = refine_stereo_params(params, p_cb_ws, p_cb_p_dss
                     % This will already be a very, very small step, so just
                     % exit
                     delta_params(:) = 0;
-                    cost = cost_prev;
                     params = params_prev;
+                    cost = cost_prev;
                     break
                 end
 
@@ -174,7 +173,7 @@ function [params, cov_params] = refine_stereo_params(params, p_cb_ws, p_cb_p_dss
                                                  f_dp_p_d_dargs, ...
                                                  idx_update, ...
                                                  lambda, ...
-                                                 W);
+                                                 cov_inv);
 
                 % update params and cost
                 params(idx_update) = params_prev(idx_update) + delta_params;
@@ -187,7 +186,7 @@ function [params, cov_params] = refine_stereo_params(params, p_cb_ws, p_cb_p_dss
                                  f_p_p2p_p_d, ...
                                  f_dp_p_d_dargs, ...
                                  idx_update, ...
-                                 W);
+                                 cov_inv);
             end
         end
 
@@ -233,10 +232,10 @@ function [params, cov_params] = refine_stereo_params(params, p_cb_ws, p_cb_p_dss
                                             f_p_p2p_p_d, ...
                                             f_dp_p_d_dargs, ...
                                             true(size(idx_update))); % Mark all as true for final covariance estimation
-    [~, ~, ~, cov_params] = alg.safe_lscov(jacob, res, W);
+    [~, ~, ~, cov_params] = alg.safe_lscov(jacob, res, cov);
 end
 
-function delta_params = calc_delta_params(params, p_cb_ws, p_cb_p_dss, idx_valids, f_p_cb_w2p_cb_p, f_dp_cb_p_dh, f_p_p2p_p_d, f_dp_p_d_dargs, idx_update, lambda, W)
+function delta_params = calc_delta_params(params, p_cb_ws, p_cb_p_dss, idx_valids, f_p_cb_w2p_cb_p, f_dp_cb_p_dh, f_p_p2p_p_d, f_dp_p_d_dargs, idx_update, lambda, cov_inv)
     % Get gauss newton params
     [jacob, res] = calc_gauss_newton_params(params, ...
                                             p_cb_ws, ...
@@ -249,10 +248,10 @@ function delta_params = calc_delta_params(params, p_cb_ws, p_cb_p_dss, idx_valid
                                             idx_update);
 
     % Get gradient
-    grad = jacob'*W*res;
+    grad = jacob'*cov_inv*res;
 
     % Get hessian
-    hess = jacob'*W*jacob;
+    hess = jacob'*cov_inv*jacob;
 
     % Add Levenberg–Marquardt damping
     hess = hess + lambda*eye(sum(idx_update));
@@ -261,7 +260,7 @@ function delta_params = calc_delta_params(params, p_cb_ws, p_cb_p_dss, idx_valid
     delta_params = -alg.safe_lscov(hess, grad);
 end
 
-function cost = calc_cost(params, p_cb_ws, p_cb_p_dss, idx_valids, f_p_cb_w2p_cb_p, f_dp_cb_p_dh, f_p_p2p_p_d, f_dp_p_d_dargs, idx_update, W)
+function cost = calc_cost(params, p_cb_ws, p_cb_p_dss, idx_valids, f_p_cb_w2p_cb_p, f_dp_cb_p_dh, f_p_p2p_p_d, f_dp_p_d_dargs, idx_update, cov_inv)
     % Get residuals
     [~, res] = calc_gauss_newton_params(params, ...
                                         p_cb_ws, ...
@@ -274,7 +273,7 @@ function cost = calc_cost(params, p_cb_ws, p_cb_p_dss, idx_valids, f_p_cb_w2p_cb
                                         idx_update);
 
     % Apply weights
-    cost = res'*W*res;
+    cost = res'*cov_inv*res;
 end
 
 function [jacob, res] = calc_gauss_newton_params(params, p_cb_ws, p_cb_p_dss, idx_valids, f_p_cb_w2p_cb_p, f_dp_cb_p_dh, f_p_p2p_p_d, f_dp_p_d_dargs, idx_update)
@@ -365,7 +364,7 @@ function [jacob, res] = calc_gauss_newton_params(params, p_cb_ws, p_cb_p_dss, id
         drt_R_drt_s = [R_L(1, 1)*eye(3) R_L(2, 1)*eye(3) R_L(3, 1)*eye(3) zeros(3);
                        R_L(1, 2)*eye(3) R_L(2, 2)*eye(3) R_L(3, 2)*eye(3) zeros(3);
                        R_L(1, 3)*eye(3) R_L(2, 3)*eye(3) R_L(3, 3)*eye(3) zeros(3);
-                       t_L(1)*eye(3)   t_L(2)*eye(3)   t_L(3)*eye(3)   eye(3)];
+                       t_L(1)*eye(3)    t_L(2)*eye(3)    t_L(3)*eye(3)    eye(3)];
         dr_s_deuler_s = alg.dr_deuler(alg.rot2euler(R_s));
         drt_s_dm_s = blkdiag(dr_s_deuler_s, eye(3));
         drt_R_dm_s = drt_R_drt_s*drt_s_dm_s;

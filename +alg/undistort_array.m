@@ -24,8 +24,6 @@ function array = undistort_array(array_d, f_p_p2p_p_d, a, d, opts)
                            d);
 
     % Resample
-    array = alg.interp_array(array_d, ...
-                             p_p_ds, ...
-                             opts.undistort_array_interp);
+    array = alg.interp_array(array_d, p_p_ds, opts.undistort_array_interp);
     array = reshape(array, size(array_d));
 end

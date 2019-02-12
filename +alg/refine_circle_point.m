@@ -12,13 +12,7 @@ function [p_cb_p, cov_cb_p, debug] = refine_circle_point(p_cb_p_init, boundary_p
     %   opts - struct;
     %       .target_optimization - string; optimization type for
     %           calibration target
-    %       .refine_ellipse_edges_h2_init - scalar; initial value of h2
-    %           parameter in "edges" ellipse refinement
-    %       .refine_ellipse_edges_it_cutoff - int; max number of
-    %           iterations performed for "edges" ellipse refinement
-    %       .refine_ellipse_edges_norm_cutoff - scalar; cutoff for the
-    %           difference in norm of the parameter vector for "edges"
-    %           ellipse refinement
+    %       .* - options for f_refine_target_point() function
     %
     % Outputs:
     %   p_cb_p - array; 1x2 optimized circle pixel point
@@ -26,7 +20,7 @@ function [p_cb_p, cov_cb_p, debug] = refine_circle_point(p_cb_p_init, boundary_p
     %   debug - struct;
 
     % Run optimization ---------------------------------------------------%
-    
+
     switch opts.target_optimization
         case 'dualconic'
             f_refine_target_point = @dualconic;
@@ -35,18 +29,18 @@ function [p_cb_p, cov_cb_p, debug] = refine_circle_point(p_cb_p_init, boundary_p
         otherwise
             error(['Unknown target optimization: "' opts.target_optimization '" for circle target.']);
     end
-    
+
     % Get ellipse
     [e_cb_p, cov_cb_p] = f_refine_target_point(p_cb_p_init, ...
+                                               boundary_p_center, ...
                                                array_cb, ...
                                                array_cb_dx, ...
                                                array_cb_dy, ...
-                                               boundary_p_center, ...
                                                opts);
-                                           
+
     % Parse point
     p_cb_p = e_cb_p(1:2)';
-    
+
     % Set debugging output
     debug.e_cb_p = e_cb_p;
     debug.boundary_p_center = boundary_p_center;
@@ -59,7 +53,7 @@ function [bb_p, mask] = calc_bb_and_mask(boundary_p)
         mask = [];
         return
     end
-    
+
     % Get bounding box
     bb_p = [floor(min(boundary_p));
             ceil(max(boundary_p))];
@@ -71,7 +65,7 @@ function [bb_p, mask] = calc_bb_and_mask(boundary_p)
                      bb_p(2, 1)-bb_p(1, 1)+1);
 end
 
-function [e_cb_p, cov_cb_p] = dualconic(p_cb_p_init, array_cb, array_cb_dx, array_cb_dy, boundary_p_center, opts) %#ok<INUSD>
+function [e_cb_p, cov_cb_p] = dualconic(p_cb_p_init, boundary_p_center, array_cb, array_cb_dx, array_cb_dy, opts) %#ok<INUSD>
     % Initialize ellipse and covariance
     e_cb_p = nan(5, 1);
     cov_cb_p = nan(2, 2);
@@ -99,13 +93,14 @@ function [e_cb_p, cov_cb_p] = dualconic(p_cb_p_init, array_cb, array_cb_dx, arra
                                               sub_array_dy, ...
                                               double(mask_sub));
 
+    % TODO: update refine_ellipse_dualconic to return covariance of ellipse
+    % center; for now just return an identity matrix.
+    cov_cb_p = eye(2);
+
     % Get ellipse in array coordinates.
     e_cb_p = e_cb_p_sub;
     e_cb_p(1:2) = e_cb_p(1:2) + bb_sub_p(1, :)' - 1;
-    
-    % For now, return identity covariance
-    cov_cb_p = eye(2);
-    
+
     % Make sure point did not go outside of original bounding box
     if ~alg.is_p_in_bb(e_cb_p(1:2)', bb_sub_p)
         e_cb_p(:) = nan;
@@ -114,14 +109,14 @@ function [e_cb_p, cov_cb_p] = dualconic(p_cb_p_init, array_cb, array_cb_dx, arra
     end
 end
 
-function [e_cb_p, cov_cb_p] = edges(p_cb_p_init, array_cb, array_cb_dx, array_cb_dy, boundary_p_center, opts)
+function [e_cb_p, cov_cb_p] = edges(p_cb_p_init, boundary_p_center, array_cb, array_cb_dx, array_cb_dy, opts)
     % Initialize ellipse by using dualconic method
-    e_cb_p = dualconic(p_cb_p_init, array_cb, array_cb_dx, array_cb_dy, boundary_p_center, opts); 
+    e_cb_p = dualconic(p_cb_p_init, boundary_p_center, array_cb, array_cb_dx, array_cb_dy, opts);
     cov_cb_p = nan(2, 2);
-    
+
     % Get bb of array
     bb_array_p = alg.bb_array(array_cb);
-        
+
     % Get bounding box and mask of sub arrays
     [bb_sub_p, mask_sub] = calc_bb_and_mask(boundary_p_center + e_cb_p(1:2)');
 

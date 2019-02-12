@@ -106,6 +106,7 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'blob_detect_r2_cluster'                        , 'required', false, 'default', 2                              , 'validation_fun', @validate_pos_scalar);
 
     % Four point detection
+    field_info(end+1) = struct('field', 'fp_detector'                                   , 'required', false, 'default', ''                             , 'validation_fun', @validate_fp_detector);
     field_info(end+1) = struct('field', 'ellipse_detect_num_samples_theta'              , 'required', false, 'default', 100                            , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'ellipse_detect_interp'                         , 'required', false, 'default', 'cubic'                        , 'validation_fun', @validate_interp);
     field_info(end+1) = struct('field', 'ellipse_detect_sf_cost'                        , 'required', false, 'default', 2                              , 'validation_fun', @validate_pos_scalar_int);
@@ -192,7 +193,7 @@ function calib_config = validate_calib_optimization(calib_config, field)
     % field needs to be a string
     calib_config = validate_string(calib_config, field);
 
-    if ~any(strcmp(param, {'fp_dr'}))
+    if ~any(strcmp(param, {'distortion_refinement'}))
         field_class_error(field, param, 'calibration optimization');
     end
 end
@@ -218,6 +219,17 @@ function calib_config = validate_cb_class(calib_config, field)
 
     % Assign value
     calib_config.(field) = cb_class;
+end
+
+function calib_config = validate_fp_detector(calib_config, field)
+    param = calib_config.(field);
+    
+    % field needs to be a string
+    calib_config = validate_string(calib_config, field);
+
+    if ~isempty(param) && ~any(strcmp(param, {'LoG'}))
+        field_class_error(field, param, 'four point detector');
+    end
 end
 
 function calib_config = validate_string(calib_config, field)

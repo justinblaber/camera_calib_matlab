@@ -17,7 +17,7 @@ function e = refine_ellipse_dualconic(array_dx, array_dy, W)
     if ~exist('W', 'var')
         W = ones(size(array_dx));
     end
-    
+
     % Fit conic
     Aq = alg.fit_conic(array_dx, array_dy, W);
 

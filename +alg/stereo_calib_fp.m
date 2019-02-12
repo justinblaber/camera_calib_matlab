@@ -1,17 +1,18 @@
-function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
-    % Performs stereo camera calibration using "four point distortion
-    % refinement" method.
+function calib = stereo_calib_fp(f_single_calib_fp, img_cbs, p_fp_p_dss, calib_config, intrin)
+    % Performs stereo camera calibration using "four point" method.
     %
     % Inputs:
+    %   f_single_calib_fp - function handle; single four point calibration
+    %       function
     %   img_cbs - struct;
     %       .L - class.img; Nx1 calibration board images
     %       .R - class.img; Nx1 calibration board images
     %   p_fp_p_dss - struct;
     %       .L - cell; Nx1 cell of four point boxes around the
-    %           calibration board images in distorted pixel coordinates.
+    %           calibration board images in distorted pixel coordinates
     %       .R - cell; Nx1 cell of four point boxes around the
-    %           calibration board images in distorted pixel coordinates.
-    %   calib_config - struct; struct returned by util.load_calib_config()
+    %           calibration board images in distorted pixel coordinates
+    %   calib_config - struct; struct returned by intf.load_calib_config()
     %   intrin - struct; optional. If passed in, intrinsics will not be
     %       optimized.
     %       .L - struct;
@@ -33,7 +34,7 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     %       .debug - struct;
 
     util.verbose_disp('------------', 1, calib_config);
-    util.verbose_disp('Performing stereo calibration with four point distortion refinement method...', 1, calib_config);
+    util.verbose_disp('Performing stereo calibration with four point method...', 1, calib_config);
 
     % Handle distortion function -----------------------------------------%
 
@@ -59,21 +60,12 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     %       calibration board pixel points
     %   2) derivative of 1) wrt homography parameters
 
-    switch calib_config.target_type
-        case 'checker'
-            f_p_cb_w2p_cb_p = @(p, H)alg.apply_homography_p2p(p, H);                             % 1)
-            f_dp_cb_p_dh = @(p, H)alg.dp_dh_p2p(p, H);                                           % 2)
-        case 'circle'
-            f_p_cb_w2p_cb_p = @(p, H)alg.apply_homography_c2e(p, H, calib_config.circle_radius); % 1)
-            f_dp_cb_p_dh = @(p, H)alg.dp_dh_c2e(p, H, calib_config.circle_radius);               % 2)
-        otherwise
-            error(['Unknown target type: "' calib_config.target_type '"']);
-    end
+    [f_p_cb_w2p_cb_p, f_dp_cb_p_dh] = alg.get_p_cb_w2p_cb_p(calib_config);  % 1) and 2)
 
     % Perform calibration ------------------------------------------------%
 
-    % Get calibration board world points
-    p_cb_ws = alg.p_cb_w(calib_config);
+    % Get the calibration board points in world coordinates
+    p_cb_ws = calib_config.cb_class.get_p_cb_ws();
 
     % Get number of boards
     num_boards = numel(img_cbs.L);
@@ -90,17 +82,12 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     util.verbose_disp('Calibrating left camera...', 1, calib_config);
 
     if exist('intrin', 'var')
-        calib_L = alg.single_calib_fp_dr(img_cbs.L, ...
-                                         p_fp_p_dss.L, ...
-                                         calib_config, ...
-                                         intrin.L);
+        calib_L = f_single_calib_fp(img_cbs.L, p_fp_p_dss.L, calib_config, intrin.L);
     else
-        calib_L = alg.single_calib_fp_dr(img_cbs.L, ...
-                                         p_fp_p_dss.L, ...
-                                         calib_config);
+        calib_L = f_single_calib_fp(img_cbs.L, p_fp_p_dss.L, calib_config);
     end
 
-    % Remove config
+    % Remove config since its redundant
     calib_L = rmfield(calib_L, 'config');
 
     % Calibrate right camera
@@ -108,17 +95,12 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     util.verbose_disp('Calibrating right camera...', 1, calib_config);
 
     if exist('intrin', 'var')
-        calib_R = alg.single_calib_fp_dr(img_cbs.R, ...
-                                         p_fp_p_dss.R, ...
-                                         calib_config, ...
-                                         intrin.R);
+        calib_R = f_single_calib_fp(img_cbs.R, p_fp_p_dss.R, calib_config, intrin.R);
     else
-        calib_R = alg.single_calib_fp_dr(img_cbs.R, ...
-                                         p_fp_p_dss.R, ...
-                                         calib_config);
+        calib_R = f_single_calib_fp(img_cbs.R, p_fp_p_dss.R, calib_config);
     end
 
-    % Remove config
+    % Remove config since its redundant
     calib_R = rmfield(calib_R, 'config');
 
     % Repackage initial guesses and other parameters ---------------------%
@@ -171,7 +153,7 @@ function calib = stereo_calib_fp_dr(img_cbs, p_fp_p_dss, calib_config, intrin)
     % Perform nonlinear refinement of all parameters ---------------------%
 
     util.verbose_disp('---------', 1, calib_config);
-    util.verbose_disp('Refining stereo parameters...', 1, calib_config);
+    util.verbose_disp(['Refining stereo parameters with ' optimization_type ' optimization...'], 1, calib_config);
 
     % Gather params
     num_params = 6+2*num_params_d+6*(num_boards+1);

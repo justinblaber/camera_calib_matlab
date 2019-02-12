@@ -9,7 +9,7 @@ function l = pointslope2line(p, m)
     %   l - array; 3x1 array of a line in the form:
     %       [a; b; c] where ax + by + c = 0
 
-    % Get x and y coordinates of points
+    % Get x and y coordinates of point
     x = p(1);
     y = p(2);
 

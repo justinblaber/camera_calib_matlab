@@ -1,4 +1,4 @@
-function [p_fp_pss, debug] = single_fp_detect_LoG(img_cbs, calib_config)
+function [p_fp_pss, debug] = single_fp_detect(img_cbs, calib_config)
     % Obtains the locations of the four points (fiducial markers) around
     % the calibration board images.
     %
@@ -12,6 +12,14 @@ function [p_fp_pss, debug] = single_fp_detect_LoG(img_cbs, calib_config)
 
     util.verbose_disp('---', 1, calib_config);
 
+    % Get four point detector function    
+    switch calib_config.fp_detector
+        case 'LoG'
+            f_fp_detect = @alg.fp_detect_LoG;
+        otherwise
+            error(['Unknown four point detector: "' calib_config.fp_detector '"']);
+    end
+    
     % Get scale factor
     if isnan(calib_config.fp_detect_array_min_size)
         sf = 1;
@@ -21,7 +29,10 @@ function [p_fp_pss, debug] = single_fp_detect_LoG(img_cbs, calib_config)
 
     % Cycle over images and get four points
     for i = 1:numel(img_cbs)
-        util.verbose_fprintf('Performing four-point detection for image: %s. ', img_cbs(i).get_path(), 1, calib_config);
+        util.verbose_fprintf('Performing four-point %s detection for image: %s. ', ...
+                             calib_config.fp_detector, ...
+                             img_cbs(i).get_path(), ...
+                             1, calib_config);
 
         % Get array and scale it
         array = img_cbs(i).get_array_gs();
@@ -29,7 +40,7 @@ function [p_fp_pss, debug] = single_fp_detect_LoG(img_cbs, calib_config)
 
         % Get four points
         t = tic;
-        [p_fp_pss{i}, debug(i)] = alg.fp_detect_LoG(array, calib_config); %#ok<AGROW>
+        [p_fp_pss{i}, debug(i)] = f_fp_detect(array, calib_config); %#ok<AGROW>
         time = toc(t);
 
         % Scale four points

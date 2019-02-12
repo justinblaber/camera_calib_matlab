@@ -5,33 +5,7 @@ function [p_fps, debug] = fp_detect_LoG(array, opts)
     % Inputs:
     %   array - array; MxN array
     %   opts - struct;
-    %       .blob_detect_r_range1 - scalar; starting point for blob radius
-    %           search.
-    %       .blob_detect_r_range2 - scalar; end point for blob radius
-    %           search.
-    %       .blob_detect_step - scalar; increment for blob radius search.
-    %       .blob_detect_num_cutoff - int; max number of blobs found.
-    %       .blob_detect_LoG_cutoff - scalar; cutoff for blob LoG value.
-    %       .blob_detect_LoG_interp - string; interpolation used for
-    %           LoG resampling.
-    %       .blob_detect_eccentricity_cutoff - scalar; cutoff for
-    %           eccentricity of blob.
-    %       .blob_detect_lambda - scalar; damping factor added to hession
-    %       .blob_detect_maxima_it_cutoff - int; max number of iterations
-    %           performed for refinement of maxima parameters.
-    %       .blob_detect_maxima_norm_cutoff - scalar; cutoff for norm of
-    %           difference of parameter vector for refinement of maxima
-    %           parameters.
-    %       .blob_detect_centroid_it_cutoff - int; max number of iterations
-    %           performed for refinement of centroid.
-    %       .blob_detect_centroid_norm_cutoff - scalar; cutoff for norm of
-    %           difference of parameter vector for refinement of centroid.
-    %       .blob_detect_d_cluster - scalar; clusters blobs within d
-    %           distance.
-    %       .blob_detect_r1_cluster - scalar; clusters blobs within r1
-    %           distance.
-    %       .blob_detect_r2_cluster - scalar; clusters blobs within r2
-    %           distance.
+    %       .blob_detect_* - options for alg.blob_detect_LoG()
     %       .ellipse_detect_num_samples_theta - int; number of samples for
     %           theta.
     %       .ellipse_detect_interp - string; interpolation used for ellipse

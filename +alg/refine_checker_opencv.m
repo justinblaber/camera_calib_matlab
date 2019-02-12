@@ -14,12 +14,12 @@ function [p, cov_p] = refine_checker_opencv(array_dx, array_dy, W)
     if ~exist('W', 'var')
         W = ones(size(array_dx));
     end
-    
+
     % Remove any nans
     mask = ~isnan(array_dx) & ~isnan(array_dy);
     array_dx(~mask) = 0;
     array_dy(~mask) = 0;
-        
+
     % Get coordinates of pixels
     bb_array = alg.bb_array(array_dx);
     [ys, xs] = alg.ndgrid_bb(bb_array);

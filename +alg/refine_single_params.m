@@ -9,7 +9,7 @@ function [params, cov_params] = refine_single_params(params, p_cb_ws, p_cb_p_dss
     %           [alpha; x_o; y_o; d_1; ... d_M; ...
     %            theta_x1; theta_y1; theta_z1; t_x1; t_y1; t_z1; ...
     %            theta_xN; theta_yN; theta_zN; t_xN; t_yN; t_zN]
-    %   p_cb_ws - array; Nx2 array of calibration board world points
+    %   p_cb_ws - array; Px2 array of calibration board world points
     %   p_cb_p_dss - cell; Nx1 cell array of calibration board distorted
     %       pixel points
     %   idx_valids - cell; Nx1 cell array of "valid" calibration board
@@ -74,19 +74,18 @@ function [params, cov_params] = refine_single_params(params, p_cb_ws, p_cb_p_dss
         idx_update(2:3) = false;
     end
 
-    % Get "weight matrix"
+    % Get covariance matrix
     if exist('cov_cb_p_dss', 'var')
-        % Do generalized least squares
-        % Get "weight" matrix (inverse of covariance)
         cov = vertcat(cov_cb_p_dss{:});                      % Concat
         cov = cov(vertcat(idx_valids{:}));                   % Apply valid indices
         cov = cellfun(@sparse, cov, 'UniformOutput', false); % Make sparse
         cov = blkdiag(cov{:});                               % Create full covariance matrix
-        W = inv(cov);                                        % This might be slow...
     else
-        % Identity weight matrix is just simple least squares
-        W = speye(2*sum(vertcat(idx_valids{:})));
+        cov = speye(2*sum(vertcat(idx_valids{:})));          % Identity matrix is just simple least squares
     end
+
+    % Precompute inverse covariance matrix; this might be slow...
+    cov_inv = cov;
 
     % Perform Levenberg–Marquardt iteration(s)
     % Initialize lambda
@@ -101,7 +100,7 @@ function [params, cov_params] = refine_single_params(params, p_cb_ws, p_cb_p_dss
                      f_p_p2p_p_d, ...
                      f_dp_p_d_dargs, ...
                      idx_update, ...
-                     W);
+                     cov_inv);
     for it = 1:opts.refine_single_params_it_cutoff
         % Store previous params and cost
         params_prev = params;
@@ -118,7 +117,7 @@ function [params, cov_params] = refine_single_params(params, p_cb_ws, p_cb_p_dss
                                          f_dp_p_d_dargs, ...
                                          idx_update, ...
                                          lambda, ...
-                                         W);
+                                         cov_inv);
 
         % update params and cost
         params(idx_update) = params_prev(idx_update) + delta_params;
@@ -131,7 +130,7 @@ function [params, cov_params] = refine_single_params(params, p_cb_ws, p_cb_p_dss
                          f_p_p2p_p_d, ...
                          f_dp_p_d_dargs, ...
                          idx_update, ...
-                         W);
+                         cov_inv);
 
         % If cost decreases, decrease lambda and store results; if cost
         % increases, then increase lambda until cost decreases
@@ -147,8 +146,8 @@ function [params, cov_params] = refine_single_params(params, p_cb_ws, p_cb_p_dss
                     % This will already be a very, very small step, so just
                     % exit
                     delta_params(:) = 0;
-                    cost = cost_prev;
                     params = params_prev;
+                    cost = cost_prev;
                     break
                 end
 
@@ -163,7 +162,7 @@ function [params, cov_params] = refine_single_params(params, p_cb_ws, p_cb_p_dss
                                                  f_dp_p_d_dargs, ...
                                                  idx_update, ...
                                                  lambda, ...
-                                                 W);
+                                                 cov_inv);
 
                 % update params and cost
                 params(idx_update) = params_prev(idx_update) + delta_params;
@@ -176,7 +175,7 @@ function [params, cov_params] = refine_single_params(params, p_cb_ws, p_cb_p_dss
                                  f_p_p2p_p_d, ...
                                  f_dp_p_d_dargs, ...
                                  idx_update, ...
-                                 W);
+                                 cov_inv);
             end
         end
 
@@ -222,10 +221,10 @@ function [params, cov_params] = refine_single_params(params, p_cb_ws, p_cb_p_dss
                                             f_p_p2p_p_d, ...
                                             f_dp_p_d_dargs, ...
                                             true(size(idx_update))); % Mark all as true for final covariance estimation
-    [~, ~, ~, cov_params] = alg.safe_lscov(jacob, res, W);
+    [~, ~, ~, cov_params] = alg.safe_lscov(jacob, res, cov);
 end
 
-function delta_params = calc_delta_params(params, p_cb_ws, p_cb_p_dss, idx_valids, f_p_cb_w2p_cb_p, f_dp_cb_p_dh, f_p_p2p_p_d, f_dp_p_d_dargs, idx_update, lambda, W)
+function delta_params = calc_delta_params(params, p_cb_ws, p_cb_p_dss, idx_valids, f_p_cb_w2p_cb_p, f_dp_cb_p_dh, f_p_p2p_p_d, f_dp_p_d_dargs, idx_update, lambda, cov_inv)
     % Get gauss newton params
     [jacob, res] = calc_gauss_newton_params(params, ...
                                             p_cb_ws, ...
@@ -238,10 +237,10 @@ function delta_params = calc_delta_params(params, p_cb_ws, p_cb_p_dss, idx_valid
                                             idx_update);
 
     % Get gradient
-    grad = jacob'*W*res;
+    grad = jacob'*cov_inv*res;
 
     % Get hessian
-    hess = jacob'*W*jacob;
+    hess = jacob'*cov_inv*jacob;
 
     % Add Levenberg–Marquardt damping
     hess = hess + lambda*eye(sum(idx_update));
@@ -250,7 +249,7 @@ function delta_params = calc_delta_params(params, p_cb_ws, p_cb_p_dss, idx_valid
     delta_params = -alg.safe_lscov(hess, grad);
 end
 
-function cost = calc_cost(params, p_cb_ws, p_cb_p_dss, idx_valids, f_p_cb_w2p_cb_p, f_dp_cb_p_dh, f_p_p2p_p_d, f_dp_p_d_dargs, idx_update, W)
+function cost = calc_cost(params, p_cb_ws, p_cb_p_dss, idx_valids, f_p_cb_w2p_cb_p, f_dp_cb_p_dh, f_p_p2p_p_d, f_dp_p_d_dargs, idx_update, cov_inv)
     % Get residuals
     [~, res] = calc_gauss_newton_params(params, ...
                                         p_cb_ws, ...
@@ -263,7 +262,7 @@ function cost = calc_cost(params, p_cb_ws, p_cb_p_dss, idx_valids, f_p_cb_w2p_cb
                                         idx_update);
 
     % Apply weights
-    cost = res'*W*res;
+    cost = res'*cov_inv*res;
 end
 
 function [jacob, res] = calc_gauss_newton_params(params, p_cb_ws, p_cb_p_dss, idx_valids, f_p_cb_w2p_cb_p, f_dp_cb_p_dh, f_p_p2p_p_d, f_dp_p_d_dargs, idx_update)

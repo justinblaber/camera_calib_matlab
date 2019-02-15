@@ -12,8 +12,8 @@ function plot_cam_3D(xform_12, face_color, face_alpha, edge_alpha, axes_color, a
         a = axes(f);
     end
 
-    % If camera size is not set (i.e. nan), then set the camera size to the
-    % calibration board target size.
+    % If camera size is not set (i.e. nan), then set the camera size to a
+    % scalefactor of the calibration board target size.
     if isnan(opts.camera_size)
         camera_size = min(opts.cb_class.get_cb_height(), opts.cb_class.get_cb_width())/4;
     else

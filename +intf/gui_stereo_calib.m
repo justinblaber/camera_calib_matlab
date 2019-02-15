@@ -1,4 +1,4 @@
-function gui_stereo_calib_fp(calib, f)
+function gui_stereo_calib(calib, f)
     % GUI for stereo calibration
 
     if ~exist('f', 'var')
@@ -16,8 +16,8 @@ function gui_stereo_calib_fp(calib, f)
     alphas = 0.1*ones(1, num_boards);
     alphas(idx_board) = 1;
     colors = external.distinguishable_colors(num_boards, {'w', 'r', 'k'});
-    axes_cb_img_L = matlab.graphics.axis.Axes.empty();
-    axes_cb_img_R = matlab.graphics.axis.Axes.empty();
+    axes_calib_cb_img_L = matlab.graphics.axis.Axes.empty();
+    axes_calib_cb_img_R = matlab.graphics.axis.Axes.empty();
 
     % Get residuals
     res_L = {};
@@ -119,20 +119,20 @@ function gui_stereo_calib_fp(calib, f)
             pos_extrinsics = [padding_width 1-padding_height-height_extrinsics width_extrinsics height_extrinsics];
             axes_extrinsics = axes('Position', pos_extrinsics, 'Parent', f);
 
-            pos_cb_info = [padding_width padding_height pos_extrinsics(3) pos_extrinsics(2)-2*padding_height];
-            axes_cb_info = axes('Position', pos_cb_info, 'Parent', f);
+            pos_cb_class = [padding_width padding_height pos_extrinsics(3) pos_extrinsics(2)-2*padding_height];
+            axes_cb_class = axes('Position', pos_cb_class, 'Parent', f);
 
-            pos_res_L = [pos_cb_info(1)+pos_cb_info(3)+padding_width 1-padding_height-height_res (1-(pos_cb_info(1)+pos_cb_info(3))-3*padding_width)/2 height_res];
+            pos_res_L = [pos_cb_class(1)+pos_cb_class(3)+padding_width 1-padding_height-height_res (1-(pos_cb_class(1)+pos_cb_class(3))-3*padding_width)/2 height_res];
             axes_res_L = axes('Position', pos_res_L, 'Parent', f);
 
             pos_res_R = [pos_res_L(1)+pos_res_L(3)+padding_width pos_res_L(2) pos_res_L(3) pos_res_L(4)];
             axes_res_R = axes('Position', pos_res_R, 'Parent', f);
 
-            pos_cb_img_L = [pos_res_L(1) pos_cb_info(2) pos_res_L(3) pos_res_L(2)-2*padding_height];
-            axes_cb_img_L = axes('Position', pos_cb_img_L, 'Parent', f);
+            pos_calib_cb_img_L = [pos_res_L(1) pos_cb_class(2) pos_res_L(3) pos_res_L(2)-2*padding_height];
+            axes_calib_cb_img_L = axes('Position', pos_calib_cb_img_L, 'Parent', f);
 
-            pos_cb_img_R = [pos_res_R(1) pos_cb_info(2) pos_res_R(3) pos_res_R(2)-2*padding_height];
-            axes_cb_img_R = axes('Position', pos_cb_img_R, 'Parent', f);
+            pos_calib_cb_img_R = [pos_res_R(1) pos_cb_class(2) pos_res_R(3) pos_res_R(2)-2*padding_height];
+            axes_calib_cb_img_R = axes('Position', pos_calib_cb_img_R, 'Parent', f);
 
             % Plot extrinsics --------------------------------------------%
 
@@ -149,12 +149,6 @@ function gui_stereo_calib_fp(calib, f)
                                          calib.config, ...
                                          axes_extrinsics);
             title(axes_extrinsics, 'Extrinsics', 'FontSize', 10);
-            drawnow
-
-            % Plot calibration board info --------------------------------%
-
-            debug.plot_cb_info_fp(calib.config, axes_cb_info);
-            title(axes_cb_info, 'Calibration board', 'FontSize', 10);
             drawnow
 
             % Plot residuals ---------------------------------------------%
@@ -177,31 +171,31 @@ function gui_stereo_calib_fp(calib, f)
                    'FontSize', 7);
             drawnow
 
-            % Plot calibration board image -------------------------------%
+            % Plot calibration board class -------------------------------%
 
-            debug.plot_cb_img_fp(calib.L.extrin(idx_board).img_cb.get_array_gs(), ...
-                                 calib.L.intrin.A, ...
-                                 calib.L.extrin(idx_board).p_fp_p_ds, ...
-                                 calib.L.extrin(idx_board).p_cb_p_ds(calib.L.extrin(idx_board).idx_valid, :), ...
-                                 calib.L.extrin(idx_board).p_cb_p_d_ms(calib.L.extrin(idx_board).idx_valid, :), ...
-                                 axes_cb_img_L);
-            title(axes_cb_img_L, 'Left board', ...
+            debug.plot_cb_class(calib.config.cb_class, axes_cb_class);
+            title(axes_cb_class, 'Calibration board', 'FontSize', 10);
+            drawnow
+
+            % Plot calibrated board image --------------------------------%
+
+            debug.plot_calib_cb_img(calib.L.extrin(idx_board), ...
+                                    calib.L.intrin, ...
+                                    axes_calib_cb_img_L);
+            title(axes_calib_cb_img_L, 'Left board', ...
                   'FontSize', 10, 'Interpreter', 'none');
-            xlabel(axes_cb_img_L, {['Path: ' calib.L.extrin(idx_board).img_cb.get_path()], ...
-                                   ['Resolution: ' num2str(calib.L.extrin(idx_board).img_cb.get_width()) ' x ' num2str(calib.L.extrin(idx_board).img_cb.get_height())]}, ...
+            xlabel(axes_calib_cb_img_L, {['Path: ' calib.L.extrin(idx_board).img_cb.get_path()], ...
+                                         ['Resolution: ' num2str(calib.L.extrin(idx_board).img_cb.get_width()) ' x ' num2str(calib.L.extrin(idx_board).img_cb.get_height())]}, ...
                    'FontSize', 8, 'Interpreter', 'none');
             drawnow
 
-            debug.plot_cb_img_fp(calib.R.extrin(idx_board).img_cb.get_array_gs(), ...
-                                 calib.R.intrin.A, ...
-                                 calib.R.extrin(idx_board).p_fp_p_ds, ...
-                                 calib.R.extrin(idx_board).p_cb_p_ds(calib.R.extrin(idx_board).idx_valid, :), ...
-                                 calib.R.extrin(idx_board).p_cb_p_d_ms(calib.R.extrin(idx_board).idx_valid, :), ...
-                                 axes_cb_img_R);
-            title(axes_cb_img_R, 'Right board', ...
+            debug.plot_calib_cb_img(calib.R.extrin(idx_board), ...
+                                    calib.R.intrin, ...
+                                    axes_calib_cb_img_R);
+            title(axes_calib_cb_img_R, 'Right board', ...
                   'FontSize', 10, 'Interpreter', 'none');
-            xlabel(axes_cb_img_R, {['Path: ' calib.R.extrin(idx_board).img_cb.get_path()], ...
-                                   ['Resolution: ' num2str(calib.R.extrin(idx_board).img_cb.get_width()) ' x ' num2str(calib.R.extrin(idx_board).img_cb.get_height())]}, ...
+            xlabel(axes_calib_cb_img_R, {['Path: ' calib.R.extrin(idx_board).img_cb.get_path()], ...
+                                         ['Resolution: ' num2str(calib.R.extrin(idx_board).img_cb.get_width()) ' x ' num2str(calib.R.extrin(idx_board).img_cb.get_height())]}, ...
                    'FontSize', 8, 'Interpreter', 'none');
             drawnow
         catch e
@@ -226,8 +220,8 @@ function gui_stereo_calib_fp(calib, f)
                     bb_R = bb_worst(res_R{idx_board}, calib.R.extrin(idx_board).p_cb_p_ds(calib.R.extrin(idx_board).idx_valid, :));
             end
 
-            set(axes_cb_img_L, 'Xlim', bb_L(:, 1), 'Ylim', bb_L(:, 2));
-            set(axes_cb_img_R, 'Xlim', bb_R(:, 1), 'Ylim', bb_R(:, 2));
+            set(axes_calib_cb_img_L, 'Xlim', bb_L(:, 1), 'Ylim', bb_L(:, 2));
+            set(axes_calib_cb_img_R, 'Xlim', bb_R(:, 1), 'Ylim', bb_R(:, 2));
         catch e
             if ishandle(f)
                 rethrow(e);

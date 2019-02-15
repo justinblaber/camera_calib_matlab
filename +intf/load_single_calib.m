@@ -1,4 +1,4 @@
-function calib = load_single_calib_fp(file_path)
+function calib = load_single_calib(file_path)
     % Loads a four point single calibration from file path
     %
     % Inputs:
@@ -14,8 +14,8 @@ function calib = load_single_calib_fp(file_path)
     %           .img_cb - class.img; calibration board image
     %           .R - array; 3x3 rotation matrix
     %           .t - array; 3x1 translation vector
-    %           .p_fp_p_ds - array; four point box around the calibration
-    %               board image in distorted pixel coordinates
+    %           .p_fp_p_ds - array; optional. four point box around the
+    %               calibration board image in distorted pixel coordinates
     %           .p_cb_p_ds - array; calibration board distorted pixel
     %               points
     %           .cov_cb_p_ds - cell; covariances of calibration board
@@ -33,7 +33,7 @@ function calib = load_single_calib_fp(file_path)
     data = util.read_data(file_path);
 
     % Parse out single four point calibration
-    [calib_tmp, data] = util.parse_single_calib_fp(data);
+    [calib_tmp, data] = util.parse_single_calib(data);
 
     % Parse out calib config
     [calib_config, data] = util.parse_calib_config(data);

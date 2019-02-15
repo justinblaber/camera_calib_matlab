@@ -1,4 +1,4 @@
-function gui_single_calib_fp(calib, f)
+function gui_single_calib(calib, f)
     % GUI for single calibration
 
     if ~exist('f', 'var')
@@ -16,7 +16,7 @@ function gui_single_calib_fp(calib, f)
     alphas = 0.1*ones(1, num_boards);
     alphas(idx_board) = 1;
     colors = external.distinguishable_colors(num_boards, {'w', 'r', 'k'});
-    axes_cb_img = matlab.graphics.axis.Axes.empty();
+    axes_calib_cb_img = matlab.graphics.axis.Axes.empty();
 
     % Get residuals
     res = {};
@@ -112,14 +112,14 @@ function gui_single_calib_fp(calib, f)
             pos_extrinsics = [padding_width 1-padding_height-height_extrinsics width_extrinsics height_extrinsics];
             axes_extrinsics = axes('Position', pos_extrinsics, 'Parent', f);
 
-            pos_cb_info = [padding_width padding_height pos_extrinsics(3) pos_extrinsics(2)-2*padding_height];
-            axes_cb_info = axes('Position', pos_cb_info, 'Parent', f);
+            pos_cb_class = [padding_width padding_height pos_extrinsics(3) pos_extrinsics(2)-2*padding_height];
+            axes_cb_class = axes('Position', pos_cb_class, 'Parent', f);
 
-            pos_res = [pos_cb_info(1)+pos_cb_info(3)+padding_width 1-padding_height-height_res 1-(pos_cb_info(1)+pos_cb_info(3))-2*padding_width height_res];
+            pos_res = [pos_cb_class(1)+pos_cb_class(3)+padding_width 1-padding_height-height_res 1-(pos_cb_class(1)+pos_cb_class(3))-2*padding_width height_res];
             axes_res = axes('Position', pos_res, 'Parent', f);
 
-            pos_cb_img = [pos_res(1) pos_cb_info(2) pos_res(3) pos_res(2)-2*padding_height];
-            axes_cb_img = axes('Position', pos_cb_img, 'Parent', f);
+            pos_calib_cb_img = [pos_res(1) pos_cb_class(2) pos_res(3) pos_res(2)-2*padding_height];
+            axes_calib_cb_img = axes('Position', pos_calib_cb_img, 'Parent', f);
 
             % Plot extrinsics --------------------------------------------%
 
@@ -134,17 +134,6 @@ function gui_single_calib_fp(calib, f)
             title(axes_extrinsics, 'Extrinsics', 'FontSize', 10);
             drawnow
 
-            % Plot calibration board info --------------------------------%
-
-            debug.plot_cb_info_fp(calib.config.cb_class.get_p_fp_ws(), ...
-                                  calib.config.cb_class.get_p_cb_ws(), ...
-                                  calib.config.cb_class.get_p_cb_w_boundaries, ...
-                                  calib.config.cb_class.get_cb_height(), ...
-                                  calib.config.cb_class.get_cb_width(), ...
-                                  axes_cb_info);
-            title(axes_cb_info, 'Calibration board', 'FontSize', 10);
-            drawnow
-
             % Plot residuals ---------------------------------------------%
 
             debug.plot_res(res, colors, alphas, max_res, axes_res);
@@ -155,19 +144,22 @@ function gui_single_calib_fp(calib, f)
                               ['Overall stddev: [' num2str(std(vertcat(res{:}))) ']']}, ...
                    'FontSize', 7);
             drawnow
+            
+            % Plot calibration board class -------------------------------%
 
-            % Plot calibration board image -------------------------------%
+            debug.plot_cb_class(calib.config.cb_class, axes_cb_class);
+            title(axes_cb_class, 'Calibration board', 'FontSize', 10);
+            drawnow
 
-            debug.plot_cb_img_fp(calib.extrin(idx_board).img_cb.get_array_gs(), ...
-                                 calib.intrin.A, ...
-                                 calib.extrin(idx_board).p_fp_p_ds, ...
-                                 calib.extrin(idx_board).p_cb_p_ds(calib.extrin(idx_board).idx_valid, :), ...
-                                 calib.extrin(idx_board).p_cb_p_d_ms(calib.extrin(idx_board).idx_valid, :), ...
-                                 axes_cb_img);
-            title(axes_cb_img, 'Calibration board', ...
+            % Plot calibrated board image --------------------------------%
+
+            debug.plot_calib_cb_img(calib.extrin(idx_board), ...
+                                    calib.intrin, ...
+                                    axes_calib_cb_img);
+            title(axes_calib_cb_img, 'Calibration board', ...
                   'FontSize', 10, 'Interpreter', 'none');
-            xlabel(axes_cb_img, {['Path: ' calib.extrin(idx_board).img_cb.get_path()], ...
-                                 ['Resolution: ' num2str(calib.extrin(idx_board).img_cb.get_width()) ' x ' num2str(calib.extrin(idx_board).img_cb.get_height())]}, ...
+            xlabel(axes_calib_cb_img, {['Path: ' calib.extrin(idx_board).img_cb.get_path()], ...
+                                       ['Resolution: ' num2str(calib.extrin(idx_board).img_cb.get_width()) ' x ' num2str(calib.extrin(idx_board).img_cb.get_height())]}, ...
                    'FontSize', 8, 'Interpreter', 'none');
             drawnow
         catch e
@@ -190,7 +182,7 @@ function gui_single_calib_fp(calib, f)
                     bb = bb_worst(res{idx_board}, calib.extrin(idx_board).p_cb_p_ds(calib.extrin(idx_board).idx_valid, :));
             end
 
-            set(axes_cb_img, 'Xlim', bb(:, 1), 'Ylim', bb(:, 2));
+            set(axes_calib_cb_img, 'Xlim', bb(:, 1), 'Ylim', bb(:, 2));
         catch e
             if ishandle(f)
                 rethrow(e);

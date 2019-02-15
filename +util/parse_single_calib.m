@@ -1,4 +1,4 @@
-function [calib, data] = parse_single_calib_fp(data, suffix)
+function [calib, data] = parse_single_calib(data, suffix)
     % Parses calibration (intrinsics + extrinsics) from input data struct.
     %
     % Inputs:
@@ -14,8 +14,8 @@ function [calib, data] = parse_single_calib_fp(data, suffix)
     %           .img_cb - class.img; calibration board image
     %           .R - array; 3x3 rotation matrix
     %           .t - array; 3x1 translation vector
-    %           .p_fp_p_ds - array; four point box around the calibration
-    %               board image in distorted pixel coordinates
+    %           .p_fp_p_ds - array; optional. four point box around the
+    %               calibration board image in distorted pixel coordinates
     %           .p_cb_p_ds - array; calibration board distorted pixel
     %               points
     %           .cov_cb_p_ds - cell; covariances of calibration board
@@ -54,7 +54,9 @@ function [calib, data] = parse_single_calib_fp(data, suffix)
         [calib.extrin(i).t, data] = util.read_and_remove(data, ['t_' num2str(i) suffix]);
 
         % Four point box around the calibration board image in distorted pixel coordinates
-        [calib.extrin(i).p_fp_p_ds, data] = util.read_and_remove(data, ['p_fp_p_ds_' num2str(i) suffix]);
+        if isfield(data, ['p_fp_p_ds_' num2str(i) suffix])
+            [calib.extrin(i).p_fp_p_ds, data] = util.read_and_remove(data, ['p_fp_p_ds_' num2str(i) suffix]);
+        end
 
         % Calibration board distorted pixel points
         [calib.extrin(i).p_cb_p_ds, data] = util.read_and_remove(data, ['p_cb_p_ds_' num2str(i) suffix]);

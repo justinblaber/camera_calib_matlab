@@ -1,4 +1,4 @@
-function save_single_calib_fp(calib, file_path)
+function save_single_calib(calib, file_path)
     % Saves a single four point calibration to file.
     %
     % Inputs:
@@ -11,8 +11,8 @@ function save_single_calib_fp(calib, file_path)
     %           .img_cb - class.img; calibration board image
     %           .R - array; 3x3 rotation matrix
     %           .t - array; 3x1 translation vector
-    %           .p_fp_p_ds - array; four point box around the calibration
-    %               board image in distorted pixel coordinates
+    %           .p_fp_p_ds - array; optional. four point box around the
+    %               calibration board image in distorted pixel coordinates
     %           .p_cb_p_ds - array; calibration board distorted pixel
     %               points
     %           .cov_cb_p_ds - cell; covariances of calibration board
@@ -34,5 +34,5 @@ function save_single_calib_fp(calib, file_path)
     util.write_newline(file_path);
 
     % Write calib
-    util.write_single_calib_fp(calib, file_path);
+    util.write_single_calib(calib, file_path);
 end

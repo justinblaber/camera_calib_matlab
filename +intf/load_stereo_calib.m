@@ -1,4 +1,4 @@
-function calib = load_stereo_calib_fp(file_path)
+function calib = load_stereo_calib(file_path)
     % Loads a four point stereo calibration from file path
     %
     % Inputs:
@@ -23,10 +23,10 @@ function calib = load_stereo_calib_fp(file_path)
     data = util.read_data(file_path);
 
     % Parse out the left calibration
-    [calib_L, data] = util.parse_single_calib_fp(data, '_L');
+    [calib_L, data] = util.parse_single_calib(data, '_L');
 
     % Parse out the right calibration
-    [calib_R, data] = util.parse_single_calib_fp(data, '_R');
+    [calib_R, data] = util.parse_single_calib(data, '_R');
 
     % Parse R_s and t_s
     [R_s, data] = util.read_and_remove(data, 'R_s');

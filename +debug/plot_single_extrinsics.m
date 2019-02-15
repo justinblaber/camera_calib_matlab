@@ -11,7 +11,6 @@ function plot_single_extrinsics(Rs, ts, colors, alphas, opts, a)
         f = figure();
         a = axes(f);
     end
-    cla(a);
 
     % Hold
     hold(a, 'on');

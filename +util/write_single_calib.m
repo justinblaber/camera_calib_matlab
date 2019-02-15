@@ -1,5 +1,5 @@
-function write_single_calib_fp(calib, file_path, suffix)
-    % Writes a single four point calibration to file.
+function write_single_calib(calib, file_path, suffix)
+    % Writes a single calibration to file.
     %
     % Inputs:
     %   calib - struct;
@@ -10,8 +10,8 @@ function write_single_calib_fp(calib, file_path, suffix)
     %           .img_cb - class.img; calibration board image
     %           .R - array; 3x3 rotation matrix
     %           .t - array; 3x1 translation vector
-    %           .p_fp_p_ds - array; four point box around the calibration
-    %               board image in distorted pixel coordinates
+    %           .p_fp_p_ds - array; optional. four point box around the
+    %               calibration board image in distorted pixel coordinates
     %           .p_cb_p_ds - array; calibration board distorted pixel
     %               points
     %           .cov_cb_p_ds - cell; covariances of calibration board
@@ -60,9 +60,11 @@ function write_single_calib_fp(calib, file_path, suffix)
         util.write_newline(file_path);
 
         % Four point box around the calibration board image in distorted pixel coordinates
-        util.write_array(calib.extrin(i).p_fp_p_ds, ['p_fp_p_ds_' num2str(i) suffix], file_path);
-        util.write_newline(file_path);
-
+        if isfield(calib.extrin(i), 'p_fp_p_ds')
+            util.write_array(calib.extrin(i).p_fp_p_ds, ['p_fp_p_ds_' num2str(i) suffix], file_path);
+            util.write_newline(file_path);
+        end
+            
         % Calibration board distorted pixel points
         util.write_array(calib.extrin(i).p_cb_p_ds, ['p_cb_p_ds_' num2str(i) suffix], file_path);
         util.write_newline(file_path);

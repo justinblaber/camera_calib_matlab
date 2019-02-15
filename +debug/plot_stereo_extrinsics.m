@@ -11,7 +11,6 @@ function plot_stereo_extrinsics(Rs, ts, R_s, t_s, colors, alphas, opts, a)
         f = figure();
         a = axes(f);
     end
-    cla(a);
 
     % Hold
     hold(a, 'on');

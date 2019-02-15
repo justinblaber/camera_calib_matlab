@@ -1,4 +1,4 @@
-function save_stereo_calib_fp(calib, file_path)
+function save_stereo_calib(calib, file_path)
     % Saves a stereo four point calibration to file.
     %
     % Inputs:
@@ -24,10 +24,10 @@ function save_stereo_calib_fp(calib, file_path)
     util.write_newline(file_path);
 
     % Write left
-    util.write_single_calib_fp(calib.L, file_path, '_L');
+    util.write_single_calib(calib.L, file_path, '_L');
 
     % Write right
-    util.write_single_calib_fp(calib.R, file_path, '_R');
+    util.write_single_calib(calib.R, file_path, '_R');
 
     % Write R_s and t_s
     util.write_array(calib.R_s, 'R_s', file_path);

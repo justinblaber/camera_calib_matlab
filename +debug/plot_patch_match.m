@@ -5,7 +5,6 @@ function plot_patch_match(patch, template, a)
         f = figure();
         a = axes(f);
     end
-    cla(a);
 
     % Show patch
     imshow(patch, [], 'Parent', a);

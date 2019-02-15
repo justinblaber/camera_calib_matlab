@@ -125,7 +125,7 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'fp_detect_array_min_size'                      , 'required', false, 'default', 400                            , 'validation_fun', @validate_pos_scalar_int_or_nan);
 
     % Plotting info
-    field_info(end+1) = struct('field', 'units'                                         , 'required', false, 'default', ''                             , 'validation_fun', @validate_string);
+    field_info(end+1) = struct('field', 'units'                                         , 'required', false, 'default', 'N/A'                          , 'validation_fun', @validate_string);
     field_info(end+1) = struct('field', 'camera_size'                                   , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_or_nan);
 
     % Create calib_config ------------------------------------------------%

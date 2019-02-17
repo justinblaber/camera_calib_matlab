@@ -16,26 +16,26 @@ function [calib_config, data] = parse_calib_config(data)
     field_info        = struct('field', 'target'                                        , 'required', true , 'default', ''                             , 'validation_fun', @validate_target);
     field_info(end+1) = struct('field', 'target_optimization'                           , 'required', true , 'default', ''                             , 'validation_fun', @validate_target_optimization);
     field_info(end+1) = struct('field', 'height_cb'                                     , 'required', true , 'default', []                             , 'validation_fun', @validate_pos_scalar);
-    field_info(end+1) = struct('field', 'width_cb'                                      , 'required', true , 'default', []                             , 'validation_fun', @validate_pos_scalar);    
+    field_info(end+1) = struct('field', 'width_cb'                                      , 'required', true , 'default', []                             , 'validation_fun', @validate_pos_scalar);
     field_info(end+1) = struct('field', 'num_targets_height'                            , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_int_or_nan);
-    field_info(end+1) = struct('field', 'num_targets_width'                             , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_int_or_nan);    
-    field_info(end+1) = struct('field', 'target_spacing'                                , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_or_nan);   
-    field_info(end+1) = struct('field', 'first_on'                                      , 'required', false, 'default', nan                            , 'validation_fun', @validate_logical_scalar_or_nan);    
+    field_info(end+1) = struct('field', 'num_targets_width'                             , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_int_or_nan);
+    field_info(end+1) = struct('field', 'target_spacing'                                , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_or_nan);
+    field_info(end+1) = struct('field', 'first_on'                                      , 'required', false, 'default', nan                            , 'validation_fun', @validate_logical_scalar_or_nan);
     field_info(end+1) = struct('field', 'height_fp'                                     , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_or_nan);
-    field_info(end+1) = struct('field', 'width_fp'                                      , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_or_nan);     
-    field_info(end+1) = struct('field', 'idx_target_removal'                            , 'required', false, 'default', []                             , 'validation_fun', @validate_pos_int);    
+    field_info(end+1) = struct('field', 'width_fp'                                      , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_or_nan);
+    field_info(end+1) = struct('field', 'idx_target_removal'                            , 'required', false, 'default', []                             , 'validation_fun', @validate_pos_int);
     field_info(end+1) = struct('field', 'cb_class'                                      , 'required', true , 'default', []                             , 'validation_fun', @validate_cb_class);
-    
+
     % Calibration optimization
     field_info(end+1) = struct('field', 'calib_optimization'                            , 'required', true , 'default', ''                             , 'validation_fun', @validate_calib_optimization);
-    
+
     % Verbosity
     field_info(end+1) = struct('field', 'verbosity'                                     , 'required', false, 'default', 3                              , 'validation_fun', @validate_int_scalar);
-    
+
     % Dominant grad angles
     field_info(end+1) = struct('field', 'dominant_grad_angles_num_bins'                 , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'dominant_grad_angles_space_peaks'              , 'required', false, 'default', 1                              , 'validation_fun', @validate_pos_scalar_int);
-    
+
     % Homography computation
     field_info(end+1) = struct('field', 'homography_p2p_it_cutoff'                      , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'homography_p2p_norm_cutoff'                    , 'required', false, 'default', 1e-6                           , 'validation_fun', @validate_pos_scalar);
@@ -50,13 +50,13 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'refine_checker_edges_it_cutoff'                , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'refine_checker_edges_norm_cutoff'              , 'required', false, 'default', 0.001                          , 'validation_fun', @validate_pos_scalar);
     field_info(end+1) = struct('field', 'refine_checker_edges_h2_init'                  , 'required', false, 'default', 0.75                           , 'validation_fun', @validate_pos_scalar);
-    
+
     % Ellipse refinement
     field_info(end+1) = struct('field', 'circle_radius'                                 , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_or_nan);
     field_info(end+1) = struct('field', 'refine_ellipse_edges_it_cutoff'                , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'refine_ellipse_edges_norm_cutoff'              , 'required', false, 'default', 0.001                          , 'validation_fun', @validate_pos_scalar);
     field_info(end+1) = struct('field', 'refine_ellipse_edges_h2_init'                  , 'required', false, 'default', 0.75                           , 'validation_fun', @validate_pos_scalar);
-    
+
     % p_p_d2p_p
     field_info(end+1) = struct('field', 'p_p_d2p_p_it_cutoff'                           , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'p_p_d2p_p_norm_cutoff'                         , 'required', false, 'default', 1e-6                           , 'validation_fun', @validate_pos_scalar);
@@ -135,7 +135,7 @@ function [calib_config, data] = parse_calib_config(data)
     for i = 1:numel(field_info)
         % Get field
         field = field_info(i).field;
-        
+
         % Check if field exists in data
         if any(strcmp(field, fields_data))
             % Field exists; get the value and remove it
@@ -167,7 +167,7 @@ end
 
 function calib_config = validate_target(calib_config, field)
     param = calib_config.(field);
-    
+
     % field needs to be a string
     calib_config = validate_string(calib_config, field);
 
@@ -178,7 +178,7 @@ end
 
 function calib_config = validate_target_optimization(calib_config, field)
     param = calib_config.(field);
-    
+
     % field needs to be a string
     calib_config = validate_string(calib_config, field);
 
@@ -189,7 +189,7 @@ end
 
 function calib_config = validate_calib_optimization(calib_config, field)
     param = calib_config.(field);
-    
+
     % field needs to be a string
     calib_config = validate_string(calib_config, field);
 
@@ -200,7 +200,7 @@ end
 
 function calib_config = validate_cb_class(calib_config, field)
     param = calib_config.(field);
-        
+
     % field needs to be a string
     calib_config = validate_string(calib_config, field);
 
@@ -208,7 +208,7 @@ function calib_config = validate_cb_class(calib_config, field)
     if ~startsWith(param, 'class.')
         field_class_error(field, param, 'class in +class directory');
     end
-    
+
     % Evaluate
     [~, cb_class] = evalc([param '(calib_config)']);
 
@@ -223,7 +223,7 @@ end
 
 function calib_config = validate_fp_detector(calib_config, field)
     param = calib_config.(field);
-    
+
     % field needs to be a string
     calib_config = validate_string(calib_config, field);
 
@@ -234,7 +234,7 @@ end
 
 function calib_config = validate_string(calib_config, field)
     param = calib_config.(field);
-    
+
     if ~ischar(param)
         field_class_error(field, param, 'string');
     end
@@ -242,7 +242,7 @@ end
 
 function calib_config = validate_scalar(calib_config, field)
     param = calib_config.(field);
-    
+
     if ~isscalar(param)
         field_class_error(field, param, 'scalar');
     end
@@ -329,7 +329,7 @@ function calib_config = validate_pos_scalar_int_or_nan(calib_config, field)
     end
 end
 
-function calib_config = validate_logical_scalar_or_nan(calib_config, field)    
+function calib_config = validate_logical_scalar_or_nan(calib_config, field)
     try
         calib_config = validate_logical_scalar(calib_config, field);
     catch
@@ -339,10 +339,10 @@ end
 
 function calib_config = validate_file(calib_config, field)
     param = calib_config.(field);
-        
+
     % field needs to be a string
     calib_config = validate_string(calib_config, field);
-    
+
     if exist(param, 'file') ~= 2
         field_class_error(field, param, 'existing file');
     end
@@ -350,7 +350,7 @@ end
 
 function calib_config = validate_interp(calib_config, field)
     param = calib_config.(field);
-        
+
     % field needs to be a string
     calib_config = validate_string(calib_config, field);
 
@@ -361,7 +361,7 @@ end
 
 function calib_config = validate_distortion(calib_config, field)
     param = calib_config.(field);
-    
+
     % field needs to be a string
     calib_config = validate_string(calib_config, field);
 

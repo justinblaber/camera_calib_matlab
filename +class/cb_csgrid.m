@@ -6,7 +6,7 @@ classdef cb_csgrid < class.cb_pattern
         num_targets_height      % int
         num_targets_width       % int
         target_spacing          % float
-        idx_target_removal      % int array 
+        idx_target_removal      % int array
     end
 
     methods(Access = public)

@@ -57,7 +57,7 @@ classdef cb_cdgrid < class.cb_pattern
             % Get grid spacing
             spacing_x = linspace(hw_cb-hw_g, hw_cb+hw_g, obj.get_num_targets_width());
             spacing_y = linspace(hh_cb-hh_g, hh_cb+hh_g, obj.get_num_targets_height());
-            
+
             % Get board points
             fo = obj.get_first_on();
             p_cb_ws = [];

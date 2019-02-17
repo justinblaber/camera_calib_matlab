@@ -144,7 +144,7 @@ function gui_single_calib(calib, f)
                               ['Overall stddev: [' num2str(std(vertcat(res{:}))) ']']}, ...
                    'FontSize', 7);
             drawnow
-            
+
             % Plot calibration board class -------------------------------%
 
             debug.plot_cb_class(calib.config.cb_class, axes_cb_class);

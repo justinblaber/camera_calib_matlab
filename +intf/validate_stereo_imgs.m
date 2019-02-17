@@ -12,7 +12,7 @@ function imgs = validate_stereo_imgs(paths)
     % Validate left and right separately
     imgs.L = intf.validate_single_imgs(paths.L);
     imgs.R = intf.validate_single_imgs(paths.R);
-    
+
     % Make sure there are the same number of elements
     num_L = numel(imgs.L);
     num_R = numel(imgs.R);
@@ -20,7 +20,7 @@ function imgs = validate_stereo_imgs(paths)
         error(['Number of left images: "' num2str(num_L) '" must ' ...
                'equal number of right images: "' num2str(num_R) '"']);
     end
-    
+
     % Make sure they are the same size
     s_L = [imgs.L(1).get_height() imgs.L(1).get_width()];
     s_R = [imgs.R(1).get_height() imgs.R(1).get_width()];

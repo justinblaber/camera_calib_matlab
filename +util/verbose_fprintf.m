@@ -3,10 +3,10 @@ function verbose_fprintf(varargin)
     %
     % Inputs:
     %   varargin - cell;
-    %       {1:end-2} - inputs to fprintf
-    %       {end-1} - s; string
+    %       {1:end-2} - inputs to function
+    %       {end-1} - int; verbose input
     %       {end} - struct;
-    %           .verbosity - level of verbosity
+    %           .verbosity - int; level of verbosity
 
     util.verbose_wrapper(@fprintf, varargin{:});
 end

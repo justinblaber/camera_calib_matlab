@@ -9,7 +9,7 @@ function Aq = fit_conic(array_dx, array_dy, W)
     %
     % Outputs:
     %   Aq - array; 3x3 conic matrix matrix stored as:
-    %       [A   B/2 D/2;[[[
+    %       [A   B/2 D/2;
     %        B/2 C   E/2;
     %        D/2 E/2 F];
 
@@ -21,6 +21,7 @@ function Aq = fit_conic(array_dx, array_dy, W)
     mask = ~isnan(array_dx) & ~isnan(array_dy);
     array_dx(~mask) = 0;
     array_dy(~mask) = 0;
+    W(~mask) = 0;
 
     % Get coordinates of pixels
     bb_array = alg.bb_array(array_dx);

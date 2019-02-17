@@ -6,15 +6,13 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debugs] = refine_target_points_cb_w2p(p
     %   p_cb_ws - array; Nx2 array of calibration board world points
     %   boundary_ws - cell; Nx1 cell array of boundary points around target
     %       point in world coordinates
-    %   array_cb - array; MxN calibration board array
+    %   array_cb - array; calibration board array
     %   f_p_cb_w2p_cb_p - function handle; function which transforms
     %       calibration world points to calibration pixel points
     %   f_p_w2p_p - function handle; function which transforms points from
     %       world coordinates to pixel coordinates
     %   opts - struct;
     %       .target - string; type of calibration target
-    %       .target_optimization - string; optimization type for
-    %           calibration target
     %       .* - rest of options are for f_refine_target_point()
     %
     % Outputs:

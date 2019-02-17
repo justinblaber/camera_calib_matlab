@@ -1,4 +1,4 @@
-function gui_stereo_fp_detect_LoG(p_fpss, debug, img_cbs, calib_config, f)
+function gui_stereo_fp_detect_LoG(p_fpss, debug_stereo_fp_detect_LoG, img_cbs, calib_config, f)
     % GUI for debugging four point LoG detection
 
     if ~exist('f', 'var')
@@ -160,8 +160,8 @@ function gui_stereo_fp_detect_LoG(p_fpss, debug, img_cbs, calib_config, f)
             % Plot
             debug.plot_single_fp_detect_LoG(array_L, ...
                                             p_fps_L, ...
-                                            debug.L(idx_board).blobs, ...
-                                            debug.L(idx_board).ellipses, ...
+                                            debug_stereo_fp_detect_LoG.L(idx_board).blobs, ...
+                                            debug_stereo_fp_detect_LoG.L(idx_board).ellipses, ...
                                             axes_cb_L);
             title(axes_cb_L, 'Blobs, ellipses, and four points (L)', 'FontSize', 10);
             xlabel(axes_cb_L, ['Path: ' img_cbs.L(idx_board).get_path()], ...
@@ -179,8 +179,8 @@ function gui_stereo_fp_detect_LoG(p_fpss, debug, img_cbs, calib_config, f)
             % Plot
             debug.plot_single_fp_detect_LoG(array_R, ...
                                             p_fps_R, ...
-                                            debug.R(idx_board).blobs, ...
-                                            debug.R(idx_board).ellipses, ...
+                                            debug_stereo_fp_detect_LoG.R(idx_board).blobs, ...
+                                            debug_stereo_fp_detect_LoG.R(idx_board).ellipses, ...
                                             axes_cb_R);
             title(axes_cb_R, 'Blobs, ellipses, and four points (R)', 'FontSize', 10);
             xlabel(axes_cb_R, ['Path: ' img_cbs.R(idx_board).get_path()], ...
@@ -190,16 +190,16 @@ function gui_stereo_fp_detect_LoG(p_fpss, debug, img_cbs, calib_config, f)
 
             for i = 1:4
                 % Left
-                debug.plot_patch_match(debug.L(idx_board).patch_matches(i).patch, ...
-                                       debug.L(idx_board).patch_matches(i).template, ...
+                debug.plot_patch_match(debug_stereo_fp_detect_LoG.L(idx_board).patch_matches(i).patch, ...
+                                       debug_stereo_fp_detect_LoG.L(idx_board).patch_matches(i).template, ...
                                        axes_patches_L(i));
-                title(axes_patches_L(i), [num2str(i) ' (CC val: ' num2str(debug.L(idx_board).patch_matches(i).val_cc) ')'], 'FontSize', 7);
+                title(axes_patches_L(i), [num2str(i) ' (CC val: ' num2str(debug_stereo_fp_detect_LoG.L(idx_board).patch_matches(i).val_cc) ')'], 'FontSize', 7);
 
                 % Right
-                debug.plot_patch_match(debug.R(idx_board).patch_matches(i).patch, ...
-                                       debug.R(idx_board).patch_matches(i).template, ...
+                debug.plot_patch_match(debug_stereo_fp_detect_LoG.R(idx_board).patch_matches(i).patch, ...
+                                       debug_stereo_fp_detect_LoG.R(idx_board).patch_matches(i).template, ...
                                        axes_patches_R(i));
-                title(axes_patches_R(i), [num2str(i) ' (CC val: ' num2str(debug.R(idx_board).patch_matches(i).val_cc) ')'], 'FontSize', 7);
+                title(axes_patches_R(i), [num2str(i) ' (CC val: ' num2str(debug_stereo_fp_detect_LoG.R(idx_board).patch_matches(i).val_cc) ')'], 'FontSize', 7);
             end
         catch e
             if ishandle(f)
@@ -219,23 +219,23 @@ function gui_stereo_fp_detect_LoG(p_fpss, debug, img_cbs, calib_config, f)
                     bb_L = bb_img(img_cbs.L(idx_board), sf);
                     bb_R = bb_img(img_cbs.R(idx_board), sf);
                 case '1'
-                    bb_L = bb_ellipse(debug.L(idx_board).patch_matches(1).ellipse);
-                    bb_R = bb_ellipse(debug.R(idx_board).patch_matches(1).ellipse);
+                    bb_L = bb_ellipse(debug_stereo_fp_detect_LoG.L(idx_board).patch_matches(1).ellipse);
+                    bb_R = bb_ellipse(debug_stereo_fp_detect_LoG.R(idx_board).patch_matches(1).ellipse);
                 case '2'
-                    bb_L = bb_ellipse(debug.L(idx_board).patch_matches(2).ellipse);
-                    bb_R = bb_ellipse(debug.R(idx_board).patch_matches(2).ellipse);
+                    bb_L = bb_ellipse(debug_stereo_fp_detect_LoG.L(idx_board).patch_matches(2).ellipse);
+                    bb_R = bb_ellipse(debug_stereo_fp_detect_LoG.R(idx_board).patch_matches(2).ellipse);
                 case '3'
-                    bb_L = bb_ellipse(debug.L(idx_board).patch_matches(3).ellipse);
-                    bb_R = bb_ellipse(debug.R(idx_board).patch_matches(3).ellipse);
+                    bb_L = bb_ellipse(debug_stereo_fp_detect_LoG.L(idx_board).patch_matches(3).ellipse);
+                    bb_R = bb_ellipse(debug_stereo_fp_detect_LoG.R(idx_board).patch_matches(3).ellipse);
                 case '4'
-                    bb_L = bb_ellipse(debug.L(idx_board).patch_matches(4).ellipse);
-                    bb_R = bb_ellipse(debug.R(idx_board).patch_matches(4).ellipse);
+                    bb_L = bb_ellipse(debug_stereo_fp_detect_LoG.L(idx_board).patch_matches(4).ellipse);
+                    bb_R = bb_ellipse(debug_stereo_fp_detect_LoG.R(idx_board).patch_matches(4).ellipse);
                 case 'worst'
                     % Get the worst patch
-                    [~, idx_L] = min([debug.L(idx_board).patch_matches.val_cc]);
-                    bb_L = bb_ellipse(debug.L(idx_board).patch_matches(idx_L).ellipse);
-                    [~, idx_R] = min([debug.R(idx_board).patch_matches.val_cc]);
-                    bb_R = bb_ellipse(debug.R(idx_board).patch_matches(idx_R).ellipse);
+                    [~, idx_L] = min([debug_stereo_fp_detect_LoG.L(idx_board).patch_matches.val_cc]);
+                    bb_L = bb_ellipse(debug_stereo_fp_detect_LoG.L(idx_board).patch_matches(idx_L).ellipse);
+                    [~, idx_R] = min([debug_stereo_fp_detect_LoG.R(idx_board).patch_matches.val_cc]);
+                    bb_R = bb_ellipse(debug_stereo_fp_detect_LoG.R(idx_board).patch_matches(idx_R).ellipse);
             end
 
             set(axes_cb_L, 'Xlim', bb_L(:, 1), 'Ylim', bb_L(:, 2));

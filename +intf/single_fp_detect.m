@@ -4,7 +4,7 @@ function [p_fp_pss, debug] = single_fp_detect(img_cbs, calib_config)
     %
     % Inputs:
     %   img_cbs - class.img; Nx1 calibration board images
-    %   calib_config - struct; struct returned by util.load_calib_config()
+    %   calib_config - struct; struct returned by intf.load_calib_config()
     %
     % Outputs:
     %   p_fp_pss - cell; Mx1 cell array of four points in pixel coordinates

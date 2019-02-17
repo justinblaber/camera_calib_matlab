@@ -1,5 +1,5 @@
 function plot_cb_class(cb_class, a)
-    % This will plot calibration board pattern
+    % This will plot calibration board class
 
     if ~exist('a', 'var')
         f = figure();

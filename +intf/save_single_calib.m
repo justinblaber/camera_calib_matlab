@@ -1,5 +1,5 @@
 function save_single_calib(calib, file_path)
-    % Saves a single four point calibration to file.
+    % Saves a single calibration to file.
     %
     % Inputs:
     %   calib - struct;

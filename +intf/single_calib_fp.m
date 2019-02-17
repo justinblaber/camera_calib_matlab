@@ -40,7 +40,7 @@ function calib = single_calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin)
         otherwise
             error(['Unknown calibration optimization: "' calib_config.calib_optimization '"']);
     end
-    
+
     % Call single four point calibration function
     if exist('intrin', 'var')
         calib = f_single_calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin);

@@ -30,7 +30,7 @@ function calib = stereo_calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin)
     %       .t_s - array; 3x1 translation vector describing translation
     %           from left to right camera
     %       .debug - struct;
-    
+
     % Get single four point calibration function
     switch calib_config.calib_optimization
         case 'distortion_refinement'
@@ -38,7 +38,7 @@ function calib = stereo_calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin)
         otherwise
             error(['Unknown calibration optimization: "' calib_config.calib_optimization '"']);
     end
-    
+
     % Call stereo four point calibration function
     if exist('intrin', 'var')
         calib = alg.stereo_calib_fp(f_single_calib_fp, img_cbs, p_fp_p_dss, calib_config, intrin);

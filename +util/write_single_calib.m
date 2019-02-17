@@ -64,7 +64,7 @@ function write_single_calib(calib, file_path, suffix)
             util.write_array(calib.extrin(i).p_fp_p_ds, ['p_fp_p_ds_' num2str(i) suffix], file_path);
             util.write_newline(file_path);
         end
-            
+
         % Calibration board distorted pixel points
         util.write_array(calib.extrin(i).p_cb_p_ds, ['p_cb_p_ds_' num2str(i) suffix], file_path);
         util.write_newline(file_path);

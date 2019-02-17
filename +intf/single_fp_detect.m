@@ -12,14 +12,14 @@ function [p_fp_pss, debug] = single_fp_detect(img_cbs, calib_config)
 
     util.verbose_disp('---', 1, calib_config);
 
-    % Get four point detector function    
+    % Get four point detector function
     switch calib_config.fp_detector
         case 'LoG'
             f_fp_detect = @alg.fp_detect_LoG;
         otherwise
             error(['Unknown four point detector: "' calib_config.fp_detector '"']);
     end
-    
+
     % Get scale factor
     if isnan(calib_config.fp_detect_array_min_size)
         sf = 1;

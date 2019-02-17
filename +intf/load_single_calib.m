@@ -1,5 +1,5 @@
 function calib = load_single_calib(file_path)
-    % Loads a four point single calibration from file path
+    % Loads a single calibration from file path
     %
     % Inputs:
     %   file_path - string; path to calibration
@@ -32,7 +32,7 @@ function calib = load_single_calib(file_path)
     % Read data
     data = util.read_data(file_path);
 
-    % Parse out single four point calibration
+    % Parse out single calibration
     [calib_tmp, data] = util.parse_single_calib(data);
 
     % Parse out calib config

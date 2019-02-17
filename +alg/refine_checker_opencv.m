@@ -19,6 +19,7 @@ function [p, cov_p] = refine_checker_opencv(array_dx, array_dy, W)
     mask = ~isnan(array_dx) & ~isnan(array_dy);
     array_dx(~mask) = 0;
     array_dy(~mask) = 0;
+    W(~mask) = 0;
 
     % Get coordinates of pixels
     bb_array = alg.bb_array(array_dx);

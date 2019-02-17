@@ -1,5 +1,5 @@
 function save_stereo_calib(calib, file_path)
-    % Saves a stereo four point calibration to file.
+    % Saves a stereo calibration to file.
     %
     % Inputs:
     %   calib - struct;

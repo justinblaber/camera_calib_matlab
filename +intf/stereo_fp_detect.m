@@ -5,7 +5,7 @@ function [p_fp_pss, debug] = stereo_fp_detect(img_cbs, calib_config)
     % Inputs:
     %   img_cbs - struct; contains:
     %       .L and .R - class.img; Nx1 calibration board images
-    %   calib_config - struct; struct returned by util.load_calib_config()
+    %   calib_config - struct; struct returned by intf.load_calib_config()
     %
     % Outputs:
     %   p_fp_pss - struct; contains:

@@ -2,8 +2,6 @@ function calib = stereo_calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin)
     % Performs stereo camera calibration using "four point" method.
     %
     % Inputs:
-    %   f_single_calib_fp - function handle; single four point calibration
-    %       function
     %   img_cbs - struct;
     %       .L - class.img; Nx1 calibration board images
     %       .R - class.img; Nx1 calibration board images
@@ -38,10 +36,10 @@ function calib = stereo_calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin)
         case 'distortion_refinement'
             f_single_calib_fp = @alg.single_calib_fp_dr;
         otherwise
-            error(['Unknown calibration optimization: "' opts.calib_optimization '"']);
+            error(['Unknown calibration optimization: "' calib_config.calib_optimization '"']);
     end
     
-    % Call single four point calibration function
+    % Call stereo four point calibration function
     if exist('intrin', 'var')
         calib = alg.stereo_calib_fp(f_single_calib_fp, img_cbs, p_fp_p_dss, calib_config, intrin);
     else

@@ -1,5 +1,5 @@
 function calib = load_stereo_calib(file_path)
-    % Loads a four point stereo calibration from file path
+    % Loads a stereo calibration from file path
     %
     % Inputs:
     %   file_path - string; path to calibration

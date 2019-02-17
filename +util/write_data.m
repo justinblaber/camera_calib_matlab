@@ -5,6 +5,7 @@ function write_data(data, file_path, suffix)
     %   double
     %   logical
     %   symbolic function
+    %   class.*
     %   cell
     %
     % Also note that cell arrays can't be nested.

@@ -1,6 +1,5 @@
 function calib = single_calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin)
-    % Performs camera calibration using "four point distortion refinement"
-    % method.
+    % Performs camera calibration using "four point" method.
     %
     % Inputs:
     %   img_cbs - class.img; Nx1 calibration board images
@@ -39,7 +38,7 @@ function calib = single_calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin)
         case 'distortion_refinement'
             f_single_calib_fp = @alg.single_calib_fp_dr;
         otherwise
-            error(['Unknown calibration optimization: "' opts.calib_optimization '"']);
+            error(['Unknown calibration optimization: "' calib_config.calib_optimization '"']);
     end
     
     % Call single four point calibration function

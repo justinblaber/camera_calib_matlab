@@ -31,7 +31,7 @@ function [l1, l2] = asymptotes(Aq)
     % TODO: handle degenerate case where A is zero
 
     % Get asymptotes
-    center = inv(Aq)*[0; 0; 1]; %#ok<MINV>
+    center = alg.safe_inv(Aq)*[0; 0; 1];
     r1 = A;
     r2 = 1;
     s1 = B/2 - (B^2 - 4*A*C)^(1/2)/2;

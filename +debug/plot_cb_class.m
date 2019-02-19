@@ -8,7 +8,7 @@ function plot_cb_class(cb_class, a)
 
     % Format axes
     axis(a, 'equal');
-    set(a, 'Ydir', 'reverse', 'Xlim', [0 cb_class.get_cb_width()], 'Ylim', [0 cb_class.get_cb_width()]);
+    set(a, 'Ydir', 'reverse', 'Xlim', [0 cb_class.get_cb_width()], 'Ylim', [0 cb_class.get_cb_height()]);
     hold(a, 'on');
 
     if isa(cb_class, 'class.cb_pattern')

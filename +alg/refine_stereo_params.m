@@ -96,7 +96,7 @@ function [params, cov_params] = refine_stereo_params(params, p_cb_ws, p_cb_p_dss
     end
 
     % Precompute inverse covariance matrix; this might be slow...
-    cov_inv = cov;
+    cov_inv = alg.safe_inv(cov);
 
     % Perform Levenberg–Marquardt iteration(s)
     % Initialize lambda

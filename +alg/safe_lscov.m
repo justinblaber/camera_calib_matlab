@@ -1,7 +1,5 @@
 function varargout = safe_lscov(varargin)
-    % Wrapper for lscov to handle case where input is empty, weights are
-    % not finite, or if covariance matrix is sparse and not positive
-    % definite.
+    % Wrapper for lscov to handle cases where inputs cause an error.
     %
     % Inputs:
     %   varargin - cell; inputs to lscov()
@@ -17,16 +15,19 @@ function varargout = safe_lscov(varargin)
     B = varargin{2}; % Second argument is always B
 
     % Check if arguments are not safe
-    if isempty(A)
+    % Note: NaN check for A hides annoying and wrong rank deficient
+    % warning; do not use isfinite() as A may be sparse and isfinite()
+    % causes it to fully expand.
+    if isempty(A) || any(isnan(A(:)))
         safe = false;
     elseif nargin == 3 || nargin == 4
         w_or_V = varargin{3}; % Third argument is either w or V
 
         % Check w_or_V:
-        %   1) If any values are not finite
+        %   1) If any values are nans
         %   2) If w_or_V is a sparse covariance matrix which is not
         %       positive definite; this is not supported by lscov()
-        if any(~isfinite(w_or_V(:))) || ...
+        if any(isnan(w_or_V(:))) || ...
            (isequal(size(w_or_V), [size(A, 2), size(A, 2)]) && issparse(w_or_V) && ~alg.is_pos_def(w_or_V))
             safe = false;
         end

@@ -16,6 +16,7 @@ function [p_cb_p, cov_cb_p, debug] = refine_checker_point(p_cb_p_init, boundary_
     %           refinement sub array
     %       .refine_checker_max_hw - int; maximum half window for checker
     %           refinement sub array
+    %       .verbose - int; level of verbosity
     %       .* - options for f_refine_target_point() function
     %
     % Outputs:
@@ -43,8 +44,9 @@ function [p_cb_p, cov_cb_p, debug] = refine_checker_point(p_cb_p_init, boundary_
     % neighboring checkers from being inside the square.
     hw_p = floor(d_p_min/sqrt(2));
     if hw_p < opts.refine_checker_min_hw
-        warning(['Minimum half width set, check to make sure checkers ' ...
-                 'in this image are not too small.']);
+        util.verbose_warning(['Minimum half width set, check to make sure ' ...
+                              'checkers in this image are not too small.'], ...
+                              1, opts);
         hw_p = opts.refine_checker_min_hw;
     elseif hw_p > opts.refine_checker_max_hw
         hw_p = opts.refine_checker_max_hw;

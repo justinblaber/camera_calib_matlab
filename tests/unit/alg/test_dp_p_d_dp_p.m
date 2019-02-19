@@ -4,7 +4,7 @@ function test_dp_p_d_dp_p
             231    86;
             485    88];
 
-    % Undistort
+    % Get analytic derivative
     a = 1.0e+02 * [5.811989327265433;
                    3.115861087870574;
                    2.342314804973926];

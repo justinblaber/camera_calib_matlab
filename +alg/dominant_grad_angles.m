@@ -14,11 +14,11 @@ function angles = dominant_grad_angles(array_dx, array_dy, num_angles, opts, W)
     %
     % Outputs:
     %   angles - array; Px1 dominant angles
-
+        
     if ~exist('W', 'var')
         W = ones(size(array_dx));
     end
-
+    
     % Get number of bins and space between peaks
     num_bins = opts.dominant_grad_angles_num_bins;
     space_peaks = opts.dominant_grad_angles_space_peaks;
@@ -29,59 +29,69 @@ function angles = dominant_grad_angles(array_dx, array_dy, num_angles, opts, W)
     % Get spacing
     spacing = pi/num_bins;
 
-    % Get magnitude array - apply weights here
-    array_mag = sqrt(array_dx.^2 + array_dy.^2).*W;
+    % Get "magnitude vector" - apply weights here
+    vec_mag = sqrt(array_dx.^2 + array_dy.^2).*W;
+    vec_mag = reshape(vec_mag, [] , 1);
 
-    % Get angle array
-    array_angle = atan(array_dy./array_dx);             % Between [-pi/2, pi/2]
+    % Get "angle vector"
+    vec_angle = atan(array_dy./array_dx);             % Between [-pi/2, pi/2]
+    vec_angle = reshape(vec_angle, [], 1);
+    
+    % Mask out small magnitude values - these can produce NaNs in angle
+    % vector and also contribute very little to histogram
+    mask = vec_mag < eps('single');
+    vec_mag(mask) = [];
+    vec_angle(mask) = [];
+    
+    % Get "index vector"
+    vec_idx = (vec_angle+pi/2+spacing/2)/spacing;     % Between [0.5, num_bins+0.5]
 
-    % Remove any nans - note this will convert 2D array to vector
-    mask = ~isnan(array_mag) & ~isnan(array_angle);
-    array_mag = array_mag(mask);
-    array_angle = array_angle(mask);
-
-    % Get "index array"
-    array_idx = (array_angle+pi/2+spacing/2)/spacing;   % Between [0.5, num_bins+0.5]
-
+    % Make sure no indices are NaN, which is possible if input gradient
+    % arrays contain a nan
+    if any(isnan(vec_idx(:)))
+        angles = nan(num_angles, 1);
+        return
+    end
+    
     % Accumulate indices which are integers directly first ---------------%
 
     % Get integer indices
-    idx_int = alg.is_int(array_idx);
+    idx_int = alg.is_int(vec_idx);
 
-    % Get integer index and magnitude arrays
-    array_idx_int = array_idx(idx_int);
-    array_mag_int = array_mag(idx_int);
+    % Get integer index and magnitude vectors
+    vec_idx_int = vec_idx(idx_int);
+    vec_mag_int = vec_mag(idx_int);
 
     % Accumulate
-    hist_idx = hist_idx + accumarray(array_idx_int, array_mag_int, [num_bins, 1]);
+    hist_idx = hist_idx + accumarray(vec_idx_int, vec_mag_int, [num_bins, 1]);
 
     % Remove integer index values from arrays
-    array_idx(idx_int) = [];
-    array_mag(idx_int) = [];
+    vec_idx(idx_int) = [];
+    vec_mag(idx_int) = [];
 
     % Use linear interpolation to accumulate non-integer indices ---------%
 
-    % Get floored idx and magnitude arrays
-    array_idx_floor = floor(array_idx);                 % Between [0, num_bins]
-    array_mag_floor = 1-(array_idx-array_idx_floor);
+    % Get floored idx and magnitude vectors
+    vec_idx_floor = floor(vec_idx);                 % Between [0, num_bins]
+    vec_mag_floor = 1-(vec_idx-vec_idx_floor);
 
-    % Get ceiled idx and magnitude arrays
-    array_idx_ceil = ceil(array_idx);                   % Between [1, num_bins+1]
-    array_mag_ceil = 1-(array_idx_ceil-array_idx);
+    % Get ceiled idx and magnitude vectors
+    vec_idx_ceil = ceil(vec_idx);                   % Between [1, num_bins+1]
+    vec_mag_ceil = 1-(vec_idx_ceil-vec_idx);
 
     % Apply mod to idx arrays
-    array_idx_floor = mod(array_idx_floor-1, num_bins) + 1;
-    array_idx_ceil  = mod(array_idx_ceil-1,  num_bins) + 1;
+    vec_idx_floor = mod(vec_idx_floor-1, num_bins) + 1;
+    vec_idx_ceil  = mod(vec_idx_ceil-1,  num_bins) + 1;
 
     % Apply array_mag to array_mag_floor and array_mag_ceil. Note that sum
     % of array_mag_floor and array_mag_ceil should equal array_mag.
-    array_mag_floor = array_mag_floor.*array_mag;
-    array_mag_ceil  = array_mag_ceil.*array_mag;
+    vec_mag_floor = vec_mag_floor.*vec_mag;
+    vec_mag_ceil  = vec_mag_ceil.*vec_mag;
 
     % Accumulate
     hist_idx = hist_idx + ...
-               accumarray(array_idx_floor, array_mag_floor, [num_bins, 1]) + ...
-               accumarray(array_idx_ceil,  array_mag_ceil,  [num_bins, 1]);
+               accumarray(vec_idx_floor, vec_mag_floor, [num_bins, 1]) + ...
+               accumarray(vec_idx_ceil,  vec_mag_ceil,  [num_bins, 1]);
 
     % Get peaks ----------------------------------------------------------%
 

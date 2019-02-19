@@ -12,16 +12,10 @@ function Aq = fit_conic(array_dx, array_dy, W)
     %       [A   B/2 D/2;
     %        B/2 C   E/2;
     %        D/2 E/2 F];
-
+    
     if ~exist('W', 'var')
         W = ones(size(array_dx));
     end
-
-    % Remove any nans
-    mask = ~isnan(array_dx) & ~isnan(array_dy);
-    array_dx(~mask) = 0;
-    array_dy(~mask) = 0;
-    W(~mask) = 0;
 
     % Get coordinates of pixels
     bb_array = alg.bb_array(array_dx);
@@ -50,10 +44,10 @@ function Aq = fit_conic(array_dx, array_dy, W)
     Aq_inv = [aq(1)   aq(2)/2 aq(4)/2;
               aq(2)/2 aq(3)   aq(5)/2;
               aq(4)/2 aq(5)/2 1];
-    Aq = inv(Aq_inv);
+    Aq = alg.safe_inv(Aq_inv);
 
     % Rescale conic matrix to take normalization into account
-    Aq = T'*Aq*T; %#ok<MINV>
+    Aq = T'*Aq*T;
 end
 
 function T_norm = norm_mat(ps)

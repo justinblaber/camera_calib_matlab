@@ -349,7 +349,7 @@ function e = second_moment_ellipse(array_dx, array_dy, xs, ys, e, r)
     M(2, 1) = M(1, 2);
 
     % Get shape of ellipse from second moment matrix
-    e = alg.cov2ellipse(inv(M), e(1:2)');
+    e = alg.cov2ellipse(alg.safe_inv(M), e(1:2)');
 
     % Constrain so:
     %   minor axis + major axis = 2*radius

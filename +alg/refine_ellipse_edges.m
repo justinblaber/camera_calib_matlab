@@ -32,13 +32,7 @@ function [e, cov_e] = refine_ellipse_edges(array_dx, array_dy, e_init, opts, W)
     if ~exist('W', 'var')
         W = ones(size(array_dx));
     end
-
-    % Remove any nans
-    mask = ~isnan(array_dx) & ~isnan(array_dy);
-    array_dx(~mask) = 0;
-    array_dy(~mask) = 0;
-    W(~mask) = 0;
-
+    
     % Get coordinates of pixels
     bb_array = alg.bb_array(array_dx);
     [ys, xs] = alg.ndgrid_bb(bb_array);

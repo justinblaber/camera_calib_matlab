@@ -43,7 +43,7 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'homography_c2e_norm_cutoff'                    , 'required', false, 'default', 1e-6                           , 'validation_fun', @validate_pos_scalar);
 
     % Checker refinement
-    field_info(end+1) = struct('field', 'refine_checker_min_hw'                         , 'required', false, 'default', 4                              , 'validation_fun', @validate_pos_scalar_int);
+    field_info(end+1) = struct('field', 'refine_checker_min_hw'                         , 'required', false, 'default', 5                              , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'refine_checker_max_hw'                         , 'required', false, 'default', 15                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'refine_checker_opencv_it_cutoff'               , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'refine_checker_opencv_norm_cutoff'             , 'required', false, 'default', 0.001                          , 'validation_fun', @validate_pos_scalar);

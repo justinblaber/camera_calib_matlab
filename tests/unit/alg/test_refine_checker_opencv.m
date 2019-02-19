@@ -5,7 +5,7 @@ function test_refine_checker_opencv
     % Load conic data
     load(fullfile(tests_path, 'data', 'checker.mat'));
 
-    [p, cov_p] = alg.refine_checker_opencv(array_dx, array_dy, p_init);
+    [p, cov_p] = alg.refine_checker_opencv(array_dx, array_dy);
 
     %{
     % Plot example
@@ -19,7 +19,7 @@ function test_refine_checker_opencv
     %}
 
     % Assert
-    assert(all(all(abs(p - [15.544070694168779  16.256744451714237]) < 1e-4)));
-    assert(all(all(abs(cov_p - [ 0.002287291664887  -0.000223903978982
-                                -0.000223903978982   0.002296588242969]) < 1e-4)));
+    assert(all(all(abs(p - [15.537134278596810  16.288478666151310]) < 1e-4)));
+    assert(all(all(abs(cov_p - [ 0.002823137521089  -0.000319661476055
+                                -0.000319661476055   0.002916900778227]) < 1e-4)));
 end

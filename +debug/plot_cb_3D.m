@@ -12,22 +12,17 @@ function plot_cb_3D(xform_w2s, color, alpha, opts, a)
         a = axes(f);
     end
 
-    % Get world coordinates
-    p_cb_ws = alg.p_cb_w(opts);
-
-    % Get bounding box
-    bb_cb_w = [min(p_cb_ws); ...
-               max(p_cb_ws)];
-
     % Form box
     % Note:
     %    p1 - p3
     %     |    |
     %    p2 - p4
-    box_w = [bb_cb_w(1, :); ...
-             bb_cb_w(1, 1) bb_cb_w(2, 2); ...
-             bb_cb_w(2, 1) bb_cb_w(1, 2); ...
-             bb_cb_w(2, :)];
+    h = opts.cb_class.get_cb_height();
+    w = opts.cb_class.get_cb_width();
+    box_w = [0 0; ...
+             0 h; ...
+             w 0; ...
+             w h];
 
     % Apply xform
     box_s = [xform_w2s(:, 1:2) xform_w2s(:, 4)] * vertcat(box_w', ones(1, 4));

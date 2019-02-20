@@ -1,9 +1,9 @@
-function [p, cov_p] = refine_checker_edges(array_dx, array_dy, l1, l2, opts)
+function [p, cov_p] = refine_checker_edges(array_dx, array_dy, l1, l2, opts, W)
     % Performs "edges" refinement of a checker center.
     %
     % Inputs:
-    %   array_dx - array; MxM array gradient in x direction
-    %   array_dy - array; MxM array gradient in y direction
+    %   array_dx - array; MxN array gradient in x direction
+    %   array_dy - array; MxN array gradient in y direction
     %   l1 - array; 3x1 array of a line in the form:
     %       [a; b; c] where ax + by + c = 0
     %   l2 - array; 3x1 array of a line in the form:
@@ -16,42 +16,27 @@ function [p, cov_p] = refine_checker_edges(array_dx, array_dy, l1, l2, opts)
     %       .refine_checker_edges_norm_cutoff - scalar; cutoff for the
     %           difference in norm of the parameter vector for "edges"
     %           checker refinement
+    %   W - array; optional MxN weight array
     %
     % Outputs:
     %   p - array; 1x2 refined checker center
     %   cov_p - array; 2x2 covariance array
 
-    if size(array_dx, 1) ~= size(array_dx, 2) || ~isequal(size(array_dx), size(array_dy))
-        error('Input gradient arrays must be square and equal in size');
+    if ~exist('W', 'var')
+        W = ones(size(array_dx));
     end
 
-    % Get size and bounding box
-    s = size(array_dx, 1);
-    bb_array = alg.bb_array(array_dx);
-
-    % Initialize weights
-    W_init = double(~isnan(array_dx) & ~isnan(array_dy));
-
-    % Remove any NaNs from array gradient
-    array_dx(isnan(array_dx)) = 0;
-    array_dy(isnan(array_dy)) = 0;
-
     % Get coordinates of pixels
+    bb_array = alg.bb_array(array_dx);
     [ys, xs] = alg.ndgrid_bb(bb_array);
     xs = xs(:);
     ys = ys(:);
 
-    % Set gaussian kernel parameters
-    sigma_gauss = (s-1)/4;
-    cov_gauss = [sigma_gauss^2 0; ...
-                 0             sigma_gauss^2];
-
     % Initial guess for center point
     p_init = alg.line_line_intersect(l1, l2);
 
-    % Get gradient magnitude - I found that using squared magnitude
-    % is better because it tends to supress smaller gradients due
-    % to noise
+    % Get gradient magnitude - I found that using squared magnitude is
+    % better because it tends to supress smaller gradients due to noise
     array_grad_mag = array_dx.^2 + array_dy.^2;
 
     % Normalize gradient magnitude between 0 and 1
@@ -73,12 +58,6 @@ function [p, cov_p] = refine_checker_edges(array_dx, array_dy, l1, l2, opts)
                                                 xs, ...
                                                 ys);
 
-        % Update weights
-        kernel_gauss = alg.safe_mvnpdf([xs ys], params(5:6)', cov_gauss);
-        kernel_gauss = reshape(kernel_gauss, [s s]);
-        kernel_gauss = alg.normalize_array(kernel_gauss, 'min-max');
-        W = kernel_gauss.*W_init;
-
         % Get and store update
         delta_params = -alg.safe_lscov(jacob, res, W(:));
         params = params + delta_params;
@@ -98,13 +77,7 @@ function [p, cov_p] = refine_checker_edges(array_dx, array_dy, l1, l2, opts)
                                             xs, ...
                                             ys);
 
-    % Update weights
-    kernel_gauss = alg.safe_mvnpdf([xs ys], params(5:6)', cov_gauss);
-    kernel_gauss = reshape(kernel_gauss, [s s]);
-    kernel_gauss = alg.normalize_array(kernel_gauss, 'min-max');
-    W = kernel_gauss.*W_init;
-
-    % Get covaraince
+    % Get covariance
     [~, ~, ~, cov_params] = alg.safe_lscov(jacob, res, W(:));
     cov_p = cov_params(5:6, 5:6);
 end

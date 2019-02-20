@@ -5,7 +5,6 @@ function plot_res(ress, colors, alphas, lim, a)
         f = figure();
         a = axes(f);
     end
-    cla(a);
 
     % Hold
     hold(a, 'on');

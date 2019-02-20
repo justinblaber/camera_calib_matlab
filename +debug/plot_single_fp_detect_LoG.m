@@ -5,7 +5,6 @@ function plot_single_fp_detect_LoG(array, p_fps, blobs, ellipses, a)
         f = figure();
         a = axes(f);
     end
-    cla(a);
 
     % Show image
     imshow(array, [], 'Parent', a)

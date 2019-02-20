@@ -4,7 +4,7 @@ function test_single_calib_fp_dr
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 
     % Read calibration config
-    calib_config = util.load_calib_config(fullfile(tests_path, 'data', 'checker', 'checker.conf'));
+    calib_config = intf.load_calib_config(fullfile(tests_path, 'data', 'checker', 'checker.conf'));
 
     % Set images
     path_cbs = {fullfile(tests_path, 'data', 'checker', '1.jpg'), ...
@@ -12,20 +12,20 @@ function test_single_calib_fp_dr
                 fullfile(tests_path, 'data', 'checker', '3.jpg')};
 
     % Validate all calibration board images
-    img_cbs = util.img.validate_similar_imgs(path_cbs);
+    img_cbs = intf.validate_single_imgs(path_cbs);
 
-    p_fp_p_dss{1} = [247 312;
-                     502 321;
-                     257 96;
-                     472 113];
-    p_fp_p_dss{2} = [292 380;
-                     506 372;
-                     303 83;
-                     507 136];
-    p_fp_p_dss{3} = [257 391;
-                     474 372;
-                     282 126;
-                     523 148];
+    p_fp_p_dss{1} = 1.0e+02 * [2.478560080855610   3.128811574943620;
+                               5.017550646217204   3.222340184937016;
+                               2.578858092193191   0.978713657276637;
+                               4.728057229926550   1.144768037695122];
+    p_fp_p_dss{2} = 1.0e+02 * [2.925910339834197   3.801571522076829;
+                               5.068529837395690   3.731235271114984;
+                               3.029352962698060   0.850811968254622;
+                               5.071128818731172   1.364401069831986];
+    p_fp_p_dss{3} = 1.0e+02 * [2.571316156472532   3.917643468669752;
+                               4.745479876584502   3.726739573724457;
+                               2.825616445648377   1.274264610508025;
+                               5.224669577204050   1.485639129893151];
 
     % Perform single calibration
     calib_test = alg.single_calib_fp_dr(img_cbs, ...
@@ -48,7 +48,7 @@ function test_single_calib_fp_dr
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 
     % Read calibration config
-    calib_config = util.load_calib_config(fullfile(tests_path, 'data', 'circle', 'circle.conf'));
+    calib_config = intf.load_calib_config(fullfile(tests_path, 'data', 'circle', 'circle.conf'));
 
     % Set images
     path_cbs = {fullfile(tests_path, 'data', 'circle', '1.jpg'), ...
@@ -56,20 +56,20 @@ function test_single_calib_fp_dr
                 fullfile(tests_path, 'data', 'circle', '3.jpg')};
 
     % Validate all calibration board images
-    img_cbs = util.img.validate_similar_imgs(path_cbs);
+    img_cbs = intf.validate_single_imgs(path_cbs);
 
-    p_fp_p_dss{1} = [195 331;
-                     505 343;
-                     231 86;
-                     485 88];
-    p_fp_p_dss{2} = [188 359;
-                     434 408;
-                     200 109;
-                     477 139];
-    p_fp_p_dss{3} = [276 386;
-                     482 364;
-                     275 83;
-                     475 129];
+    p_fp_p_dss{1} = 1.0e+02 * [1.958093817366979   3.321367973803599
+                               5.047045883488412   3.444087740490789
+                               2.315190657038523   0.865420505042654
+                               4.856066159002346   0.902576404040427];
+    p_fp_p_dss{2} = 1.0e+02 * [1.886107656616930   3.600313957272261
+                               4.342373715541079   4.089996366420240
+                               1.998891511786369   1.102973173402852
+                               4.767630817332042   1.400119347161953];
+    p_fp_p_dss{3} = 1.0e+02 * [2.754512734382462   3.879126096733292
+                               4.826685658804343   3.652821960654624
+                               2.761711229540450   0.855223708793761
+                               4.745691979350180   1.308546811147698];
 
     % Perform single calibration
     calib_test = alg.single_calib_fp_dr(img_cbs, ...

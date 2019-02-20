@@ -1,6 +1,5 @@
 function y = safe_mvnpdf(varargin)
-    % Wrapper for mvnpdf to handle case where input is empty or covariance
-    % matrix is not positive definite.
+    % Wrapper for mvnpdf to handle cases where inputs cause an error.
     %
     % Inputs:
     %   varargin - cell; inputs to mvnpdf()

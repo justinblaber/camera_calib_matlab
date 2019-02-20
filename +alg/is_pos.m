@@ -1,11 +1,11 @@
-function success = is_pos(num)
-    % Determines if input is a real, finite, and positive number.
+function success = is_pos(array)
+    % Determines if input is real, finite, and positive
     %
     % Inputs:
-    %   num - scalar;
+    %   array - array;
     %
     % Outputs:
     %   success - logical;
 
-    success = alg.is_num(num) && num > 0;
+    success = alg.is_real_and_finite(array) & array > 0;
 end

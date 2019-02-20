@@ -49,7 +49,7 @@ function jacob = dp_p_d_dp_p(p_ps, f_dp_p_d_dx_p, f_dp_p_d_dy_p, a, d)
     end
 
     % TODO: find a better way to construct sparse diagonal jacobian,
-    % as this is probably the bottleneck
+    % as this is probably a bottleneck
 
     % Jacobian
     jacob_cell = mat2cell(sparse(reshape(vertcat(dp_p_d_dx_p', dp_p_d_dy_p'), 2, [])), 2, 2*ones(1, size(p_ps, 1)));

@@ -5,6 +5,7 @@ function write_data(data, file_path, suffix)
     %   double
     %   logical
     %   symbolic function
+    %   class.*
     %   cell
     %
     % Also note that cell arrays can't be nested.
@@ -43,7 +44,8 @@ function write_data(data, file_path, suffix)
 end
 
 function write_param(param, name, file_path)
-    switch class(param)
+    class_param = class(param);
+    switch class_param
         case 'char'
             util.write_string(param, name, file_path);
         case {'double', 'logical'}
@@ -57,8 +59,13 @@ function write_param(param, name, file_path)
             % Convert symbolic function to string, then write to disk
             util.write_string(util.sym2str(param), name, file_path);
         otherwise
-            error(['A param: "' name '" was ' ...
-                   'found in calibration config that has ' ...
-                   'unsupported type of: "' class(param) '".']);
+            % Write class.* as strings
+            if startsWith(class_param, 'class.')
+                util.write_string(class_param, name, file_path);
+            else
+                error(['A param: "' name '" was ' ...
+                       'found in calibration config that has ' ...
+                       'unsupported type of: "' class(param) '".']);
+            end
     end
 end

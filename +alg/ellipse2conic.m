@@ -22,7 +22,7 @@ function Aq = ellipse2conic(e)
     b = e(4);
     alpha = e(5);
 
-    % Get conic polyinomial coefficients; from wikipedia: https://en.wikipedia.org/wiki/Ellipse
+    % Get conic polynomial coefficients; from wikipedia: https://en.wikipedia.org/wiki/Ellipse
     A = a^2*sin(alpha)^2 + b^2*cos(alpha)^2;
     B = 2*(b^2 - a^2)*sin(alpha)*cos(alpha);
     C = a^2*cos(alpha)^2 + b^2*sin(alpha)^2;

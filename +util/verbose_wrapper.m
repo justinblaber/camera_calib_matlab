@@ -5,9 +5,9 @@ function verbose_wrapper(f, varargin)
     %   f - function handle;
     %   varargin - cell;
     %       {1:end-2} - inputs to function
-    %       {end-1} - s; string
+    %       {end-1} - int; verbose input
     %       {end} - struct;
-    %           .verbosity - level of verbosity
+    %           .verbosity - int; level of verbosity
 
     if varargin{end}.verbosity >= varargin{end-1}
         f(varargin{1:end-2});

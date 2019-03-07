@@ -29,7 +29,7 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debugs] = refine_target_points_cb_w2p(p
         case 'circle'
             f_refine_target_point = @alg.refine_circle_point;
         otherwise
-            error(['Unknown calibration target: "' opts.target '"']);
+            error(['Unsupported calibration target: "' opts.target '"']);
     end
 
     % Get array bounding box

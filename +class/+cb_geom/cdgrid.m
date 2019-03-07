@@ -1,6 +1,6 @@
-classdef cb_cdgrid < class.cb_pattern
+classdef cdgrid < class.cb_geom.target
     % This is the class definition for a centered diamond grid calibration
-    % board pattern.
+    % board geometry.
 
     properties(Access = private)
         num_targets_height      % int
@@ -10,19 +10,7 @@ classdef cb_cdgrid < class.cb_pattern
         idx_target_removal      % int array
     end
 
-    methods(Access = public)
-        function obj = cb_cdgrid(opts)
-            obj@class.cb_pattern(opts);
-
-            obj.num_targets_height = opts.num_targets_height;
-            obj.num_targets_width = opts.num_targets_width;
-            obj.target_spacing = opts.target_spacing;
-            obj.first_on = opts.first_on;
-            if isfield(opts, 'idx_target_removal')
-                obj.idx_target_removal = opts.idx_target_removal;
-            end
-        end
-
+    methods(Access = protected)    
         function num = get_num_targets_height(obj)
             num = obj.num_targets_height;
         end
@@ -41,6 +29,20 @@ classdef cb_cdgrid < class.cb_pattern
 
         function mat = get_idx_target_removal(obj)
             mat = obj.idx_target_removal;
+        end
+    end
+    
+    methods(Access = public)
+        function obj = cdgrid(opts)
+            obj@class.cb_geom.target(opts);
+
+            obj.num_targets_height = opts.num_targets_height;
+            obj.num_targets_width = opts.num_targets_width;
+            obj.target_spacing = opts.target_spacing;
+            obj.first_on = opts.first_on;
+            if isfield(opts, 'idx_target_removal')
+                obj.idx_target_removal = opts.idx_target_removal;
+            end
         end
 
         % Abstract methods -----------------------------------------------%

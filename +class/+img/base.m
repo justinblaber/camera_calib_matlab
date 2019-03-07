@@ -1,5 +1,5 @@
-classdef img < handle
-    % This is the class definition for an image file.
+classdef base < handle
+    % This is the base class definition for an image.
 
     properties(Access = private)
         path    % string
@@ -13,14 +13,14 @@ classdef img < handle
             % objects.
 
             % Initialize imgs
-            imgs = class.img.empty();
+            imgs = class.img.base.empty();
             if isempty(paths)
                 return
             end
 
-            % Set images
+            % Set images 
             for i = 1:numel(paths)
-                imgs(i) = class.img(paths{i});
+                imgs(i) = class.img.base(paths{i});
             end
 
             % Make sure all imgs exist, have valid imfinfos, and valid
@@ -74,7 +74,7 @@ classdef img < handle
     end
 
     methods(Access = public)
-        function obj = img(path)
+        function obj = base(path)
             obj.path = path;
         end
 

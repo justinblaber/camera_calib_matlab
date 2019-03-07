@@ -3,12 +3,9 @@ function sym_p_p2p_p_d = none()
     %
     % Note that the function must have arguments which start with:
     %
-    %   x_p, y_p, a, x_o, y_o
+    %   x_p, y_p, a11, a21, a31, a12, a22, a32, a13, a23, a33, d1, ..., dN
     %
-    % in that order, and then are followed by distortion parameters.
-    %
-    % "a" is alpha and it's assumed there's a single focal length (i.e.
-    % square pixels).
+    % in that order.
     %
     % Inputs:
     %   None
@@ -18,8 +15,8 @@ function sym_p_p2p_p_d = none()
     %       pixel coordinates and distorted pixel coordinates.
 
     % Declare symbolic function
-    syms sym_p_p2p_p_d(x_p, y_p, a, x_o, y_o)
+    syms sym_p_p2p_p_d(x_p, y_p, a11, a21, a31, a12, a22, a32, a13, a23, a33)
 
     % Define symbolic function
-    sym_p_p2p_p_d(x_p, y_p, a, x_o, y_o) = [x_p, y_p];
+    sym_p_p2p_p_d(x_p, y_p, a11, a21, a31, a12, a22, a32, a13, a23, a33) = [x_p, y_p];
 end

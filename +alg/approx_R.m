@@ -1,4 +1,4 @@
-function R = approx_rot(R)
+function R = approx_R(R)
     % Gets the "best" (smallest frobenius norm) approximation of the input
     % matrix as a rotation matrix, subject to R'R = I. Taken from Zhang's
     % camera calibration paper.

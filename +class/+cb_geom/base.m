@@ -1,5 +1,5 @@
-classdef cb < handle
-    % This is the base class definition for a calibration board.
+classdef base < handle
+    % This is the base class definition for a calibration board geometry.
 
     properties(Access = private)
         height_cb               % float
@@ -7,7 +7,7 @@ classdef cb < handle
     end
 
     methods(Access = public)
-        function obj = cb(opts)
+        function obj = base(opts)
             obj.height_cb = opts.height_cb;
             obj.width_cb = opts.width_cb;
         end

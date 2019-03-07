@@ -7,5 +7,5 @@ function imgs = validate_single_imgs(paths)
     % Outputs:
     %   imgs - class.img; img objects
 
-    imgs = class.img.validate_similar_imgs(paths);
+    imgs = class.img.base.validate_similar_imgs(paths);
 end

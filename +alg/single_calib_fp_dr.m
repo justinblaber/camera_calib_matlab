@@ -1,4 +1,40 @@
 function calib = single_calib_fp_dr(obj_single_calib, obj_cb_geom, img_cbs, p_fp_p_dss, calib_config, intrin)
+    % Performs camera calibration using "four point distortion refinement"
+    % method.
+    %
+    % Inputs:
+    %   obj_single_calib - class.calib; calibration object
+    %   obj_cb_geom - class.cb_geom; calibration board geometry object
+    %   img_cbs - class.img; Nx1 calibration board images
+    %   p_fp_p_dss - cell; Nx1 cell of four point boxes around the
+    %       calibration board images in distorted pixel coordinates
+    %   calib_config - struct; struct returned by intf.load_calib_config()
+    %   intrin - struct; optional. If passed in, intrinsics will not be
+    %       optimized.
+    %       .A - array; 3x3 camera matrix
+    %       .d - array; Mx1 array of distortion coefficients
+    %
+    % Outputs:
+    %   calib - struct;
+    %       .config - struct; copy of input calib_config
+    %       .intrin - struct;
+    %           .A - array; 3x3 camera matrix
+    %           .d - array; Mx1 array of distortion coefficients
+    %       .extrin - struct; Nx1 struct containing extrinsics
+    %           .img_cb - class.img; calibration board image
+    %           .R - array; 3x3 rotation matrix
+    %           .t - array; 3x1 translation vector
+    %           .p_fp_p_ds - array; four point box around the calibration
+    %               board image in distorted pixel coordinates
+    %           .p_cb_p_ds - array; calibration board distorted pixel
+    %               points
+    %           .cov_cb_p_ds - cell; covariances of calibration board
+    %               distorted pixel points
+    %           .p_cb_p_d_ms - array; calibration board model distorted
+    %               pixel points
+    %           .idx_valid - array; valid calibration board points
+    %           .debug - cell;
+    %       .debug - struct;
 
     util.verbose_disp('------', 1, calib_config);
     util.verbose_disp('Performing single calibration with four point distortion refinement method...', 1, calib_config);
@@ -73,7 +109,9 @@ function calib = single_calib_fp_dr(obj_single_calib, obj_cb_geom, img_cbs, p_fp
             if exist('A', 'var') && exist('d', 'var')
                 % undistort array
                 array_cb = alg.undistort_array(img_cbs(i).get_array_gs(), ...
-                                               @(p)obj_single_calib.p_p2p_p_d(p, A, d), ...
+                                               obj_single_calib.get_obj_distortion(), ...
+                                               A, ...
+                                               d, ...
                                                calib_config);
             else
                 % If intrinsics arent available, assume distortion is small
@@ -188,7 +226,7 @@ function calib = single_calib_fp_dr(obj_single_calib, obj_cb_geom, img_cbs, p_fp
                                                      idx_valids, ...
                                                      optimization_type);
         end
-        
+
         % Update homographies --------------------------------------------%
 
         for i = 1:num_boards

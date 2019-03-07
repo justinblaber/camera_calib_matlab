@@ -32,7 +32,7 @@ function [e, cov_e] = refine_ellipse_edges(array_dx, array_dy, e_init, opts, W)
     if ~exist('W', 'var')
         W = ones(size(array_dx));
     end
-    
+
     % Get coordinates of pixels
     bb_array = alg.bb_array(array_dx);
     [ys, xs] = alg.ndgrid_bb(bb_array);
@@ -53,11 +53,11 @@ function [e, cov_e] = refine_ellipse_edges(array_dx, array_dy, e_init, opts, W)
 
     % Perform iterations until convergence
     for it = 1:opts.refine_ellipse_edges_it_cutoff
-        % Get gauss newton parameters
-        [jacob, res] = calc_gauss_newton_params(params, ...
-                                                array_grad_mag, ...
-                                                xs, ...
-                                                ys);
+        % Get residual and jacobian
+        [res, jacob] = calc_res_and_jacob(params, ...
+                                          array_grad_mag, ...
+                                          xs, ...
+                                          ys);
 
         % Get and store update
         delta_params = -alg.safe_lscov(jacob, res, W(:));
@@ -73,17 +73,17 @@ function [e, cov_e] = refine_ellipse_edges(array_dx, array_dy, e_init, opts, W)
     e = params(3:7);
 
     % Get covariance of center point
-    [jacob, res] = calc_gauss_newton_params(params, ...
-                                            array_grad_mag, ...
-                                            xs, ...
-                                            ys);
+    [res, jacob] = calc_res_and_jacob(params, ...
+                                      array_grad_mag, ...
+                                      xs, ...
+                                      ys);
 
     % Get covariance
     [~, ~, ~, cov_params] = alg.safe_lscov(jacob, res, W(:));
     cov_e = cov_params(3:7, 3:7);
 end
 
-function [jacob, res] = calc_gauss_newton_params(params, array_grad_mag, xs, ys)
+function [res, jacob] = calc_res_and_jacob(params, array_grad_mag, xs, ys)
     % Sample edge function
     f = params(1).*exp(-params(2).^2.*(((params(4) - ys).^2 + (params(3) - xs).^2).^(1./2) - (params(5).*params(6).*((params(6).^2.*params(3).^2.*cos(params(7)).^2 + params(5).^2.*params(4).^2.*cos(params(7)).^2 + params(5).^2.*params(3).^2.*sin(params(7)).^2 + params(5).^2.*ys.^2.*cos(params(7)).^2 + params(6).^2.*xs.^2.*cos(params(7)).^2 + params(6).^2.*params(4).^2.*sin(params(7)).^2 + params(5).^2.*xs.^2.*sin(params(7)).^2 + params(6).^2.*ys.^2.*sin(params(7)).^2 - 2.*params(6).^2.*params(3).*xs.*cos(params(7)).^2 - params(5).^2.*params(3).*params(4).*sin(2.*params(7)) + params(6).^2.*params(3).*params(4).*sin(2.*params(7)) - 2.*params(5).^2.*params(4).*ys.*cos(params(7)).^2 - 2.*params(5).^2.*params(3).*xs.*sin(params(7)).^2 + params(5).^2.*params(3).*ys.*sin(2.*params(7)) - params(6).^2.*params(3).*ys.*sin(2.*params(7)) + params(5).^2.*params(4).*xs.*sin(2.*params(7)) - params(6).^2.*params(4).*xs.*sin(2.*params(7)) - 2.*params(6).^2.*params(4).*ys.*sin(params(7)).^2 - params(5).^2.*xs.*ys.*sin(2.*params(7)) + params(6).^2.*xs.*ys.*sin(2.*params(7)))./(params(3).^2 - 2.*params(3).*xs + params(4).^2 - 2.*params(4).*ys + xs.^2 + ys.^2)).^(1./2).*(params(3).^2 - 2.*params(3).*xs + params(4).^2 - 2.*params(4).*ys + xs.^2 + ys.^2))./(params(6).^2.*params(3).^2.*cos(params(7)).^2 + params(5).^2.*params(4).^2.*cos(params(7)).^2 + params(5).^2.*params(3).^2.*sin(params(7)).^2 + params(5).^2.*ys.^2.*cos(params(7)).^2 + params(6).^2.*xs.^2.*cos(params(7)).^2 + params(6).^2.*params(4).^2.*sin(params(7)).^2 + params(5).^2.*xs.^2.*sin(params(7)).^2 + params(6).^2.*ys.^2.*sin(params(7)).^2 - 2.*params(6).^2.*params(3).*xs.*cos(params(7)).^2 - params(5).^2.*params(3).*params(4).*sin(2.*params(7)) + params(6).^2.*params(3).*params(4).*sin(2.*params(7)) - 2.*params(5).^2.*params(4).*ys.*cos(params(7)).^2 - 2.*params(5).^2.*params(3).*xs.*sin(params(7)).^2 + params(5).^2.*params(3).*ys.*sin(2.*params(7)) - params(6).^2.*params(3).*ys.*sin(2.*params(7)) + params(5).^2.*params(4).*xs.*sin(2.*params(7)) - params(6).^2.*params(4).*xs.*sin(2.*params(7)) - 2.*params(6).^2.*params(4).*ys.*sin(params(7)).^2 - params(5).^2.*xs.*ys.*sin(2.*params(7)) + params(6).^2.*xs.*ys.*sin(2.*params(7)))).^2);
 

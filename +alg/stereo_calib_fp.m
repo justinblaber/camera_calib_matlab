@@ -1,15 +1,51 @@
 function calib = stereo_calib_fp(f_single_calib_fp, obj_single_calib, obj_cb_geom, img_cbs, p_fp_p_dss, calib_config, intrin)
+    % Performs stereo camera calibration using "four point" method.
+    %
+    % Inputs:
+    %   f_single_calib_fp - function handle; single four point calibration
+    %       function
+    %   obj_single_calib - class.calib; calibration object
+    %   obj_cb_geom - class.cb_geom; calibration board geometry object
+    %   img_cbs - struct;
+    %       .L - class.img; Nx1 calibration board images
+    %       .R - class.img; Nx1 calibration board images
+    %   p_fp_p_dss - struct;
+    %       .L - cell; Nx1 cell of four point boxes around the
+    %           calibration board images in distorted pixel coordinates
+    %       .R - cell; Nx1 cell of four point boxes around the
+    %           calibration board images in distorted pixel coordinates
+    %   calib_config - struct; struct returned by intf.load_calib_config()
+    %   intrin - struct; optional. If passed in, intrinsics will not be
+    %       optimized.
+    %       .L - struct;
+    %           .A - array; 3x3 camera matrix
+    %           .d - array; Mx1 array of distortion coefficients
+    %       .R - struct;
+    %           .A - array; 3x3 camera matrix
+    %           .d - array; Mx1 array of distortion coefficients
+    %
+    % Outputs:
+    %   calib - struct;
+    %       .config - struct; copy of input calib_config
+    %       .L - struct; calibration for left camera
+    %       .R - struct; calibration for right camera
+    %       .R_s - array; 3x3 rotation matrix describing rotation from
+    %           left to right camera
+    %       .t_s - array; 3x1 translation vector describing translation
+    %           from left to right camera
+    %       .debug - struct;
 
     util.verbose_disp('------------', 1, calib_config);
     util.verbose_disp('Performing stereo calibration with four point method...', 1, calib_config);
 
-    % Create stereo object; copy stuff stuff single object
+    % Create stereo object; copy stuff stuff single object to ensure they
+    % are the same.
     obj_stereo_calib = class.calib.stereo(obj_single_calib.get_obj_A(), ...
                                           obj_single_calib.get_obj_R(), ...
                                           obj_single_calib.get_obj_cb_w2p(), ...
                                           obj_single_calib.get_obj_distortion(), ...
                                           calib_config);
-    
+
     % Perform calibration ------------------------------------------------%
 
     % Get the calibration board points in world coordinates
@@ -120,7 +156,7 @@ function calib = stereo_calib_fp(f_single_calib_fp, obj_single_calib, obj_cb_geo
 
     util.verbose_disp('---------', 1, calib_config);
     util.verbose_disp(['Refining stereo parameters with ' optimization_type ' optimization...'], 1, calib_config);
-  
+
     if calib_config.apply_covariance_optimization
         [A, d, Rs, ts] = obj_stereo_calib.refine(A, ...
                                                  d, ...

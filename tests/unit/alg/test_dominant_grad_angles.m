@@ -16,7 +16,7 @@ function test_dominant_grad_angles
     hold on;
     p = [13.454815113457174  13.135563241128239];
     l1 = alg.pointslope2line(p, tan(angles_test(1) + pi/2));
-    l2 = alg.pointslope2line(p, tan(angles_test(2) + pi/2));    
+    l2 = alg.pointslope2line(p, tan(angles_test(2) + pi/2));
     e2 = ezplot(@(x, y) l1(1).*x + l1(2).*y + l1(3), [1 size(array_dx, 2) 1 size(array_dx, 1)]); %#ok<EZPLT>
     e3 = ezplot(@(x, y) l2(1).*x + l2(2).*y + l2(3), [1 size(array_dx, 2) 1 size(array_dx, 1)]); %#ok<EZPLT>
     set(e2, 'color', 'g');

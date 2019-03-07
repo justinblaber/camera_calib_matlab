@@ -16,10 +16,10 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debugs] = refine_target_points_cb_w2p(p
     %       .* - rest of options are for f_refine_target_point()
     %
     % Outputs:
-    %   p_cb_ps - array; Px2 array of optimized target pixel points
-    %   cov_cb_ps - cell array; Px1 cell array of covariance matrices of
+    %   p_cb_ps - array; Nx2 array of optimized target pixel points
+    %   cov_cb_ps - cell array; Nx1 cell array of covariance matrices of
     %       target pixel points
-    %   idx_valid - array; Px1 logical array of "valid" target points
+    %   idx_valid - array; Nx1 logical array of "valid" target points
     %   debugs - cell array;
 
     % Get target refinement function

@@ -5,19 +5,19 @@ classdef cb_w2p < handle
     properties(Access = private)
         opts
     end
-    
+
     methods(Access = public)
         function obj = cb_w2p(opts)
             obj.opts = opts;
         end
     end
-    
-    methods(Access = protected)             
+
+    methods(Access = protected)
         function opts = get_opts(obj)
             opts = obj.opts;
         end
     end
-    
+
     methods(Abstract, Access = public)
         p_cb_ps = p_cb_w2p_cb_p(obj, p_cb_ws, H)
         jacob = dp_cb_p_dH(obj, p_cb_ws, H)

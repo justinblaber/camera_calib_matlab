@@ -26,7 +26,7 @@ function [R, t] = init_extrinsic_params(H, A)
 
     % Initial guess is not necessarily orthogonal, so get the best
     % rotational approximation.
-    R = alg.approx_rot([r1 r2 r3]);
+    R = alg.approx_R([r1 r2 r3]);
 
     % Compute translation - use average of both lambdas to normalize
     t = H_bar(:, 3)./mean([lambda1 lambda2]);

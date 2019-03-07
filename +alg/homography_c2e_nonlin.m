@@ -1,4 +1,4 @@
-function H_12 = homography_c2e_nonlin(p_1s, p_2s, H_12_init, opts, cov)
+function H_12 = homography_c2e_nonlin(p_1s, p_2s, H_12_init, r_1, opts, cov)
     % This will compute a homography, assuming points in perspective "1"
     % are centers of circles while points in perspective "2" are centers
     % of ellipses, using non-linear least squares fit.
@@ -10,14 +10,13 @@ function H_12 = homography_c2e_nonlin(p_1s, p_2s, H_12_init, opts, cov)
     %       ellipses
     %   H_12_init - array; 3x3 initial guess of homography which transforms
     %       the points from perspective "1" to "2".
+    %   r_1 - scalar; radius of circle in perspective "1"
     %   opts - struct;
     %       .homography_c2e_it_cutoff - int; number of iterations performed
     %           for "c2e" nonlinear homography refinement
     %       .homography_c2e_norm_cutoff - scalar; cutoff for norm of
     %           difference of parameter vector for nonlinear "c2e"
     %           homography refinement
-    %       .circle_radius - scalar; radius of circle in perspective "1"
-    %           coordinates
     %   cov - array; optional 2*Nx2*N covariance array used for generalized
     %       least squares analysis
     %
@@ -34,9 +33,6 @@ function H_12 = homography_c2e_nonlin(p_1s, p_2s, H_12_init, opts, cov)
     % Number of points
     num_points = size(p_1s, 1);
 
-    % Get radius of circle in perspective "1" coordinates
-    r_1 = opts.circle_radius;
-
     % Initialize homography parameter vector; make sure H_12(3, 3) is 1
     params = H_12_init(1:8)'./H_12_init(end);
 
@@ -46,7 +42,7 @@ function H_12 = homography_c2e_nonlin(p_1s, p_2s, H_12_init, opts, cov)
         H_12 = reshape([params; 1], 3, 3);
 
         % Compute jacobian
-        jacob = alg.dp_dh_c2e(p_1s, H_12, r_1);
+        jacob = alg.dp_dH_c2e(p_1s, H_12, r_1);
         jacob = jacob(:, 1:end-1); % Remove last column since H_12(3, 3) is constant
 
         % Get residual

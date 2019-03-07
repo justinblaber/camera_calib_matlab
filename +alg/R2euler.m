@@ -1,4 +1,4 @@
-function euler = rot2euler(R)
+function euler = R2euler(R)
     % Converts rotation matrix to euler angles. Assumes X-Y-Z rotation
     % sequence.
     %

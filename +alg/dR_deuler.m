@@ -1,4 +1,4 @@
-function jacob = dr_deuler(euler)
+function jacob = dR_deuler(euler)
     % Returns jacobian of rotation wrt euler angles. Assumes X-Y-Z rotation
     % sequence.
     %
@@ -11,15 +11,15 @@ function jacob = dr_deuler(euler)
     %       angles. Format of jacobian is:
     %
     %               dtheta_x dtheta_y dtheta_z
-    %       dr11
-    %       dr21
-    %       dr31
-    %       dr12
-    %       dr22
-    %       dr32
-    %       dr13
-    %       dr23
-    %       dr33
+    %       dR11
+    %       dR21
+    %       dR31
+    %       dR12
+    %       dR22
+    %       dR32
+    %       dR13
+    %       dR23
+    %       dR33
 
     % TODO: Add checks for degenerate cases (gimbal lock?), although this
     % shouldn't really happen with real data... I think...

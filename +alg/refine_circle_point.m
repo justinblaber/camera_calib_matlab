@@ -27,7 +27,7 @@ function [p_cb_p, cov_cb_p, debug] = refine_circle_point(p_cb_p_init, boundary_p
         case 'edges'
             f_refine_target_point = @edges;
         otherwise
-            error(['Unknown target optimization: "' opts.target_optimization '" for circle target.']);
+            error(['Unsupported target optimization: "' opts.target_optimization '" for circle target.']);
     end
 
     % Get ellipse

@@ -1,6 +1,6 @@
-classdef cb_cfp < class.cb_fp
-    % This is the class definition for a centered four point box on the
-    % calibration board.
+classdef cfp < class.cb_geom.fp
+    % This is the class definition for a centered four point box
+    % calibration board geometry.
 
     properties(Access = private)
         height_fp               % float
@@ -8,8 +8,8 @@ classdef cb_cfp < class.cb_fp
     end
 
     methods(Access = public)
-        function obj = cb_cfp(opts)
-            obj@class.cb_fp(opts);
+        function obj = cfp(opts)
+            obj@class.cb_geom.fp(opts);
 
             obj.height_fp = opts.height_fp;
             obj.width_fp = opts.width_fp;

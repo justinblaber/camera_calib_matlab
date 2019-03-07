@@ -60,7 +60,7 @@ function [p_cb_p, cov_cb_p, debug] = refine_checker_point(p_cb_p_init, boundary_
         case 'edges'
             f_refine_target_point = @edges;
         otherwise
-            error(['Unknown target optimization: "' opts.target_optimization '" for checker target.']);
+            error(['Unsupported target optimization: "' opts.target_optimization '" for checker target.']);
     end
 
     % Get point

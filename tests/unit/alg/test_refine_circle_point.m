@@ -30,9 +30,9 @@ function test_refine_circle_point
     assert(all(all(abs(p_cb_p - 1.0e+02 * [0.472536045090068   4.586135830011939]) < 1e-4)));
     assert(all(all(abs(cov_cb_p - 1.0e-04 * [0.305699412205980  -0.039657431351037;
                                             -0.039657431351037   0.341407540539564]) < 1e-4)));
-                                         
+
  	clear
-    
+
     % Get tests path
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 

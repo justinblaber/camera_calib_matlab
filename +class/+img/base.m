@@ -18,7 +18,7 @@ classdef base < handle
                 return
             end
 
-            % Set images 
+            % Set images
             for i = 1:numel(paths)
                 imgs(i) = class.img.base(paths{i});
             end

@@ -37,9 +37,9 @@ function test_refine_checker_point
     assert(all(all(abs(p_cb_p - 1.0e+03 * [1.413488804288715   1.176076346048422]) < 1e-4)));
     assert(all(all(abs(cov_cb_p - 1.0e-03 * [0.193411499268622   0.001103024408296;
                                              0.001103024408296   0.195806325333371]) < 1e-4)));
-                                         
+
  	clear
-    
+
     % Get tests path
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 

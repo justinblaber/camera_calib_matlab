@@ -1,21 +1,21 @@
 classdef stereo < class.calib.base
     % This is the class definition for a stereo calibration.
-    
+
     methods(Access = public)
         function obj = stereo(obj_A, obj_R, obj_cb_w2p, obj_distortion, opts)
             obj@class.calib.base(obj_A, obj_R, obj_cb_w2p, obj_distortion, opts);
         end
     end
-    
+
     methods(Access = private)
         % Params  --------------------------------------------------------%
-        
+
         function params = get_params(obj, A, d, Rs, ts, R_s, t_s)
             % params: [a_L; d_L; a_R; d_R; r_1_L; t_1_L; ...; r_N_L; t_N_L, r_s, t_s]
-            
+
             % Intrinsics
             params = vertcat(obj.A2a(A.L), d.L, obj.A2a(A.R), d.R);
-            
+
             % Extrinsics
             for i = 1:numel(Rs.L)
                 params = vertcat(params, ...
@@ -26,64 +26,64 @@ classdef stereo < class.calib.base
                              obj.R2r(R_s), ...
                              t_s);
         end
-        
+
         function [A, d, Rs, ts, R_s, t_s] = parse_params(obj, params)
             % params: [a_L; d_L; a_R; d_R; r_1_L; t_1_L; ...; r_N_L; t_N_L, r_s, t_s]
-                                    
+
             % Parse A.L
             [a.L, params] = obj.pop_param(params, obj.get_num_params_a());
             A.L = obj.a2A(a.L);
-                        
+
             % Parse d.L
             [d.L, params] = obj.pop_param(params, obj.get_num_params_d());
-            
+
             % Parse A.R
             [a.R, params] = obj.pop_param(params, obj.get_num_params_a());
             A.R = obj.a2A(a.R);
-            
+
             % Parse d.R
             [d.R, params] = obj.pop_param(params, obj.get_num_params_d());
-            
+
             % Parse Rs.L and ts.L
             i = 1;
             while numel(params) > obj.get_num_params_e()
                 % Parse R
                 [r_L, params] = obj.pop_param(params, obj.get_num_params_r());
                 Rs.L{i} = obj.r2R(r_L);
-                                
+
                 % Parse t
                 [t_L, params] = obj.pop_param(params, obj.get_num_params_t());
                 ts.L{i} = t_L;
-                
+
                 % Increment
                 i = i + 1;
             end
-            
+
             % Parse R_s and t_s
             [r_s, params] = obj.pop_param(params, obj.get_num_params_r());
             R_s = obj.r2R(r_s);
 
             [t_s, params] = obj.pop_param(params, obj.get_num_params_t()); %#ok<ASGLU>
 
-            % Recompute Rs.R and ts.R            
+            % Recompute Rs.R and ts.R
             for i = 1:numel(Rs.L)
                 Rs.R{i} = R_s*Rs.L{i};
                 ts.R{i} = R_s*ts.L{i} + t_s;
             end
         end
-                
+
         % Residual and jacobian ------------------------------------------%
-        
+
         function [res, jacob] = calc_res_and_jacob(obj, params, p_cb_ws, p_cb_p_dss, idx_valids)
             % Get number of boards
             num_boards = numel(p_cb_p_dss.L);
-            
+
             % Get number of params
             num_params = numel(params);
-                        
+
             % Parse params
             [A, d, Rs, ts, R_s, t_s] = obj.parse_params(params); %#ok<ASGLU>
-    
+
             % Handle left camera -----------------------------------------%
             % Left extrinsics are independent
 
@@ -94,14 +94,14 @@ classdef stereo < class.calib.base
             for i = 1:num_boards
                 % Get valid indices for this board
                 idx_valid_board_L = 2*sum(vertcat(idx_valids.L{1:i-1}))+1:2*sum(vertcat(idx_valids.L{1:i}));
-                
+
                 % Get valid points
                 p_cb_ws_valid_L = p_cb_ws(idx_valids.L{i}, :);
                 p_cb_p_ds_valid_L = p_cb_p_dss.L{i}(idx_valids.L{i}, :);
-                
+
                 % Get valid model calibration board distorted pixel points
                 p_cb_p_d_ms_valid_L = obj.p_cb_w2p_cb_p_d(p_cb_ws_valid_L, Rs.L{i}, ts.L{i}, A.L, d.L);
-                
+
                 % Store residuals
                 res_L(idx_valid_board_L) = reshape((p_cb_p_d_ms_valid_L - p_cb_p_ds_valid_L)', [], 1);
 
@@ -126,11 +126,11 @@ classdef stereo < class.calib.base
             for i = 1:num_boards
                 % Get valid indices for this board
                 idx_valid_board_R = 2*sum(vertcat(idx_valids.R{1:i-1}))+1:2*sum(vertcat(idx_valids.R{1:i}));
-                
+
                 % Get valid points
                 p_cb_ws_valid_R = p_cb_ws(idx_valids.R{i}, :);
                 p_cb_p_ds_valid_R = p_cb_p_dss.R{i}(idx_valids.R{i}, :);
-                
+
                 % Get valid model calibration board distorted pixel points
                 p_cb_p_d_ms_valid_R = obj.p_cb_w2p_cb_p_d(p_cb_ws_valid_R, Rs.R{i}, ts.R{i}, A.R, d.R);
 
@@ -164,20 +164,20 @@ classdef stereo < class.calib.base
             % Concat
             res = vertcat(res_L, res_R);
             jacob = vertcat(jacob_L, jacob_R);
-        end    
-    end    
-    
-    methods(Access = public)                
+        end
+    end
+
+    methods(Access = public)
         function [A, d, Rs, ts] = refine(obj, A, d, Rs, ts, R_s, t_s, p_cb_ws, p_cb_p_dss, idx_valids, optimization_type, cov_cb_p_dss)
             % Get opts
             opts = obj.get_opts();
-                                   
+
             % Get params
-            params = obj.get_params(A, d, Rs, ts, R_s, t_s);           
-                                    
+            params = obj.get_params(A, d, Rs, ts, R_s, t_s);
+
             % Get number of params
             num_params = numel(params);
-            
+
             % Determine which parameters to update based on type
             idx_update = false(size(params));
             switch optimization_type
@@ -200,10 +200,10 @@ classdef stereo < class.calib.base
             else
                 cov = speye(2*sum(vertcat(idx_valids.L{:}, idx_valids.R{:}))); % Identity matrix is just simple least squares
             end
-    
+
             % Get residual and jacobian function
             f_calc_res_and_jacob = @(params)obj.calc_res_and_jacob(params, p_cb_ws, p_cb_p_dss, idx_valids);
-            
+
             % Levenberg-Marquardt with covariance estimate optimization
             [params, cov_params] = alg.lmcov(f_calc_res_and_jacob, ...
                                              params, ...
@@ -214,8 +214,8 @@ classdef stereo < class.calib.base
                                              opts.refine_stereo_params_it_cutoff, ...
                                              opts.refine_stereo_params_norm_cutoff, ...
                                              2, ...
-                                             opts);         
-                                          
+                                             opts);
+
             % Print params
             util.verbose_disp('------', 1, opts);
             util.verbose_disp('Stereo intrinsic params (+- 3*sigma):', 1, opts);
@@ -225,7 +225,7 @@ classdef stereo < class.calib.base
             for i = 1:obj.get_num_params_a()
                 obj.print_param(a_args{i}, i,                        params, cov_params,    '  ');
                 obj.print_param(a_args{i}, obj.get_num_params_i()+i, params, cov_params, newline);
-            end            
+            end
             % Distortion params
             util.verbose_disp('  -Distortion (L):                     -Distortion (R): ', 1, opts);
             d_args = obj.get_d_args();
@@ -243,7 +243,7 @@ classdef stereo < class.calib.base
             end
             % Translation
             util.verbose_disp('  -Translation (L => R):', 1, opts);
-            t_args = {'x', 'y', 'z'};            
+            t_args = {'x', 'y', 'z'};
             for i = 1:obj.get_num_params_t()
                 obj.print_param(t_args{i}, num_params-obj.get_num_params_t()+i, params, cov_params, newline);
             end

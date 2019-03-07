@@ -12,7 +12,7 @@ function Aq = fit_conic(array_dx, array_dy, W)
     %       [A   B/2 D/2;
     %        B/2 C   E/2;
     %        D/2 E/2 F];
-    
+
     if ~exist('W', 'var')
         W = ones(size(array_dx));
     end

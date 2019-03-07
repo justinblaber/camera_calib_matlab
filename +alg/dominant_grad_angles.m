@@ -14,11 +14,11 @@ function angles = dominant_grad_angles(array_dx, array_dy, num_angles, opts, W)
     %
     % Outputs:
     %   angles - array; Px1 dominant angles
-        
+
     if ~exist('W', 'var')
         W = ones(size(array_dx));
     end
-    
+
     % Get number of bins and space between peaks
     num_bins = opts.dominant_grad_angles_num_bins;
     space_peaks = opts.dominant_grad_angles_space_peaks;
@@ -36,13 +36,13 @@ function angles = dominant_grad_angles(array_dx, array_dy, num_angles, opts, W)
     % Get "angle vector"
     vec_angle = atan(array_dy./array_dx);             % Between [-pi/2, pi/2]
     vec_angle = reshape(vec_angle, [], 1);
-    
+
     % Mask out small magnitude values - these can produce NaNs in angle
     % vector and also contribute very little to histogram
     mask = vec_mag < eps('single');
     vec_mag(mask) = [];
     vec_angle(mask) = [];
-    
+
     % Get "index vector"
     vec_idx = (vec_angle+pi/2+spacing/2)/spacing;     % Between [0.5, num_bins+0.5]
 
@@ -52,7 +52,7 @@ function angles = dominant_grad_angles(array_dx, array_dy, num_angles, opts, W)
         angles = nan(num_angles, 1);
         return
     end
-    
+
     % Accumulate indices which are integers directly first ---------------%
 
     % Get integer indices

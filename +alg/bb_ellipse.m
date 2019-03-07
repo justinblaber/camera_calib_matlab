@@ -20,4 +20,3 @@ function bb = bb_ellipse(e)
     bb = [e(1)-width/2 e(2)-height/2;
           e(1)+width/2 e(2)+height/2];
 end
-

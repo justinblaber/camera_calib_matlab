@@ -15,4 +15,3 @@ function bb = bb_array(array)
     bb = [1 1;
           w h];
 end
-

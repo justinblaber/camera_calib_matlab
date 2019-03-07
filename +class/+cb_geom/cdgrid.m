@@ -10,7 +10,7 @@ classdef cdgrid < class.cb_geom.target
         idx_target_removal      % int array
     end
 
-    methods(Access = protected)    
+    methods(Access = protected)
         function num = get_num_targets_height(obj)
             num = obj.num_targets_height;
         end
@@ -31,7 +31,7 @@ classdef cdgrid < class.cb_geom.target
             mat = obj.idx_target_removal;
         end
     end
-    
+
     methods(Access = public)
         function obj = cdgrid(opts)
             obj@class.cb_geom.target(opts);

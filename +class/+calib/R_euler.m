@@ -19,7 +19,7 @@ classdef R_euler < class.calib.R
         function num = get_num_params_r(obj) %#ok<MANU>
             num = 3;
         end
-        
+
         function args = get_r_args(obj) %#ok<MANU>
             args = {'theta_x', 'theta_y', 'theta_z'};
         end

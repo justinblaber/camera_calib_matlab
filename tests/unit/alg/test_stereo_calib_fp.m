@@ -84,9 +84,9 @@ function test_stereo_calib_fp
         assert(all(all(abs(calib_test.R.extrin(i).R - calib.R.extrin(i).R) < 1e-4)));
         assert(all(all(abs(calib_test.R.extrin(i).t - calib.R.extrin(i).t) < 1e-4)));
     end
-    
+
     clear
-    
+
     % Get tests path
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 

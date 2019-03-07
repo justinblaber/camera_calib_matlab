@@ -5,7 +5,7 @@ function test_parse_calib_config
     data.width_cb            = 600;
     data.num_targets_height  = 10;
     data.num_targets_width   = 20;
-    data.target_spacing      = 1;    
+    data.target_spacing      = 1;
     data.target_optimization = 'opencv';
     data.calib_optimization  = 'distortion_refinement';
 

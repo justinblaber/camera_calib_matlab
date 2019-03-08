@@ -13,7 +13,7 @@ function [R, t] = init_extrinsic_params(H, A)
     %   t - array; 3x1 translation vector
 
     % Remove intrinsics from homography
-    H_bar = A^-1*H;
+    H_bar = alg.safe_inv(A)*H;
 
     % Compute scaling factors
     lambda1 = norm(H_bar(:, 1));

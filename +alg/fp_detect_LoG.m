@@ -30,10 +30,10 @@ function [p_fps, debug] = fp_detect_LoG(array, opts)
     %           templates.
     %       .fp_detect_marker_config_path - path; path to marker template
     %           config.
-    %       .fp_detect_num_cutoff - scalar; mse cutoff for fast template
-    %           thresholding.
-    %       .fp_detect_mse_cutoff - int; max number of ellipses for fast
+    %       .fp_detect_num_cutoff - int; max number of ellipses for fast
     %           template thresholding.
+    %       .fp_detect_mse_cutoff - scalar; mse cutoff for fast template
+    %           thresholding.
     %       .fp_detect_padding_radial - int; radial padding used for marker
     %           detection.
     %

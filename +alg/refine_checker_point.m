@@ -16,7 +16,7 @@ function [p_cb_p, cov_cb_p, debug] = refine_checker_point(p_cb_p_init, boundary_
     %           refinement sub array
     %       .refine_checker_max_hw - int; maximum half window for checker
     %           refinement sub array
-    %       .verbose - int; level of verbosity
+    %       .verbosity - int; level of verbosity
     %       .* - options for f_refine_target_point() function
     %
     % Outputs:

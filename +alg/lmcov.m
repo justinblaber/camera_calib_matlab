@@ -6,10 +6,10 @@ function [params, cov_params] = lmcov(f_calc_res_and_jacob, params, cov, idx_upd
     %    jacobian of residuals when params is input
     %   params - array; Nx1 array of parameters
     %   cov - array; covariance of residuals
-    %   idx_update - array; Nx1 indices indicated which parameters to
+    %   idx_update - array; Nx1 indices which indicate parameters to
     %       optimize
     %   lambda - scalar; initial lambda
-    %   lambda_factor - scalar; mulitplicative lambda factor
+    %   lambda_factor - scalar; multiplicative lambda factor
     %   it_cutoff - int; number of iterations to perform
     %   norm_cutoff - scalar; cutoff for the norm of difference of params
     %   verbose_level - int; verbosity cutoff

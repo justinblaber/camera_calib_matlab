@@ -10,7 +10,7 @@ function Aq = ellipse2conic(e)
     %       e(5) = alpha; rotation of major axis
     %
     % Outputs:
-    %   Aq - array; 3x3 conic matrix matrix stored as:
+    %   Aq - array; 3x3 conic matrix stored as:
     %       [A   B/2 D/2;
     %        B/2 C   E/2;
     %        D/2 E/2 F];

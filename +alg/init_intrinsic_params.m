@@ -49,9 +49,9 @@ function A = init_intrinsic_params(Hs, width, height)
                             -v3(3)*v4(3)];
     end
 
-    % Get x by finding value which makes projection of A on b equal to b.
-    % I believe this tends to prevent over estimates when A and b are not
-    % collinear.
+    % Get alpha by finding value which makes projection of A on b equal to
+    % b. I believe this tends to prevent over estimates when A and b are
+    % not collinear.
     alpha_squared = dot(b, A)/dot(b, b);
     if alpha_squared < 0
         alpha = nan; % Instead of returning imaginary number, just return nan

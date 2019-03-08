@@ -8,7 +8,7 @@ function Aq = fit_conic(array_dx, array_dy, W)
     %   W - array; optional MxN weight array
     %
     % Outputs:
-    %   Aq - array; 3x3 conic matrix matrix stored as:
+    %   Aq - array; 3x3 conic matrix stored as:
     %       [A   B/2 D/2;
     %        B/2 C   E/2;
     %        D/2 E/2 F];

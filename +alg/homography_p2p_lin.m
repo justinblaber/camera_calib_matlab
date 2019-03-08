@@ -37,7 +37,7 @@ function H_12 = homography_p2p_lin(p_1s, p_2s)
     H_12_norm = reshape(V(:, end), 3, 3)';
 
     % "Undo" normalization to get desired homography
-    H_12 = T_2^-1*H_12_norm*T_1;
+    H_12 = alg.safe_inv(T_2)*H_12_norm*T_1;
 
     % Normalize H_12(3, 3) to 1
     H_12 = H_12./H_12(3, 3);

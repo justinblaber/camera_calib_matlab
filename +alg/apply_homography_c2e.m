@@ -16,7 +16,7 @@ function p_2s = apply_homography_c2e(p_1s, H_12, r_1)
     %       ellipses
 
     if ~alg.is_pos(r_1)
-        error('radius must be positive')
+        error('radius must be positive');
     end
 
     % TODO: Find matrix equation equivalent of this

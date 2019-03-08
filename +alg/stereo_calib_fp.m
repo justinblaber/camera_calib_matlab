@@ -38,7 +38,7 @@ function calib = stereo_calib_fp(f_single_calib_fp, obj_single_calib, obj_cb_geo
     util.verbose_disp('------------', 1, calib_config);
     util.verbose_disp('Performing stereo calibration with four point method...', 1, calib_config);
 
-    % Create stereo object; copy stuff stuff single object to ensure they
+    % Create stereo object; copy stuff from single object to ensure they
     % are the same.
     obj_stereo_calib = class.calib.stereo(obj_single_calib.get_obj_A(), ...
                                           obj_single_calib.get_obj_R(), ...

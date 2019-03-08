@@ -2,7 +2,7 @@ function [l1, l2] = asymptotes(Aq)
     % Given a conic matrix of a hyperbola, this will return the asymptotes.
     %
     % Inputs:
-    %   Aq - array; 3x3 conic matrix matrix stored as:
+    %   Aq - array; 3x3 conic matrix stored as:
     %       [A   B/2 D/2;
     %        B/2 C   E/2;
     %        D/2 E/2 F];
@@ -41,4 +41,3 @@ function [l1, l2] = asymptotes(Aq)
     l1 = [r1 s1 -r1*center(1)-s1*center(2)]';
     l2 = [r2 s2 -r2*center(1)-s2*center(2)]';
 end
-

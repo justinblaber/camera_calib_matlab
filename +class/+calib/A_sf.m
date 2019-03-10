@@ -1,4 +1,4 @@
-classdef A_sf < class.calib.A
+classdef A_sf < class.calib.A_intf
     % Single focal length parameterization of a camera matrix.
 
     methods(Access = public)

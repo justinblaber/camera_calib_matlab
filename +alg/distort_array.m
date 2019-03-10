@@ -6,7 +6,7 @@ function array_d = distort_array(array, obj_distortion, A, d, opts)
     %
     % Inputs:
     %   array - array; array containing undistorted image
-    %   obj_distortion - class.distortion; describes the mapping
+    %   obj_distortion - class.distortion.intf; describes the mapping
     %       between pixel coordinates and distorted pixel coordinates.
     %   A - array; 3x3 camera matrix
     %   d - array; Mx1 array of distortion coefficients

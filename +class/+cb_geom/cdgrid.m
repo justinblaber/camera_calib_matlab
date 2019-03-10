@@ -1,4 +1,4 @@
-classdef cdgrid < class.cb_geom.target
+classdef cdgrid < class.cb_geom.target_base
     % This is the class definition for a centered diamond grid calibration
     % board geometry.
 
@@ -34,7 +34,7 @@ classdef cdgrid < class.cb_geom.target
 
     methods(Access = public)
         function obj = cdgrid(opts)
-            obj@class.cb_geom.target(opts);
+            obj@class.cb_geom.target_base(opts);
 
             obj.num_targets_height = opts.num_targets_height;
             obj.num_targets_width = opts.num_targets_width;

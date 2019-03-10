@@ -1,10 +1,10 @@
-classdef cb_w2p_c2e < class.calib.cb_w2p
+classdef cb_w2p_c2e < class.calib.cb_w2p_base
     % Mapping of calibration board points using "center of circle" to
     % "center of ellipse"
 
     methods(Access = public)
         function obj = cb_w2p_c2e(opts)
-            obj@class.calib.cb_w2p(opts);
+            obj@class.calib.cb_w2p_base(opts);
         end
     end
 

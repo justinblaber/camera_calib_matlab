@@ -1,11 +1,18 @@
-function calib = single_calib_fp_dr(obj_single_calib, obj_cb_geom, img_cbs, p_fp_p_dss, calib_config, intrin)
+function calib = single_calib_fp_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, obj_cb_geom, img_cbs, p_fp_p_dss, calib_config, intrin)
     % Performs camera calibration using "four point distortion refinement"
     % method.
     %
     % Inputs:
-    %   obj_single_calib - class.calib; calibration object
-    %   obj_cb_geom - class.cb_geom; calibration board geometry object
-    %   img_cbs - class.img; Nx1 calibration board images
+    %   obj_A - class.calib.A_intf; parameterization for camera matrix
+    %   obj_R - class.calib.R_intf; parameterization for rotation matrix
+    %   obj_cb_w2p - class.calib.cb_w2p_intf; describes the mapping between
+    %       calibration board world points and calibration board pixel
+    %       points.
+    %   obj_distortion - class.distortion.intf; describes the mapping
+    %       between pixel coordinates and distorted pixel coordinates.
+    %   obj_cb_geom - class.cb_geom.fp_intf & class.cb_geom.target_intf;
+    %       calibration board four-point and target geometry interface.
+    %   img_cbs - class.img.intf; Nx1 calibration board image interfaces.
     %   p_fp_p_dss - cell; Nx1 cell of four point boxes around the
     %       calibration board images in distorted pixel coordinates
     %   calib_config - struct; struct returned by intf.load_calib_config()
@@ -39,7 +46,14 @@ function calib = single_calib_fp_dr(obj_single_calib, obj_cb_geom, img_cbs, p_fp
     util.verbose_disp('------', 1, calib_config);
     util.verbose_disp('Performing single calibration with four point distortion refinement method...', 1, calib_config);
 
-    % Perform calibration ------------------------------------------------%
+    % Perform single calibration -----------------------------------------%
+    
+    % Get calibration object
+    obj_single_calib = class.calib.single(obj_A, ...
+                                          obj_R, ...
+                                          obj_cb_w2p, ...
+                                          obj_distortion, ...
+                                          calib_config);
 
     % Get the calibration board points and boundaries in world coordinates
     p_fp_ws = obj_cb_geom.get_p_fp_ws();
@@ -207,6 +221,8 @@ function calib = single_calib_fp_dr(obj_single_calib, obj_cb_geom, img_cbs, p_fp
         util.verbose_disp(['Refining single parameters with ' optimization_type ' optimization...'], 3, calib_config);
 
         if calib_config.apply_covariance_optimization
+            util.verbose_disp('Applying covariance optimization.', 3, calib_config);
+
             [A, d, Rs, ts] = obj_single_calib.refine(A, ...
                                                      d, ...
                                                      Rs, ...

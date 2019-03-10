@@ -1,4 +1,4 @@
-classdef R_euler < class.calib.R
+classdef R_euler < class.calib.R_intf
     % Euler parameterization of a rotation matrix.
 
     methods(Access = public)

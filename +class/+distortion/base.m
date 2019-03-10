@@ -1,4 +1,4 @@
-classdef base < handle %#ok<*PROPLC>
+classdef base < class.distortion.intf %#ok<*PROPLC>
     % This is the base class definition for camera distrotion.
 
     properties(Access = private)
@@ -8,7 +8,7 @@ classdef base < handle %#ok<*PROPLC>
         opts
     end
 
-    methods(Static, Access = private)
+    methods(Static, Access = protected)
         function [a_x, a_y, s, x_o, y_o] = parse_A(A)
             % A = [a_x,   s, x_o;
             %        0, a_y, y_o;
@@ -59,7 +59,7 @@ classdef base < handle %#ok<*PROPLC>
         end
     end
 
-    methods(Access = private)
+    methods(Access = protected)
         function opts = get_opts(obj)
             opts = obj.opts;
         end

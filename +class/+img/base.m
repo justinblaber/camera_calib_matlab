@@ -1,4 +1,4 @@
-classdef base < handle
+classdef base < class.img.intf
     % This is the base class definition for an image.
 
     properties(Access = private)
@@ -46,6 +46,12 @@ classdef base < handle
     end
 
     methods(Access = private)
+        function img_info = get_imfinfo(obj)
+            obj.validate_exist();
+
+            img_info = imfinfo(obj.get_path());
+        end
+        
         function validate_exist(obj)
             if ~obj.exist()
                 error(['Image: ' obj.get_path() ' does not exist.']);
@@ -77,6 +83,8 @@ classdef base < handle
         function obj = base(path)
             obj.path = path;
         end
+        
+        % Abstract methods -----------------------------------------------%
 
         function path = get_path(obj)
             path = obj.path;
@@ -84,12 +92,6 @@ classdef base < handle
 
         function success = exist(obj)
             success = exist(obj.get_path(), 'file') ~= 0;
-        end
-
-        function img_info = get_imfinfo(obj)
-            obj.validate_exist();
-
-            img_info = imfinfo(obj.get_path());
         end
 
         function array_gs = get_array_gs(obj)

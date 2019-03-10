@@ -1,4 +1,4 @@
-classdef base < handle
+classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_intf & class.distortion.intf
     % This is the base class definition for a calibration.
 
     properties(Access = private)
@@ -10,7 +10,7 @@ classdef base < handle
     end
 
     methods(Access = public)
-        function obj = base(obj_A, obj_R, obj_cb_w2p, obj_distortion, opts)
+        function obj = base(obj_A, obj_R, obj_cb_w2p, obj_distortion, opts)            
             obj.obj_A = obj_A;
             obj.obj_R = obj_R;
             obj.obj_cb_w2p = obj_cb_w2p;

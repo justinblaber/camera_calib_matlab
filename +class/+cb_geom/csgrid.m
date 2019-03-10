@@ -1,4 +1,4 @@
-classdef csgrid < class.cb_geom.target
+classdef csgrid < class.cb_geom.target_base
     % This is the class definition for a centered square grid calibration
     % board geometry.
 
@@ -29,7 +29,7 @@ classdef csgrid < class.cb_geom.target
 
     methods(Access = public)
         function obj = csgrid(opts)
-            obj@class.cb_geom.target(opts);
+            obj@class.cb_geom.target_base(opts);
 
             obj.num_targets_height = opts.num_targets_height;
             obj.num_targets_width = opts.num_targets_width;

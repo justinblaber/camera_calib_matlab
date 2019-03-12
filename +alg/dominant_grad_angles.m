@@ -31,7 +31,7 @@ function angles = dominant_grad_angles(array_dx, array_dy, num_angles, opts, W)
 
     % Get "magnitude vector" - apply weights here
     vec_mag = sqrt(array_dx.^2 + array_dy.^2).*W;
-    vec_mag = reshape(vec_mag, [] , 1);
+    vec_mag = reshape(vec_mag, [], 1);
 
     % Get "angle vector"
     vec_angle = atan(array_dy./array_dx);             % Between [-pi/2, pi/2]

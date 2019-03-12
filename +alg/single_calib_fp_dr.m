@@ -28,7 +28,7 @@ function calib = single_calib_fp_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, ob
     %           .A - array; 3x3 camera matrix
     %           .d - array; Mx1 array of distortion coefficients
     %       .extrin - struct; Nx1 struct containing extrinsics
-    %           .img_cb - class.img; calibration board image
+    %           .img_cb - class.img.intf; calibration board image
     %           .R - array; 3x3 rotation matrix
     %           .t - array; 3x1 translation vector
     %           .p_fp_p_ds - array; four point box around the calibration
@@ -47,7 +47,7 @@ function calib = single_calib_fp_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, ob
     util.verbose_disp('Performing single calibration with four point distortion refinement method...', 1, calib_config);
 
     % Perform single calibration -----------------------------------------%
-    
+
     % Get calibration object
     obj_single_calib = class.calib.single(obj_A, ...
                                           obj_R, ...

@@ -14,8 +14,8 @@ function calib = stereo_calib_fp(f_single_calib_fp, obj_A, obj_R, obj_cb_w2p, ob
     %   obj_cb_geom - class.cb_geom.fp_intf & class.cb_geom.target_intf;
     %       calibration board four-point and target geometry interface.
     %   img_cbs - struct;
-    %       .L - class.img; Nx1 calibration board image interfaces.
-    %       .R - class.img; Nx1 calibration board image interfaces.
+    %       .L - class.img.intf; Nx1 calibration board image interfaces.
+    %       .R - class.img.intf; Nx1 calibration board image interfaces.
     %   p_fp_p_dss - struct;
     %       .L - cell; Nx1 cell of four point boxes around the
     %           calibration board images in distorted pixel coordinates
@@ -131,7 +131,7 @@ function calib = stereo_calib_fp(f_single_calib_fp, obj_A, obj_R, obj_cb_w2p, ob
                                           obj_cb_w2p, ...
                                           obj_distortion, ...
                                           calib_config);
-                                      
+
     % Get the calibration board points in world coordinates
     p_cb_ws = obj_cb_geom.get_p_cb_ws();
 
@@ -144,7 +144,7 @@ function calib = stereo_calib_fp(f_single_calib_fp, obj_A, obj_R, obj_cb_w2p, ob
     else
         optimization_type = 'full';      % Optimize intrinsics and extrinsics
     end
-                                          
+
     % Get initial guesses for transform between left and right cameras ---%
 
     % Get least squares linear initial guess for R_s
@@ -179,7 +179,7 @@ function calib = stereo_calib_fp(f_single_calib_fp, obj_A, obj_R, obj_cb_w2p, ob
 
     if calib_config.apply_covariance_optimization
         util.verbose_disp('Applying covariance optimization.', 3, calib_config);
-            
+
         [A, d, Rs, ts] = obj_stereo_calib.refine(A, ...
                                                  d, ...
                                                  Rs, ...

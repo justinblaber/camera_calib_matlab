@@ -1,5 +1,6 @@
-classdef intf < handle %#ok<*PROPLC>
+classdef (Abstract) intf < handle
     % This is the interface for camera distortion.
+
     methods(Abstract, Access = public)
         num_params_d = get_num_params_d(obj)
         args = get_d_args(obj)

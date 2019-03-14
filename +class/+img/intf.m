@@ -1,6 +1,6 @@
 classdef (Abstract) intf < handle
     % This is the interface class for an image
-    
+
     methods(Abstract, Access = public)
         path = get_path(obj)
         success = exist(obj)

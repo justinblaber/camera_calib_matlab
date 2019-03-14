@@ -9,7 +9,7 @@ classdef base < class.img.intf
         function imgs = validate_similar_imgs(paths)
             % This function will make sure all image paths in the cell
             % array "paths" exist, are the same size, have valid imfinfos,
-            % have valid colortypes and then returns all images as "img"
+            % have valid colortypes and then returns all images as base img
             % objects.
 
             % Initialize imgs
@@ -51,7 +51,7 @@ classdef base < class.img.intf
 
             img_info = imfinfo(obj.get_path());
         end
-        
+
         function validate_exist(obj)
             if ~obj.exist()
                 error(['Image: ' obj.get_path() ' does not exist.']);
@@ -59,7 +59,7 @@ classdef base < class.img.intf
         end
 
         function validate_imfinfo(obj)
-            img_info = imfinfo(obj.get_path());
+            img_info = obj.get_imfinfo();
             if numel(img_info) ~= 1
                 error(['Image: ' obj.get_path() ' does not contain a ' ...
                        'single image. Only single image formats are ' ...
@@ -83,7 +83,7 @@ classdef base < class.img.intf
         function obj = base(path)
             obj.path = path;
         end
-        
+
         % Abstract methods -----------------------------------------------%
 
         function path = get_path(obj)

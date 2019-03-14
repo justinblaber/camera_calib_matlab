@@ -1,6 +1,6 @@
-classdef R_intf < handle
+classdef (Abstract) R_intf < handle
     % This is the interface for a rotation matrix parameterization.
-    
+
     methods(Abstract, Access = public)
         R = r2R(obj, r)
         r = R2r(obj, R)

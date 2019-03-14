@@ -1,4 +1,4 @@
-classdef cb_w2p_intf < handle
+classdef (Abstract) cb_w2p_intf < handle
     % This is the interface for the mapping between calibration board world
     % points and calibration board pixel points.
 

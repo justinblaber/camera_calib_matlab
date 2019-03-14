@@ -1,4 +1,4 @@
-classdef A_intf < handle
+classdef (Abstract) A_intf < handle
     % This is the interface for a camera matrix parameterization.
 
     methods(Abstract, Access = public)

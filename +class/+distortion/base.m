@@ -1,5 +1,5 @@
 classdef base < class.distortion.intf %#ok<*PROPLC>
-    % This is the base class definition for camera distrotion.
+    % This is the base class definition for camera distortion.
 
     properties(Access = private)
         sym_p_p2p_p_d
@@ -60,10 +60,6 @@ classdef base < class.distortion.intf %#ok<*PROPLC>
     end
 
     methods(Access = protected)
-        function opts = get_opts(obj)
-            opts = obj.opts;
-        end
-
         function sym_p_p2p_p_d = get_sym_p_p2p_p_d(obj)
             sym_p_p2p_p_d = obj.sym_p_p2p_p_d;
         end
@@ -74,6 +70,10 @@ classdef base < class.distortion.intf %#ok<*PROPLC>
 
         function f_dp_p_d_dargs = get_f_dp_p_d_dargs(obj)
             f_dp_p_d_dargs = obj.f_dp_p_d_dargs;
+        end
+
+        function opts = get_opts(obj)
+            opts = obj.opts;
         end
     end
 
@@ -98,9 +98,7 @@ classdef base < class.distortion.intf %#ok<*PROPLC>
             obj.f_dp_p_d_dargs = f_dp_p_d_dargs;
             obj.opts = opts;
         end
-    end
 
-    methods(Access = public)
         function num_params_d = get_num_params_d(obj)
             % Distortion function has format:
             %   f(x_p, y_p, a_x, a_y, s, x_o, y_o, d_1, ..., d_N)
@@ -116,23 +114,22 @@ classdef base < class.distortion.intf %#ok<*PROPLC>
 
         function args = get_d_args(obj)
             sym_args = argnames(obj.get_sym_p_p2p_p_d());
-            args = {};
             for i = 1:numel(sym_args)-7
                 args{i} = char(sym_args(i+7)); %#ok<AGROW>
             end
         end
 
         function jacob = dp_p_d_dp_p(obj, p_ps, A, d)
-            %       Format of jacobian is:
+            %   Format of jacobian is:
             %
-            %                dx_p_1 dy_p_1 ... dx_p_N dy_p_N
-            %       dx_p_d_1
-            %       dy_p_d_1
-            %          .
-            %          .
-            %          .
-            %       dx_p_d_N
-            %       dy_p_d_N
+            %             dx_p_1 dy_p_1 ... dx_p_N dy_p_N
+            %   dx_p_d_1
+            %   dy_p_d_1
+            %       .
+            %       .
+            %       .
+            %   dx_p_d_N
+            %   dy_p_d_N
 
             f_dp_p_d_dargs = obj.get_f_dp_p_d_dargs();
 
@@ -149,16 +146,16 @@ classdef base < class.distortion.intf %#ok<*PROPLC>
         end
 
         function jacob = dp_p_d_dA(obj, p_ps, A, d)
-            %       Format of jacobian is:
+            %   Format of jacobian is:
             %
-            %                dA_11 dA_21 dA_31 dA_12 dA_22 dA_23 dA_13 dA_23 dA_33
-            %       dx_p_d_1
-            %       dy_p_d_1
-            %          .
-            %          .
-            %          .
-            %       dx_p_d_N
-            %       dy_p_d_N
+            %            dA_11 dA_21 dA_31 dA_12 dA_22 dA_32 dA_13 dA_23 dA_33
+            %   dx_p_d_1
+            %   dy_p_d_1
+            %      .
+            %      .
+            %      .
+            %   dx_p_d_N
+            %   dy_p_d_N
 
             % NOTE:
             %   A = [A_11, A_12, A_13; = [a_x,   s, x_o;
@@ -169,9 +166,9 @@ classdef base < class.distortion.intf %#ok<*PROPLC>
 
             dp_p_d_da_x = class.distortion.base.dp_p_d_darg(f_dp_p_d_dargs{3}, p_ps, A, d); % 3rd index is a_x
             dp_p_d_da_y = class.distortion.base.dp_p_d_darg(f_dp_p_d_dargs{4}, p_ps, A, d); % 4th index is a_y
-            dp_p_d_ds   = class.distortion.base.dp_p_d_darg(f_dp_p_d_dargs{5}, p_ps, A, d); % 4th index is s
-            dp_p_d_dx_o = class.distortion.base.dp_p_d_darg(f_dp_p_d_dargs{6}, p_ps, A, d); % 4th index is x_o
-            dp_p_d_dy_o = class.distortion.base.dp_p_d_darg(f_dp_p_d_dargs{7}, p_ps, A, d); % 4th index is y_o
+            dp_p_d_ds   = class.distortion.base.dp_p_d_darg(f_dp_p_d_dargs{5}, p_ps, A, d); % 5th index is s
+            dp_p_d_dx_o = class.distortion.base.dp_p_d_darg(f_dp_p_d_dargs{6}, p_ps, A, d); % 6th index is x_o
+            dp_p_d_dy_o = class.distortion.base.dp_p_d_darg(f_dp_p_d_dargs{7}, p_ps, A, d); % 7th index is y_o
 
             jacob = [dp_p_d_da_x, ...                   % A_11
                      zeros(2*size(p_ps, 1), 1), ...     % A_21
@@ -185,23 +182,22 @@ classdef base < class.distortion.intf %#ok<*PROPLC>
         end
 
         function jacob = dp_p_d_dd(obj, p_ps, A, d)
-            %       Format of jacobian is:
+            %   Format of jacobian is:
             %
-            %                dd_1 ... dd_N
-            %       dx_p_d_1
-            %       dy_p_d_1
-            %          .
-            %          .
-            %          .
-            %       dx_p_d_N
-            %       dy_p_d_N
+            %            dd_1 ... dd_N
+            %   dx_p_d_1
+            %   dy_p_d_1
+            %      .
+            %      .
+            %      .
+            %   dx_p_d_N
+            %   dy_p_d_N
 
             f_dp_p_d_dargs = obj.get_f_dp_p_d_dargs();
-            num_params_d = obj.get_num_params_d();
 
+            num_params_d = obj.get_num_params_d();
             for i = 1:num_params_d
                 dp_p_d_dd_i = class.distortion.base.dp_p_d_darg(f_dp_p_d_dargs{7+i}, p_ps, A, d); % Offset of 7
-
                 jacob(:, i) = dp_p_d_dd_i; %#ok<AGROW>
             end
         end

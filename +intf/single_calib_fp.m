@@ -2,7 +2,7 @@ function calib = single_calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin)
     % Performs camera calibration using "four point" method.
     %
     % Inputs:
-    %   img_cbs - class.img; Nx1 calibration board images
+    %   img_cbs - class.img.intf; Nx1 calibration board images
     %   p_fp_p_dss - cell; Nx1 cell of four point boxes around the
     %       calibration board images in distorted pixel coordinates
     %   calib_config - struct; struct returned by intf.load_calib_config()
@@ -18,7 +18,7 @@ function calib = single_calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin)
     %           .A - array; 3x3 camera matrix
     %           .d - array; Mx1 array of distortion coefficients
     %       .extrin - struct; Nx1 struct containing extrinsics
-    %           .img_cb - class.img; calibration board image
+    %           .img_cb - class.img.intf; calibration board image
     %           .R - array; 3x3 rotation matrix
     %           .t - array; 3x1 translation vector
     %           .p_fp_p_ds - array; four point box around the calibration
@@ -32,7 +32,7 @@ function calib = single_calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin)
     %           .idx_valid - array; valid calibration board points
     %           .debug - cell;
     %       .debug - struct;
-
+    
     % Get single four point calibration function
     switch calib_config.calib_optimization
         case 'distortion_refinement'
@@ -40,11 +40,29 @@ function calib = single_calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin)
         otherwise
             error(['Unknown calibration optimization: "' calib_config.calib_optimization '"']);
     end
+    
+    % Get calibration parameterization
+    [obj_A, obj_R, obj_cb_w2p, obj_distortion] = util.calib_parameterization(calib_config);
 
     % Call single four point calibration function
     if exist('intrin', 'var')
-        calib = f_single_calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin);
+        calib = f_single_calib_fp(obj_A, ...
+                                  obj_R, ...
+                                  obj_cb_w2p, ...
+                                  obj_distortion, ...
+                                  calib_config.obj_cb_geom, ...
+                                  img_cbs, ...
+                                  p_fp_p_dss, ...
+                                  calib_config, ...
+                                  intrin);
     else
-        calib = f_single_calib_fp(img_cbs, p_fp_p_dss, calib_config);
+        calib = f_single_calib_fp(obj_A, ...
+                                  obj_R, ...
+                                  obj_cb_w2p, ...
+                                  obj_distortion, ...
+                                  calib_config.obj_cb_geom, ...
+                                  img_cbs, ...
+                                  p_fp_p_dss, ...
+                                  calib_config);
     end
 end

@@ -112,13 +112,13 @@ function gui_single_calib(calib, f)
             pos_extrinsics = [padding_width 1-padding_height-height_extrinsics width_extrinsics height_extrinsics];
             axes_extrinsics = axes('Position', pos_extrinsics, 'Parent', f);
 
-            pos_cb_class = [padding_width padding_height pos_extrinsics(3) pos_extrinsics(2)-2*padding_height];
-            axes_cb_class = axes('Position', pos_cb_class, 'Parent', f);
+            pos_cb_geom = [padding_width padding_height pos_extrinsics(3) pos_extrinsics(2)-2*padding_height];
+            axes_cb_geom = axes('Position', pos_cb_geom, 'Parent', f);
 
-            pos_res = [pos_cb_class(1)+pos_cb_class(3)+padding_width 1-padding_height-height_res 1-(pos_cb_class(1)+pos_cb_class(3))-2*padding_width height_res];
+            pos_res = [pos_cb_geom(1)+pos_cb_geom(3)+padding_width 1-padding_height-height_res 1-(pos_cb_geom(1)+pos_cb_geom(3))-2*padding_width height_res];
             axes_res = axes('Position', pos_res, 'Parent', f);
 
-            pos_calib_cb_img = [pos_res(1) pos_cb_class(2) pos_res(3) pos_res(2)-2*padding_height];
+            pos_calib_cb_img = [pos_res(1) pos_cb_geom(2) pos_res(3) pos_res(2)-2*padding_height];
             axes_calib_cb_img = axes('Position', pos_calib_cb_img, 'Parent', f);
 
             % Plot extrinsics --------------------------------------------%
@@ -147,8 +147,8 @@ function gui_single_calib(calib, f)
 
             % Plot calibration board class -------------------------------%
 
-            debug.plot_cb_class(calib.config.cb_class, axes_cb_class);
-            title(axes_cb_class, 'Calibration board', 'FontSize', 10);
+            debug.plot_cb_geom(calib.config.obj_cb_geom, axes_cb_geom);
+            title(axes_cb_geom, 'Calibration board', 'FontSize', 10);
             drawnow
 
             % Plot calibrated board image --------------------------------%

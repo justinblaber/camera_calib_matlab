@@ -3,7 +3,7 @@ function [p_fp_pss, debug] = single_fp_detect(img_cbs, calib_config)
     % the calibration board images.
     %
     % Inputs:
-    %   img_cbs - class.img; Nx1 calibration board images
+    %   img_cbs - class.img.intf; Nx1 calibration board images
     %   calib_config - struct; struct returned by intf.load_calib_config()
     %
     % Outputs:
@@ -32,7 +32,8 @@ function [p_fp_pss, debug] = single_fp_detect(img_cbs, calib_config)
         util.verbose_fprintf('Performing four-point %s detection for image: %s. ', ...
                              calib_config.fp_detector, ...
                              img_cbs(i).get_path(), ...
-                             1, calib_config);
+                             1, ...
+                             calib_config);
 
         % Get array and scale it
         array = img_cbs(i).get_array_gs();

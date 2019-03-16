@@ -17,8 +17,8 @@ function plot_cb_3D(xform_w2s, color, alpha, opts, a)
     %    p1 - p3
     %     |    |
     %    p2 - p4
-    h = opts.cb_class.get_cb_height();
-    w = opts.cb_class.get_cb_width();
+    h = opts.obj_cb_geom.get_cb_height();
+    w = opts.obj_cb_geom.get_cb_width();
     box_w = [0 0; ...
              0 h; ...
              w 0; ...

@@ -1,6 +1,8 @@
 function write_num(num, name, file_path)
     % Writes number to data file. Has format:
+    %
     %   name = num
+    %
     % This will append to the file and writes with 16 significant figures
     % in ascii format, which allows it to be human readable/modifiable
     % while also retaining double precision.

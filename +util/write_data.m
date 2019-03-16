@@ -1,6 +1,7 @@
 function write_data(data, file_path, suffix)
     % Writes data struct to file. Note that data struct fields must only
     % contain:
+    %
     %   string
     %   double
     %   logical

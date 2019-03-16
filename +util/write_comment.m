@@ -1,6 +1,8 @@
 function write_comment(comment, file_path)
     % Writes comment to data file. Has format:
+    %
     %   % comment
+    %
     % This will append to the file.
     %
     % Inputs:

@@ -1,5 +1,6 @@
 function sym_f = str2sym(str_f) %#ok<STOUT>
     % Converts input string to a symbolic function which has the form:
+    %
     %   sym_f(arg1, arg2, ..., argN) = val
     %
     % Inputs:

@@ -1,11 +1,13 @@
 function data = read_data(file_path)
     % Reads "names" from data file. Data file must have format:
+    %
     %   % comment
     %   name =
     %   array
     %   name = num
     %   name = string
     %   ...
+    %
     % It returns everything as a struct with fields corresponding to the
     % name(s). If multiple names are found, then struct field will be a
     % cell array. It is assumed all "num" are those strings convertable to

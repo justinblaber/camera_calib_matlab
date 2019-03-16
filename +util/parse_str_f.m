@@ -1,5 +1,6 @@
 function [name, args, val] = parse_str_f(str_f)
     % Parses input "symbolic function string" into:
+    %
     %   name(args) = val
     %
     % Inputs:

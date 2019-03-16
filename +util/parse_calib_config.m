@@ -15,7 +15,7 @@ function [calib_config, data] = parse_calib_config(data)
     % Calibration board target
     field_info        = struct('field', 'target'                                        , 'required', true , 'default', ''                             , 'validation_fun', @validate_target);
     field_info(end+1) = struct('field', 'target_optimization'                           , 'required', true , 'default', ''                             , 'validation_fun', @validate_target_optimization);
-    
+
     % Calibration board geometry
     field_info(end+1) = struct('field', 'height_cb'                                     , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar);
     field_info(end+1) = struct('field', 'width_cb'                                      , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar);
@@ -27,29 +27,31 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'width_fp'                                      , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_or_nan);
     field_info(end+1) = struct('field', 'idx_target_removal'                            , 'required', false, 'default', []                             , 'validation_fun', @validate_pos_int);
     field_info(end+1) = struct('field', 'obj_cb_geom'                                   , 'required', true , 'default', []                             , 'validation_fun', @validate_obj_cb_geom);
-    
+
     % Camera matrix parameterization
     field_info(end+1) = struct('field', 'A_parameterization'                            , 'required', false, 'default', 'single_focal'                 , 'validation_fun', @validate_A_parameterization);
-        
+
     % Rotation matrix parameterization
     field_info(end+1) = struct('field', 'R_parameterization'                            , 'required', false, 'default', 'euler'                        , 'validation_fun', @validate_R_parameterization);
-        
+
     % Distortion
     field_info(end+1) = struct('field', 'sym_p_p2p_p_d'                                 , 'required', false, 'default', 'distortion.heikkila97'        , 'validation_fun', @validate_sym_p_p2p_p_d);
 
     % Algorithms ---------------------------------------------------------%
-    
+
     % Calibration optimization
     field_info(end+1) = struct('field', 'calib_optimization'                            , 'required', true , 'default', ''                             , 'validation_fun', @validate_calib_optimization);
-    field_info(end+1) = struct('field', 'distortion_refinement_it_cutoff'               , 'required', false, 'default', 1                              , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'apply_covariance_optimization'                 , 'required', false, 'default', true                           , 'validation_fun', @validate_logical_scalar);
-    
+
+    % Distortion refinement
+    field_info(end+1) = struct('field', 'distortion_refinement_it_cutoff'               , 'required', false, 'default', 1                              , 'validation_fun', @validate_pos_scalar_int);
+
     % Homography computation
     field_info(end+1) = struct('field', 'homography_p2p_it_cutoff'                      , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'homography_p2p_norm_cutoff'                    , 'required', false, 'default', 1e-6                           , 'validation_fun', @validate_pos_scalar);
     field_info(end+1) = struct('field', 'homography_c2e_it_cutoff'                      , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'homography_c2e_norm_cutoff'                    , 'required', false, 'default', 1e-6                           , 'validation_fun', @validate_pos_scalar);
-    
+
     % Dominant grad angles
     field_info(end+1) = struct('field', 'dominant_grad_angles_num_bins'                 , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'dominant_grad_angles_space_peaks'              , 'required', false, 'default', 1                              , 'validation_fun', @validate_pos_scalar_int);
@@ -126,11 +128,12 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'fp_detect_mse_cutoff'                          , 'required', false, 'default', 0.2                            , 'validation_fun', @validate_pos_scalar);
     field_info(end+1) = struct('field', 'fp_detect_padding_radial'                      , 'required', false, 'default', 5                              , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'fp_detect_array_min_size'                      , 'required', false, 'default', 400                            , 'validation_fun', @validate_pos_scalar_int_or_nan);
-    
+
     % Verbosity
     field_info(end+1) = struct('field', 'verbosity'                                     , 'required', false, 'default', 3                              , 'validation_fun', @validate_int_scalar);
 
-    % Plotting info
+    % Plotting -----------------------------------------------------------%
+
     field_info(end+1) = struct('field', 'units'                                         , 'required', false, 'default', 'N/A'                          , 'validation_fun', @validate_string);
     field_info(end+1) = struct('field', 'camera_size'                                   , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_or_nan);
 
@@ -152,8 +155,7 @@ function [calib_config, data] = parse_calib_config(data)
         else
             % Field doesn't exist; check if it's required or not
             if field_info(i).required
-                error(['Required field: "' field '" was ' ...
-                       'not found.']);
+                error(['Required field: "' field '" was not found.']);
             else
                 % This is an optional field; set the default value since it
                 % was not set
@@ -210,9 +212,9 @@ function calib_config = validate_obj_cb_geom(calib_config, field)
     % field needs to be a string
     calib_config = validate_string(calib_config, field);
 
-    % Must start with "class."
-    if ~startsWith(param, 'class.')
-        field_class_error(field, param, 'class in +class directory');
+    % Must start with "class.cb_geom"
+    if ~startsWith(param, 'class.cb_geom')
+        field_class_error(field, param, 'class in +class/+cb_geom directory');
     end
 
     % Evaluate
@@ -230,7 +232,7 @@ function calib_config = validate_fp_detector(calib_config, field)
     % field needs to be a string
     calib_config = validate_string(calib_config, field);
 
-    if ~isempty(param) && ~any(strcmp(param, {'LoG'}))
+    if ~any(strcmp(param, {'LoG'}))
         field_class_error(field, param, 'four point detector');
     end
 end

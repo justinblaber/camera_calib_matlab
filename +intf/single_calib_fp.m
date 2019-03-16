@@ -32,7 +32,7 @@ function calib = single_calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin)
     %           .idx_valid - array; valid calibration board points
     %           .debug - cell;
     %       .debug - struct;
-    
+
     % Get single four point calibration function
     switch calib_config.calib_optimization
         case 'distortion_refinement'
@@ -40,7 +40,7 @@ function calib = single_calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin)
         otherwise
             error(['Unknown calibration optimization: "' calib_config.calib_optimization '"']);
     end
-    
+
     % Get calibration parameterization
     [obj_A, obj_R, obj_cb_w2p, obj_distortion] = util.calib_parameterization(calib_config);
 

@@ -1,4 +1,4 @@
-function plot_cb_class(cb_class, a)
+function plot_cb_class(obj_cb_geom, a)
     % This will plot calibration board class
 
     if ~exist('a', 'var')
@@ -8,12 +8,13 @@ function plot_cb_class(cb_class, a)
 
     % Format axes
     axis(a, 'equal');
-    set(a, 'Ydir', 'reverse', 'Xlim', [0 cb_class.get_cb_width()], 'Ylim', [0 cb_class.get_cb_height()]);
+    set(a, 'Ydir', 'reverse', 'Xlim', [0 obj_cb_geom.get_cb_width()], ...
+                              'Ylim', [0 obj_cb_geom.get_cb_height()]);
     hold(a, 'on');
 
-    if isa(cb_class, 'class.cb_pattern')
-        p_cb_ws = cb_class.get_p_cb_ws();
-        boundary_ws = cb_class.get_p_cb_w_boundaries();
+    if isa(obj_cb_geom, 'class.cb_geom.target_intf')
+        p_cb_ws = obj_cb_geom.get_p_cb_ws();
+        boundary_ws = obj_cb_geom.get_p_cb_w_boundaries();
 
         % Plot board points
         plot(p_cb_ws(:, 1), p_cb_ws(:, 2), 'gs', 'MarkerSize', 8, ...
@@ -29,8 +30,8 @@ function plot_cb_class(cb_class, a)
         end
     end
 
-    if isa(cb_class, 'class.cb_fp')
-        p_fp_ws = cb_class.get_p_fp_ws();
+    if isa(obj_cb_geom, 'class.cb_geom.fp_intf')
+        p_fp_ws = obj_cb_geom.get_p_fp_ws();
 
         % Plot four points
         plot(p_fp_ws(:, 1), p_fp_ws(:, 2), 'bo', 'MarkerSize', 8, ...

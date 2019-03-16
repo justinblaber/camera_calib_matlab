@@ -11,7 +11,7 @@ function calib = load_single_calib(file_path)
     %           .A - array; 3x3 camera matrix
     %           .d - array; Mx1 array of distortion coefficients
     %       .extrin - struct; Nx1 struct containing extrinsics
-    %           .img_cb - class.img; calibration board image
+    %           .img_cb - class.img.base; calibration board image
     %           .R - array; 3x3 rotation matrix
     %           .t - array; 3x1 translation vector
     %           .p_fp_p_ds - array; optional. four point box around the

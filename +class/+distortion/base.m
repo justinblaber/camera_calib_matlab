@@ -8,6 +8,16 @@ classdef base < class.distortion.intf %#ok<*PROPLC>
         opts
     end
 
+    methods(Static, Access = public)
+        function validate_sym_p_p2p_p_d(sym_p_p2p_p_d)
+            %   f(x_p, y_p, a_x, a_y, s, x_o, y_o, d_1, ..., d_N)
+            args = arrayfun(@char, argnames(sym_p_p2p_p_d), 'UniformOutput', false);
+            if ~all(strcmp(args(1:7), {'x_p', 'y_p', 'a_x', 'a_y', 's', 'x_o', 'y_o'}))
+                error('Symbolic distortion function must have arguments which start with: (x_p, y_p, a_x, a_y, s, x_o, y_o)');
+            end
+        end
+    end
+
     methods(Static, Access = protected)
         function [a_x, a_y, s, x_o, y_o] = parse_A(A)
             % A = [a_x,   s, x_o;

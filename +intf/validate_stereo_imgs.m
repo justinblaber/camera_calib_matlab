@@ -7,7 +7,7 @@ function imgs = validate_stereo_imgs(paths)
     %
     % Outputs:
     %   imgs - struct;
-    %       .L and .R - class.img; img objects
+    %       .L and .R - class.img.base; img objects
 
     % Validate left and right separately
     imgs.L = intf.validate_single_imgs(paths.L);

@@ -212,10 +212,7 @@ function calib_config = validate_cb_class(calib_config, field)
     % Evaluate
     [~, cb_class] = evalc([param '(calib_config)']);
 
-    % Validate that it has a calibration board pattern defined
-    if ~isa(cb_class, 'class.cb_pattern')
-        field_class_error(field, param, 'class.cb_pattern');
-    end
+    % TODO: validate
 
     % Assign value
     calib_config.(field) = cb_class;

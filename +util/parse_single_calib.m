@@ -45,7 +45,7 @@ function [calib, data] = parse_single_calib(data, suffix)
         % Calibration board image - read path and then convert to
         % class.img.base
         [calib.extrin(i).img_cb, data] = util.read_and_remove(data, ['img_path_' num2str(i) suffix]);
-        calib.extrin(i).img_cb = class.img(calib.extrin(i).img_cb);
+        calib.extrin(i).img_cb = class.img.base(calib.extrin(i).img_cb);
 
         % TODO: maybe issue warning if image cant be found?
 

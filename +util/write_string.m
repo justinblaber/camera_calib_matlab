@@ -1,6 +1,8 @@
 function write_string(s, name, file_path)
     % Writes string to data file. Has format:
+    %
     %   name = s
+    %
     % This will append to the file.
     %
     % Inputs:

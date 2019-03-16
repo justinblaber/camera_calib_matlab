@@ -1,7 +1,9 @@
 function write_array(array, name, file_path)
     % Writes array to data file. Has format:
+    %
     %   name =
     %   array
+    %
     % This will append to the file and writes with 16 significant figures
     % in ascii format, which allows it to be human readable/modifiable
     % while also retaining double precision.

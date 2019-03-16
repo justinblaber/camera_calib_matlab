@@ -28,8 +28,8 @@ for i = 1:numel(marker_config.marker_paths)
     array_marker = rgb2gray(im2double(array_marker));
 
     % Get coordinates
-    x = bsxfun(@times, cos(theta_samples), radius_samples') + (size(array_marker, 2)+1)/2;
-    y = bsxfun(@times, sin(theta_samples), radius_samples') + (size(array_marker, 1)+1)/2;
+    x = cos(theta_samples)*radius_samples' + (size(array_marker, 2)+1)/2;
+    y = sin(theta_samples)*radius_samples' + (size(array_marker, 1)+1)/2;
 
     % Get polar patch
     polar_patch = alg.interp_array(array_marker, [x(:) y(:)], marker_config.interp);

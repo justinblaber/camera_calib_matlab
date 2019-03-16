@@ -1,5 +1,6 @@
 function str_f = sym2str(sym_f)
     % Converts input symbolic function to a string which has the form:
+    %
     %   sym_f(arg1, arg2, ..., argN) = val
     %
     % Inputs:

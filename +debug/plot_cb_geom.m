@@ -1,4 +1,4 @@
-function plot_cb_class(obj_cb_geom, a)
+function plot_cb_geom(obj_cb_geom, a)
     % This will plot calibration board class
 
     if ~exist('a', 'var')
@@ -8,10 +8,13 @@ function plot_cb_class(obj_cb_geom, a)
 
     % Format axes
     axis(a, 'equal');
-    set(a, 'Ydir', 'reverse', 'Xlim', [0 obj_cb_geom.get_cb_width()], ...
-                              'Ylim', [0 obj_cb_geom.get_cb_height()]);
     hold(a, 'on');
 
+    if isa(obj_cb_geom, 'class.cb_geom.size_intf')
+        set(a, 'Ydir', 'reverse', 'Xlim', [0 obj_cb_geom.get_cb_width()], ...
+                                  'Ylim', [0 obj_cb_geom.get_cb_height()]);
+    end
+    
     if isa(obj_cb_geom, 'class.cb_geom.target_intf')
         p_cb_ws = obj_cb_geom.get_p_cb_ws();
         boundary_ws = obj_cb_geom.get_p_cb_w_boundaries();

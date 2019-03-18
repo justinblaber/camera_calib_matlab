@@ -93,7 +93,7 @@ function [params, cov_params] = lmcov(f_calc_res_and_jacob, params, cov, idx_upd
         end
     end
     if it == it_cutoff
-        util.verbose_warning('iterations hit cutoff before converging!!!', verbose_level);
+        util.verbose_warning('iterations hit cutoff before converging!!!', verbose_level, opts);
     end
 
     % Get covariance of parameters

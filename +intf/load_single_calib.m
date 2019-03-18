@@ -14,8 +14,6 @@ function calib = load_single_calib(file_path)
     %           .img_cb - class.img.base; calibration board image
     %           .R - array; 3x3 rotation matrix
     %           .t - array; 3x1 translation vector
-    %           .p_fp_p_ds - array; optional. four point box around the
-    %               calibration board image in distorted pixel coordinates
     %           .p_cb_p_ds - array; calibration board distorted pixel
     %               points
     %           .cov_cb_p_ds - cell; covariances of calibration board
@@ -23,6 +21,8 @@ function calib = load_single_calib(file_path)
     %           .p_cb_p_d_ms - array; calibration board model distorted
     %               pixel points
     %           .idx_valid - array; valid calibration board points
+    %           .p_fp_p_ds - array; optional. four point box around the
+    %               calibration board image in distorted pixel coordinates
 
     % Check to make sure data file exists
     if exist(file_path, 'file') ~= 2

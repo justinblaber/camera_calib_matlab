@@ -14,8 +14,6 @@ function [calib, data] = parse_single_calib(data, suffix)
     %           .img_cb - class.img.base; calibration board image
     %           .R - array; 3x3 rotation matrix
     %           .t - array; 3x1 translation vector
-    %           .p_fp_p_ds - array; optional. four point box around the
-    %               calibration board image in distorted pixel coordinates
     %           .p_cb_p_ds - array; calibration board distorted pixel
     %               points
     %           .cov_cb_p_ds - cell; covariances of calibration board
@@ -23,6 +21,8 @@ function [calib, data] = parse_single_calib(data, suffix)
     %           .p_cb_p_d_ms - array; calibration board model distorted
     %               pixel points
     %           .idx_valid - array; valid calibration board points
+    %           .p_fp_p_ds - array; optional. four point box around the
+    %               calibration board image in distorted pixel coordinates
     %   data - struct; input data with calibration removed.
 
     % Get suffix
@@ -55,11 +55,6 @@ function [calib, data] = parse_single_calib(data, suffix)
         % Translation
         [calib.extrin(i).t, data] = util.read_and_remove(data, ['t_' num2str(i) suffix]);
 
-        % Four point box around the calibration board image in distorted pixel coordinates
-        if isfield(data, ['p_fp_p_ds_' num2str(i) suffix])
-            [calib.extrin(i).p_fp_p_ds, data] = util.read_and_remove(data, ['p_fp_p_ds_' num2str(i) suffix]);
-        end
-
         % Calibration board distorted pixel points
         [calib.extrin(i).p_cb_p_ds, data] = util.read_and_remove(data, ['p_cb_p_ds_' num2str(i) suffix]);
 
@@ -72,6 +67,11 @@ function [calib, data] = parse_single_calib(data, suffix)
         % Valid calibration board points - convert to logical
         [calib.extrin(i).idx_valid, data] = util.read_and_remove(data, ['idx_valid_' num2str(i) suffix]);
         calib.extrin(i).idx_valid = logical(calib.extrin(i).idx_valid);
+
+        % Four point box around the calibration board image in distorted pixel coordinates
+        if isfield(data, ['p_fp_p_ds_' num2str(i) suffix])
+            [calib.extrin(i).p_fp_p_ds, data] = util.read_and_remove(data, ['p_fp_p_ds_' num2str(i) suffix]);
+        end
 
         % Increment
         i = i + 1;

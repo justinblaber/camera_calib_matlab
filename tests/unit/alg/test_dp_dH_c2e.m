@@ -1,4 +1,6 @@
-function test_dp_dh_p2p
+function test_dp_dH_c2e
+    r_1 = 2;
+
     p_1s = [0 0;
             0 1;
             1 0;
@@ -10,16 +12,16 @@ function test_dp_dh_p2p
 
     % Get finite difference approximation
     delta = 1e-10;
-    dp_dh = zeros(numel(p_1s), 9);
+    dp_dH = zeros(numel(p_1s), 9);
     for i = 1:9 % Cycle over homography components
         % Increment homography component
         H_12_delta = H_12;
         H_12_delta(i) = H_12(i) + delta;
 
         % Finite difference approximation
-        dp_dh(:, i) = reshape(((alg.apply_homography_p2p(p_1s, H_12_delta) - alg.apply_homography_p2p(p_1s, H_12))./delta)', [], 1);
+        dp_dH(:, i) = reshape(((alg.apply_homography_c2e(p_1s, H_12_delta, r_1) - alg.apply_homography_c2e(p_1s, H_12, r_1))./delta)', [], 1);
     end
 
     % Assert
-    assert(all(all(abs(dp_dh - alg.dp_dh_p2p(p_1s, H_12)) < 1e-4)));
+    assert(all(all(abs(dp_dH - alg.dp_dH_c2e(p_1s, H_12, r_1)) < 1e-4)));
 end

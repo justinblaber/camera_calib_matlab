@@ -29,10 +29,10 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'obj_cb_geom'                                   , 'required', true , 'default', []                             , 'validation_fun', @validate_obj_cb_geom);
 
     % Camera matrix parameterization
-    field_info(end+1) = struct('field', 'A_parameterization'                            , 'required', false, 'default', 'single_focal'                 , 'validation_fun', @validate_A_parameterization);
+    field_info(end+1) = struct('field', 'obj_A'                                         , 'required', false, 'default', 'class.calib.A_sf'             , 'validation_fun', @validate_obj_A);
 
     % Rotation matrix parameterization
-    field_info(end+1) = struct('field', 'R_parameterization'                            , 'required', false, 'default', 'euler'                        , 'validation_fun', @validate_R_parameterization);
+    field_info(end+1) = struct('field', 'obj_R'                                         , 'required', false, 'default', 'class.calib.R_euler'          , 'validation_fun', @validate_obj_R);
 
     % Distortion
     field_info(end+1) = struct('field', 'sym_p_p2p_p_d'                                 , 'required', false, 'default', 'distortion.heikkila97'        , 'validation_fun', @validate_sym_p_p2p_p_d);
@@ -226,6 +226,67 @@ function calib_config = validate_obj_cb_geom(calib_config, field)
     calib_config.(field) = obj_cb_geom;
 end
 
+function calib_config = validate_obj_A(calib_config, field)
+    param = calib_config.(field);
+
+    % Must start with "class.calib"
+    if ~startsWith(param, 'class.calib')
+        field_class_error(field, param, 'class in +class/+calib directory');
+    end
+
+    % Evaluate
+    [~, obj_A] = evalc([param '()']);
+
+    % TODO: validate
+
+    % Assign value
+    calib_config.(field) = obj_A;
+end
+
+function calib_config = validate_obj_R(calib_config, field)
+    param = calib_config.(field);
+
+    % Must start with "class.calib"
+    if ~startsWith(param, 'class.calib')
+        field_class_error(field, param, 'class in +class/+calib directory');
+    end
+
+    % Evaluate
+    [~, obj_R] = evalc([param '()']);
+
+    % TODO: validate
+
+    % Assign value
+    calib_config.(field) = obj_R;
+end
+
+function calib_config = validate_sym_p_p2p_p_d(calib_config, field)
+    param = calib_config.(field);
+
+    % field needs to be a string
+    calib_config = validate_string(calib_config, field);
+
+    % If it starts with "distortion.", then its assumed to be a function in
+    % +distortion, so just load it. Otherwise, its assumed to be a
+    % "symbolic function string", so convert it.
+    if startsWith(param, 'distortion.')
+        [~, sym_distortion] = evalc(param);
+
+        % Validate that this is indeed a symbolic function
+        if ~isa(sym_distortion, 'symfun')
+            field_class_error(field, param, 'symbolic function');
+        end
+    else
+        sym_distortion = util.str2sym(param);
+    end
+
+    % Validate distortion function
+    class.distortion.base.validate_sym_p_p2p_p_d(sym_distortion);
+
+    % Assign value
+    calib_config.(field) = sym_distortion;
+end
+
 function calib_config = validate_fp_detector(calib_config, field)
     param = calib_config.(field);
 
@@ -362,55 +423,6 @@ function calib_config = validate_interp(calib_config, field)
     if ~any(strcmp(param, {'linear', 'cubic', 'spline'}))
         field_class_error(field, param, 'interpolation type');
     end
-end
-
-function calib_config = validate_A_parameterization(calib_config, field)
-    param = calib_config.(field);
-
-    % field needs to be a string
-    calib_config = validate_string(calib_config, field);
-
-    if ~any(strcmp(param, {'single_focal'}))
-        field_class_error(field, param, 'A parameterization type');
-    end
-end
-
-function calib_config = validate_R_parameterization(calib_config, field)
-    param = calib_config.(field);
-
-    % field needs to be a string
-    calib_config = validate_string(calib_config, field);
-
-    if ~any(strcmp(param, {'euler'}))
-        field_class_error(field, param, 'R parameterization type');
-    end
-end
-
-function calib_config = validate_sym_p_p2p_p_d(calib_config, field)
-    param = calib_config.(field);
-
-    % field needs to be a string
-    calib_config = validate_string(calib_config, field);
-
-    % If it starts with "distortion.", then its assumed to be a function in
-    % +distortion, so just load it. Otherwise, its assumed to be a
-    % "symbolic function string", so convert it.
-    if startsWith(param, 'distortion.')
-        [~, sym_distortion] = evalc(param);
-
-        % Validate that this is indeed a symbolic function
-        if ~isa(sym_distortion, 'symfun')
-            field_class_error(field, param, 'symbolic function');
-        end
-    else
-        sym_distortion = util.str2sym(param);
-    end
-
-    % Validate distortion function
-    class.distortion.base.validate_sym_p_p2p_p_d(sym_distortion);
-
-    % Assign value
-    calib_config.(field) = sym_distortion;
 end
 
 function field_class_error(field, param, class_param)

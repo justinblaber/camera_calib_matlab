@@ -5,7 +5,7 @@ function test_write_single_calib()
     calib.intrin.A = eye(3);
     calib.intrin.d = ones(3, 1);
 
-    calib.extrin.img_cb = class.img('test');
+    calib.extrin.img_cb = class.img.base('test');
     calib.extrin.R = eye(3);
     calib.extrin.t = ones(3, 1);
     calib.extrin.p_fp_p_ds = ones(4, 2);

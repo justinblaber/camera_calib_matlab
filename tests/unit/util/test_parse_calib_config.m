@@ -6,7 +6,7 @@ function test_parse_calib_config
     data.num_targets_height  = 10;
     data.num_targets_width   = 20;
     data.target_spacing      = 1;
-    data.obj_cb_geom         = 'class.cb_geom.csgrid_cfp';    
+    data.obj_cb_geom         = 'class.cb_geom.csgrid_cfp';
     data.calib_optimization  = 'distortion_refinement';
 
     [calib_config, data] = util.parse_calib_config(data); %#ok<ASGLU>

@@ -1,5 +1,5 @@
-function calib = single_calib_fp_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, obj_cb_geom, img_cbs, p_fp_p_dss, calib_config, intrin)
-    % Performs camera calibration using "four point distortion refinement"
+function calib = single_calib_H_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, obj_cb_geom, img_cbs, H_w2ps, calib_config, intrin)
+    % Performs camera calibration using "homography distortion refinement"
     % method.
     %
     % Inputs:
@@ -10,11 +10,11 @@ function calib = single_calib_fp_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, ob
     %       points.
     %   obj_distortion - class.distortion.intf; describes the mapping
     %       between pixel coordinates and distorted pixel coordinates.
-    %   obj_cb_geom - class.cb_geom.fp_intf & class.cb_geom.target_intf;
-    %       calibration board four-point and target geometry interface.
+    %   obj_cb_geom - class.cb_geom.target_intf; calibration board target
+    %       geometry interface.
     %   img_cbs - class.img.intf; Nx1 calibration board image interfaces.
-    %   p_fp_p_dss - cell; Nx1 cell of four point boxes around the
-    %       calibration board images in distorted pixel coordinates
+    %   H_w2ps - cell; Nx1 cell of initial guesses of homographies which
+    %       map world coordinates to pixel coordinates
     %   calib_config - struct; struct returned by intf.load_calib_config()
     %   intrin - struct; optional. If passed in, intrinsics will not be
     %       optimized.
@@ -31,8 +31,6 @@ function calib = single_calib_fp_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, ob
     %           .img_cb - class.img.intf; calibration board image
     %           .R - array; 3x3 rotation matrix
     %           .t - array; 3x1 translation vector
-    %           .p_fp_p_ds - array; four point box around the calibration
-    %               board image in distorted pixel coordinates
     %           .p_cb_p_ds - array; calibration board distorted pixel
     %               points
     %           .cov_cb_p_ds - cell; covariances of calibration board
@@ -40,8 +38,6 @@ function calib = single_calib_fp_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, ob
     %           .p_cb_p_d_ms - array; calibration board model distorted
     %               pixel points
     %           .idx_valid - array; valid calibration board points
-    %           .debug - cell;
-    %       .debug - struct;
 
     util.verbose_disp('------', 1, calib_config);
     util.verbose_disp('Performing single calibration with four point distortion refinement method...', 1, calib_config);
@@ -56,7 +52,6 @@ function calib = single_calib_fp_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, ob
                                           calib_config);
 
     % Get the calibration board points and boundaries in world coordinates
-    p_fp_ws = obj_cb_geom.get_p_fp_ws();
     p_cb_ws = obj_cb_geom.get_p_cb_ws();
     boundary_ws = obj_cb_geom.get_p_cb_w_boundaries();
 
@@ -90,30 +85,6 @@ function calib = single_calib_fp_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, ob
 
         % Get calibration board pixel points -----------------------------%
 
-        % For first iteration, initialize homographies from world to pixel
-        % coordinates using four point boxes
-        if it == 1
-            for i = 1:num_boards
-                % Get four point box in pixel coordinates
-                if exist('A', 'var') && exist('d', 'var')
-                    % If intrinsics are passed in, undistort four point box
-                    p_fp_ps = obj_single_calib.p_p_d2p_p(p_fp_p_dss{i}, ...
-                                                         p_fp_p_dss{i}, ...     % Use distorted points for initial guess
-                                                         A, ...
-                                                         d);
-                else
-                    % If intrinsics arent available, assume distortion is small
-                    p_fp_ps = p_fp_p_dss{i};
-                end
-
-                % Compute homography - use direct p2p method
-                H_w2ps{i} = alg.homography_p2p(p_fp_ws, ...
-                                               p_fp_ps, ...
-                                               calib_config); %#ok<AGROW>
-            end
-        end
-
-        % Get calibration board points
         util.verbose_disp('---', 2, calib_config);
         for i = 1:num_boards
             t = tic;
@@ -261,7 +232,6 @@ function calib = single_calib_fp_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, ob
         calib.extrin(i).img_cb = img_cbs(i);
         calib.extrin(i).R = Rs{i};
         calib.extrin(i).t = ts{i};
-        calib.extrin(i).p_fp_p_ds = p_fp_p_dss{i};
         calib.extrin(i).p_cb_p_ds = p_cb_p_dss{i};
         calib.extrin(i).cov_cb_p_ds = cov_cb_p_dss{i};
         calib.extrin(i).p_cb_p_d_ms = obj_single_calib.p_cb_w2p_cb_p_d(p_cb_ws, Rs{i}, ts{i}, A, d);

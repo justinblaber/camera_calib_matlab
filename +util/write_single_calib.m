@@ -10,8 +10,6 @@ function write_single_calib(calib, file_path, suffix)
     %           .img_cb - class.img.intf; calibration board image
     %           .R - array; 3x3 rotation matrix
     %           .t - array; 3x1 translation vector
-    %           .p_fp_p_ds - array; optional. four point box around the
-    %               calibration board image in distorted pixel coordinates
     %           .p_cb_p_ds - array; calibration board distorted pixel
     %               points
     %           .cov_cb_p_ds - cell; covariances of calibration board
@@ -19,6 +17,8 @@ function write_single_calib(calib, file_path, suffix)
     %           .p_cb_p_d_ms - array; calibration board model distorted
     %               pixel points
     %           .idx_valid - array; valid calibration board points
+    %           .p_fp_p_ds - array; optional. four point box around the
+    %               calibration board image in distorted pixel coordinates
     %   file_path - string; path to calibration
     %   suffix - string; optional. suffix to add to names
     %
@@ -59,12 +59,6 @@ function write_single_calib(calib, file_path, suffix)
         util.write_array(calib.extrin(i).t, ['t_' num2str(i) suffix], file_path);
         util.write_newline(file_path);
 
-        % Four point box around the calibration board image in distorted pixel coordinates
-        if isfield(calib.extrin(i), 'p_fp_p_ds')
-            util.write_array(calib.extrin(i).p_fp_p_ds, ['p_fp_p_ds_' num2str(i) suffix], file_path);
-            util.write_newline(file_path);
-        end
-
         % Calibration board distorted pixel points
         util.write_array(calib.extrin(i).p_cb_p_ds, ['p_cb_p_ds_' num2str(i) suffix], file_path);
         util.write_newline(file_path);
@@ -82,5 +76,11 @@ function write_single_calib(calib, file_path, suffix)
         % Valid calibration board points
         util.write_array(calib.extrin(i).idx_valid, ['idx_valid_' num2str(i) suffix], file_path);
         util.write_newline(file_path);
+
+        % Four point box around the calibration board image in distorted pixel coordinates
+        if isfield(calib.extrin(i), 'p_fp_p_ds')
+            util.write_array(calib.extrin(i).p_fp_p_ds, ['p_fp_p_ds_' num2str(i) suffix], file_path);
+            util.write_newline(file_path);
+        end
     end
 end

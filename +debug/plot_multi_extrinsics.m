@@ -1,5 +1,5 @@
-function plot_stereo_extrinsics(Rs, ts, R_s, t_s, colors, alphas, opts, a)
-    % This will plot stereo extrinsics
+function plot_multi_extrinsics(Rs, ts, R_1s, t_1s, colors, alphas, opts, a)
+    % This will plot multi extrinsics
 
     % Matlab's 3D plot is not very good; to get it in the orientation I want,
     % I've just switched the x, y, and z components with:
@@ -14,23 +14,26 @@ function plot_stereo_extrinsics(Rs, ts, R_s, t_s, colors, alphas, opts, a)
 
     % Hold
     hold(a, 'on');
+    
+    % Get number of cameras and boards
+    num_cams = numel(R_1s);
+    num_boards = numel(Rs);
 
     % Plot calibration boards; xform is applied to get the calibration
-    % boards in the coordinates of the left camera.
-    for i = 1:numel(Rs.L)
+    % boards in the coordinates of the first camera.
+    for i = 1:num_boards
         % Get affine xform
-        xform = [Rs.L{i} ts.L{i}; zeros(1, 3) 1];
+        xform = [Rs{i} ts{i}; zeros(1, 3) 1];
 
         % Plot calibration board
         debug.plot_cb_3D(xform, colors(i, :), alphas(i), opts, a);
     end
 
-    % Plot left camera
-    debug.plot_cam_3D(eye(4), 'k', 0.5, 1, 'b', 2, 10, opts, a);
-
-    % Plot right camera
-    xform = inv([R_s t_s; zeros(1, 3) 1]);
-    debug.plot_cam_3D(xform,  'k', 0.5, 1, 'r', 2, 10, opts, a);
+    % Plot cameras
+    for i = 1:num_cams
+        xform = inv([R_1s{i} t_1s{i}; zeros(1, 3) 1]);
+        debug.plot_cam_3D(xform, 'k', 0.5, 1, 'b', 2, 10, opts, a);
+    end
 
     % Format plot
     set(a, 'Ydir', 'reverse');

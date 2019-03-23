@@ -40,7 +40,7 @@ function calib = single_calib_H_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, obj
     %           .idx_valid - array; valid calibration board points
 
     util.verbose_disp('------', 1, calib_config);
-    util.verbose_disp('Performing single calibration with four point distortion refinement method...', 1, calib_config);
+    util.verbose_disp('Performing single calibration with distortion refinement method...', 1, calib_config);
 
     % Perform single calibration -----------------------------------------%
 

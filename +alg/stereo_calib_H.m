@@ -42,7 +42,7 @@ function calib = stereo_calib_H(f_single_calib_H, obj_A, obj_R, obj_cb_w2p, obj_
     %           from left to right camera
 
     util.verbose_disp('------------', 1, calib_config);
-    util.verbose_disp('Performing stereo calibration with four point method...', 1, calib_config);
+    util.verbose_disp('Performing stereo calibration...', 1, calib_config);
 
     % Perform single calibrations ----------------------------------------%
 

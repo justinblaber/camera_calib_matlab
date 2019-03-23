@@ -98,7 +98,12 @@ function [params, cov_params] = lmcov(f_calc_res_and_jacob, params, cov, idx_upd
 
     % Get covariance of parameters
     [res, jacob] = f_calc_res_and_jacob(params);
-    [~, ~, ~, cov_params] = alg.safe_lscov(jacob, res, cov);
+    [~, ~, ~, cov_params] = alg.safe_lscov(jacob(:, idx_update), res, cov);
+    
+    % Expand covariance array to same size as params. Note that any
+    % non-updated parameters are assumed to have a covariance of zero.
+    idx_fill = idx_update*idx_update';
+    cov_params = cov_params(reshape(cumsum(idx_fill(:)), size(idx_fill))).*idx_fill;
 end
 
 function cost = calc_cost(f_calc_res_and_jacob, params, cov_inv)

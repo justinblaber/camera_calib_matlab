@@ -32,7 +32,7 @@ function plot_multi_extrinsics(Rs, ts, R_1s, t_1s, colors, alphas, opts, a)
     % Plot cameras
     for i = 1:num_cams
         xform = inv([R_1s{i} t_1s{i}; zeros(1, 3) 1]);
-        debug.plot_cam_3D(xform, 'k', 0.5, 1, 'b', 2, 10, opts, a);
+        debug.plot_cam_3D(xform, 'k', 0.5, 1, 'r', 2, 10, opts, a);
     end
 
     % Format plot

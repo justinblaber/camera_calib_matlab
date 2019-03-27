@@ -88,7 +88,7 @@ function calib = single_calib_H_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, obj
         util.verbose_disp('---', 2, calib_config);
         for i = 1:num_boards
             t = tic;
-            util.verbose_fprintf(['Refining "' calib_config.target '" points with method: "' calib_config.target_optimization '" for: ' img_cbs(i).get_path() '. '], 2, calib_config);
+            util.verbose_fprintf(['Refining "' calib_config.target '" points with method: "' calib_config.target_optimization '" for: ' img_cbs(i).get_name() '. '], 2, calib_config);
 
             % Get undistorted calibration board image array
             if exist('A', 'var') && exist('d', 'var')
@@ -136,9 +136,7 @@ function calib = single_calib_H_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, obj
 
             % Get initial guess for camera matrix
             if ~exist('A', 'var')
-                A = alg.init_intrinsic_params(H_w2ps, ...
-                                              img_cbs(1).get_width(), ...
-                                              img_cbs(1).get_height());
+                A = alg.init_intrinsic_params(H_w2ps, img_cbs(1).get_size());
             end
 
             % Get initial guess for extrinsics

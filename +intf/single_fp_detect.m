@@ -24,14 +24,14 @@ function [p_fp_pss, debug] = single_fp_detect(img_cbs, calib_config)
     if isnan(calib_config.fp_detect_array_min_size)
         sf = 1;
     else
-        sf = calib_config.fp_detect_array_min_size/min([img_cbs(1).get_height() img_cbs(1).get_width()]);
+        sf = calib_config.fp_detect_array_min_size/min(img_cbs(1).get_size());
     end
 
     % Cycle over images and get four points
     for i = 1:numel(img_cbs)
         util.verbose_fprintf('Performing four-point %s detection for image: %s. ', ...
                              calib_config.fp_detector, ...
-                             img_cbs(i).get_path(), ...
+                             img_cbs(i).get_name(), ...
                              1, ...
                              calib_config);
 

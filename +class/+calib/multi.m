@@ -10,14 +10,14 @@ classdef multi < class.calib.base
     methods(Access = private)
         % Params  --------------------------------------------------------%
 
-        function params = get_params(obj, As, ds, Rss, tss, R_1s, t_1s)
+        function params = get_params(obj, As, ds, Rs, ts, R_1s, t_1s)
             % params: [a_1; d_1; a_2; d_2; ... a_M; d_M; ...
             %          r_1; t_1; r_2; t_2; ... r_N; t_N; ...
             %          r_1_1; t_1_1; r_1_2; t_1_2; ...; r_1_M, t_1_M]
-
-            % Get number of cameras and number of calibration boards
-            num_cams = numel(As);
-            num_boards = numel(Rss{1});
+                        
+            % Get number of cameras and boards
+            num_cams = size(Rs, 2);
+            num_boards = size(Rs, 1);
             
             % Initialize params
             params = [];
@@ -32,8 +32,8 @@ classdef multi < class.calib.base
             % Camera 1 extrinsics
             for i = 1:num_boards
                 params = vertcat(params, ...
-                                 obj.R2r(Rss{1}{i}), ...
-                                 tss{1}{i}); %#ok<AGROW>
+                                 obj.R2r(Rs{i, 1}), ...
+                                 ts{i, 1}); %#ok<AGROW>
             end
             
             % Camera 1 to camera i extrinsics
@@ -63,10 +63,10 @@ classdef multi < class.calib.base
             for i = 1:num_boards
                 % Parse R
                 [r, params] = obj.pop_param(params, obj.get_num_params_r());
-                Rs{i} = obj.r2R(r); %#ok<AGROW>
+                Rs{i, 1} = obj.r2R(r); %#ok<AGROW>
 
                 % Parse t
-                [ts{i}, params] = obj.pop_param(params, obj.get_num_params_t()); %#ok<AGROW>
+                [ts{i, 1}, params] = obj.pop_param(params, obj.get_num_params_t()); %#ok<AGROW>
             end
                         
             % Camera 1 to camera i extrinsics
@@ -82,39 +82,38 @@ classdef multi < class.calib.base
 
         % Residual and jacobian ------------------------------------------%
 
-        function [res, jacob] = calc_res_and_jacob(obj, params, p_cb_ws, p_cb_p_dsss, idx_validss)
-            % Get number of cameras and number of calibration boards
-            num_cams = numel(p_cb_p_dsss);
-            num_boards = numel(p_cb_p_dsss{1});
-            
+        function [res, jacob] = calc_res_and_jacob(obj, params, p_cb_ws, p_cb_p_dss, idx_validss)            
             % Get number of params
             num_params = numel(params);
 
+            % Get number of cameras and boards
+            num_cams = size(p_cb_p_dss, 2);
+            num_boards = size(p_cb_p_dss, 1);
+            
             % Parse params
             [As, ds, Rs, ts, R_1s, t_1s] = obj.parse_params(params, num_cams, num_boards);
 
-            % Loop over cameras and build residuals and jacobian ---------%
+            % Build residuals and jacobian ---------%
+            
             res = [];
             jacob = sparse([]);
-            
-            for i = 1:num_cams
+            for i = 1:num_cams % Iterate over cameras
                 % Get residuals and jacobian for this camera
-                num_res_i = 2*sum(vertcat(idx_validss{i}{:}));
+                num_res_i = 2*sum(vertcat(idx_validss{:, i}));
                 res_i = zeros(num_res_i, 1);
                 jacob_i = sparse(num_res_i, num_params);
-                                
-                % Cycle over boards
-                for j = 1:num_boards                    
+                                                
+                for j = 1:num_boards % Iterate over boards        
                     % Get rotation and translation for this board                    
-                    R_board = R_1s{i}*Rs{j};
-                    t_board = R_1s{i}*ts{j} + t_1s{i};
+                    R_board = R_1s{i}*Rs{j, 1};
+                    t_board = R_1s{i}*ts{j, 1} + t_1s{i};
                     
                     % Get valid indices for this board
-                    idx_valid_board = 2*sum(vertcat(idx_validss{i}{1:j-1}))+1:2*sum(vertcat(idx_validss{i}{1:j}));
+                    idx_valid_board = 2*sum(vertcat(idx_validss{1:j-1, i}))+1:2*sum(vertcat(idx_validss{1:j, i}));
 
                     % Get valid points
-                    p_cb_ws_valid = p_cb_ws(idx_validss{i}{j}, :);
-                    p_cb_p_ds_valid = p_cb_p_dsss{i}{j}(idx_validss{i}{j}, :);
+                    p_cb_ws_valid = p_cb_ws(idx_validss{j, i}, :);
+                    p_cb_p_ds_valid = p_cb_p_dss{j, i}(idx_validss{j, i}, :);
 
                     % Get valid model calibration board distorted pixel points
                     p_cb_p_d_ms_valid = obj.p_cb_w2p_cb_p_d(p_cb_ws_valid, R_board, t_board, As{i}, ds{i});
@@ -128,17 +127,17 @@ classdef multi < class.calib.base
 
                     % Extrinsics - "1"
                     dRt_i_dRt_1 = blkdiag(R_1s{i}, R_1s{i}, R_1s{i}, R_1s{i});
-                    dR_1_dr_1 = obj.dR_dr(obj.R2r(Rs{j}));
+                    dR_1_dr_1 = obj.dR_dr(obj.R2r(Rs{j, 1}));
                     dRt_1_dextrinsic_1 = blkdiag(dR_1_dr_1, eye(3));
                     dRt_i_dextrinsic_1 = dRt_i_dRt_1*dRt_1_dextrinsic_1;
                     idx_extrinsic_1 = num_cams*obj.get_num_params_i()+(j-1)*obj.get_num_params_e()+1:num_cams*obj.get_num_params_i()+j*obj.get_num_params_e();
                     jacob_i(idx_valid_board, idx_extrinsic_1) = obj.dp_cb_p_d_dextrinsic(p_cb_ws_valid, R_board, t_board, As{i}, ds{i}, dRt_i_dextrinsic_1); %#ok<SPRIX>
 
                     % Extrinsics - "1_i"
-                    dRt_i_dRt_1_i = [Rs{j}(1, 1)*eye(3), Rs{j}(2, 1)*eye(3), Rs{j}(3, 1)*eye(3), zeros(3);
-                                     Rs{j}(1, 2)*eye(3), Rs{j}(2, 2)*eye(3), Rs{j}(3, 2)*eye(3), zeros(3);
-                                     Rs{j}(1, 3)*eye(3), Rs{j}(2, 3)*eye(3), Rs{j}(3, 3)*eye(3), zeros(3);
-                                        ts{j}(1)*eye(3),    ts{j}(2)*eye(3),    ts{j}(3)*eye(3),   eye(3)];
+                    dRt_i_dRt_1_i = [Rs{j, 1}(1, 1)*eye(3), Rs{j, 1}(2, 1)*eye(3), Rs{j, 1}(3, 1)*eye(3), zeros(3);
+                                     Rs{j, 1}(1, 2)*eye(3), Rs{j, 1}(2, 2)*eye(3), Rs{j, 1}(3, 2)*eye(3), zeros(3);
+                                     Rs{j, 1}(1, 3)*eye(3), Rs{j, 1}(2, 3)*eye(3), Rs{j, 1}(3, 3)*eye(3), zeros(3);
+                                        ts{j, 1}(1)*eye(3),    ts{j, 1}(2)*eye(3),    ts{j, 1}(3)*eye(3),   eye(3)];
                     dR_1_i_dr_1_i = obj.dR_dr(obj.R2r(R_1s{i}));
                     dRt_1_i_dextrinsic_1_i = blkdiag(dR_1_i_dr_1_i, eye(3));
                     dRt_i_dextrinsic_1_i = dRt_i_dRt_1_i*dRt_1_i_dextrinsic_1_i;
@@ -154,16 +153,16 @@ classdef multi < class.calib.base
     end
 
     methods(Access = public)
-        function [As, ds, Rss, tss, R_1s, t_1s] = refine(obj, As, ds, Rss, tss, R_1s, t_1s, p_cb_ws, p_cb_p_dsss, idx_validss, optimization_type, cov_cb_p_dsss)
+        function [As, ds, Rs, ts, R_1s, t_1s] = refine(obj, As, ds, Rs, ts, R_1s, t_1s, p_cb_ws, p_cb_p_dsss, idx_validss, optimization_type, cov_cb_p_dss)
             % Get opts
             opts = obj.get_opts();
 
-            % Get number of cameras and number of calibration boards
-            num_cams = numel(As);
-            num_boards = numel(Rss{1});
+            % Get number of cameras and boards
+            num_cams = size(Rs, 2);
+            num_boards = size(Rs, 1);
             
             % Get params
-            params = obj.get_params(As, ds, Rss, tss, R_1s, t_1s);
+            params = obj.get_params(As, ds, Rs, ts, R_1s, t_1s);
 
             % Get number of params
             num_params = numel(params);
@@ -171,8 +170,11 @@ classdef multi < class.calib.base
             % Determine which parameters to update based on type
             idx_update = false(size(params));
             switch optimization_type
+                case 'intrinsic'
+                    % Only update intrinsics
+                    idx_update(1:num_cams*obj.get_num_params_i()) = true;
                 case 'extrinsic'
-                    % Only update rotations and translations
+                    % Only update extrinsics
                     idx_update(num_cams*obj.get_num_params_i()+1:num_params) = true;
                 case 'full'
                     % Update everything
@@ -186,24 +188,13 @@ classdef multi < class.calib.base
                        num_cams*obj.get_num_params_i()+(num_boards+1)*obj.get_num_params_e()) = false;
 
             % Get covariance matrix
-            if exist('cov_cb_p_dss', 'var')
-                % Get covariance matrix
-                cov = [cov_cb_p_dsss{:}];                                  
-                cov = vertcat(cov{:});
-                
-                % Apply valid indices
-                idx = [idx_validss{:}];
-                idx = vertcat(idx{:});                
-                cov = cov(idx);
-                
-                % Make sparse
-                cov = cellfun(@sparse, cov, 'UniformOutput', false);
-                
-                % Create sparse matrix
-                cov = blkdiag(cov{:});
-            else
-                % Create sparse identity matrix which is just least squares
-                cov = speye(2*sum(cellfun(@sum, [idx_validss{:}])));
+            if exist('cov_cb_p_dss', 'var')                
+                cov = vertcat(cov_cb_p_dss{:});                      % Append covarianced
+                cov = cov(vertcat(idx_validss{:}));                  % Apply valid indices
+                cov = cellfun(@sparse, cov, 'UniformOutput', false); % Make sparse
+                cov = blkdiag(cov{:});                               % Create sparse matrix
+            else                
+                cov = speye(2*sum(vertcat(idx_validss{:}))); % Sparse identity matrix is just least squares
             end
 
             % Get residual and jacobian function
@@ -290,8 +281,8 @@ classdef multi < class.calib.base
             % Set outputs
             for i = 1:num_cams
                 for j = 1:num_boards
-                    Rss{i}{j} = R_1s{i}*Rs{j};
-                    tss{i}{j} = R_1s{i}*ts{j} + t_1s{i};
+                    Rs{j, i} = R_1s{i}*Rs{j, 1};
+                    ts{j, i} = R_1s{i}*ts{j, 1} + t_1s{i};
                 end
             end
         end

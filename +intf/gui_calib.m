@@ -1,5 +1,5 @@
-function gui_single_calib(calib, f)
-    % GUI for single calibration
+function gui_calib(calib, f)
+    % Calibration gui
 
     if ~exist('f', 'var')
         f = figure();
@@ -9,29 +9,35 @@ function gui_single_calib(calib, f)
     % Disable KeyPressFcn until after plotting is complete
     set(f, 'KeyPressFcn', @(~, ~)drawnow);
 
+    % Get number of cameras and boards
+    num_cams = numel(calib.cam);
+    num_boards = numel(calib.cam(1).extrin);
+    
     % Initialize parameters
     mode = 'whole';
     idx_board = 1;
-    num_boards = numel(calib.extrin);
     alphas = 0.1*ones(1, num_boards);
     alphas(idx_board) = 1;
     colors = external.distinguishable_colors(num_boards, {'w', 'r', 'k'});
-    axes_calib_cb_img = matlab.graphics.axis.Axes.empty();
+    axes_calib_cb_imgs = matlab.graphics.axis.Axes.empty();
 
     % Get residuals
-    res = {};
-    for i = 1:num_boards
-        res{i} = calib.extrin(i).p_cb_p_d_ms - calib.extrin(i).p_cb_p_ds; %#ok<AGROW>
-        res{i} = res{i}(calib.extrin(i).idx_valid, :); %#ok<AGROW>
+    ress = {};
+    for i = 1:num_cams %#ok<FXUP>
+        for j = 1:num_boards
+            ress{j, i} = calib.cam(i).extrin(j).p_cb_p_d_ms - calib.cam(i).extrin(j).p_cb_p_ds; %#ok<AGROW>
+            ress{j, i} = ress{j, i}(calib.cam(i).extrin(j).idx_valid, :); %#ok<AGROW>
+        end
     end
-    max_res = max(max(vertcat(res{:})));
+    max_res = max(max(vertcat(ress{:})));
 
     % Set axes parameters
     padding_height = 0.1;
     padding_width = 0.05;
     height_extrinsics = 0.25;
-    width_extrinsics = 0.4;
+    width_extrinsics = 0.25;
     height_res = height_extrinsics;
+    width_res = (1-width_extrinsics-(num_cams+2)*padding_width)/num_cams;
 
     % Initialize plot
     plot_gui();
@@ -112,38 +118,42 @@ function gui_single_calib(calib, f)
             pos_extrinsics = [padding_width 1-padding_height-height_extrinsics width_extrinsics height_extrinsics];
             axes_extrinsics = axes('Position', pos_extrinsics, 'Parent', f);
 
-            pos_cb_geom = [padding_width padding_height pos_extrinsics(3) pos_extrinsics(2)-2*padding_height];
+            pos_cb_geom = [padding_width padding_height pos_extrinsics(3) 1-height_extrinsics-3*padding_height];
             axes_cb_geom = axes('Position', pos_cb_geom, 'Parent', f);
 
-            pos_res = [pos_cb_geom(1)+pos_cb_geom(3)+padding_width 1-padding_height-height_res 1-(pos_cb_geom(1)+pos_cb_geom(3))-2*padding_width height_res];
-            axes_res = axes('Position', pos_res, 'Parent', f);
-
-            pos_calib_cb_img = [pos_res(1) pos_cb_geom(2) pos_res(3) pos_res(2)-2*padding_height];
-            axes_calib_cb_img = axes('Position', pos_calib_cb_img, 'Parent', f);
-
+            for i = 1:num_cams %#ok<FXUP>
+                pos_res = [pos_cb_geom(1)+pos_cb_geom(3)+i*padding_width+(i-1)*width_res pos_extrinsics(2) width_res height_res];
+                axes_ress(i) = axes('Position', pos_res, 'Parent', f); %#ok<AGROW>
+                                
+                pos_calib_cb_img = [pos_res(1) pos_cb_geom(2) pos_res(3) pos_cb_geom(4)];
+                axes_calib_cb_imgs(i) = axes('Position', pos_calib_cb_img, 'Parent', f);
+            end
+            
             % Plot extrinsics --------------------------------------------%
-
-            Rs = {calib.extrin.R};
-            ts = {calib.extrin.t};
-            debug.plot_single_extrinsics(Rs, ...
-                                         ts, ...
-                                         colors, ...
-                                         alphas, ...
-                                         calib.config, ...
-                                         axes_extrinsics);
+            
+            debug.plot_multi_extrinsics({calib.cam(1).extrin.R}, ...
+                                        {calib.cam(1).extrin.t}, ...
+                                        {calib.cam.R_1}, ...
+                                        {calib.cam.t_1}, ...
+                                        colors, ...
+                                        alphas, ...
+                                        calib.config, ...
+                                        axes_extrinsics);
             title(axes_extrinsics, 'Extrinsics', 'FontSize', 10);
             drawnow
 
             % Plot residuals ---------------------------------------------%
 
-            debug.plot_res(res, colors, alphas, max_res, axes_res);
-            title(axes_res, 'Residuals', 'FontSize', 10);
-            xlabel(axes_res, {['Board mean: [' num2str(mean(res{idx_board})) ']'], ...
-                              ['Board stddev: [' num2str(std(res{idx_board})) ']'], ...
-                              ['Overall mean: [' num2str(mean(vertcat(res{:}))) ']'], ...
-                              ['Overall stddev: [' num2str(std(vertcat(res{:}))) ']']}, ...
-                   'FontSize', 7);
-            drawnow
+            for i = 1:num_cams %#ok<FXUP>
+                debug.plot_res(ress(:, i), colors, alphas, max_res, axes_ress(i));
+                title(axes_ress(i), ['Residuals (' num2str(i) ')'], 'FontSize', 10);
+                xlabel(axes_ress(i), {['Board mean: [' num2str(mean(ress{idx_board, i})) ']'], ...
+                                      ['Board stddev: [' num2str(std(ress{idx_board, i})) ']'], ...
+                                      ['Overall mean: [' num2str(mean(vertcat(ress{:, i}))) ']'], ...
+                                      ['Overall stddev: [' num2str(std(vertcat(ress{:, i}))) ']']}, ...
+                       'FontSize', 7);
+                drawnow
+            end
 
             % Plot calibration board class -------------------------------%
 
@@ -153,15 +163,17 @@ function gui_single_calib(calib, f)
 
             % Plot calibrated board image --------------------------------%
 
-            debug.plot_calib_cb_img(calib.extrin(idx_board), ...
-                                    calib.intrin, ...
-                                    axes_calib_cb_img);
-            title(axes_calib_cb_img, 'Calibration board', ...
-                  'FontSize', 10, 'Interpreter', 'none');
-            xlabel(axes_calib_cb_img, {['Name: ' calib.extrin(idx_board).img_cb.get_name()], ...
-                                       ['Resolution: ' num2str(calib.extrin(idx_board).img_cb.get_width()) ' x ' num2str(calib.extrin(idx_board).img_cb.get_height())]}, ...
-                   'FontSize', 8, 'Interpreter', 'none');
-            drawnow
+            for i = 1:num_cams %#ok<FXUP>
+                debug.plot_calib_cb_img(calib.cam(i).extrin(idx_board), ...
+                                        calib.cam(i).intrin, ...
+                                        axes_calib_cb_imgs(i));
+                title(axes_calib_cb_imgs(i), ['Board (' num2str(i) ')'], ...
+                      'FontSize', 10, 'Interpreter', 'none');
+                xlabel(axes_calib_cb_imgs(i), {['Name: ' calib.cam(i).extrin(idx_board).img_cb.get_name()], ...
+                                               ['Size: [' num2str(calib.cam(i).extrin(idx_board).img_cb.get_size()) ']']}, ...
+                       'FontSize', 8, 'Interpreter', 'none');
+                drawnow
+            end
         catch e
             if ishandle(f)
                 rethrow(e);
@@ -175,14 +187,16 @@ function gui_single_calib(calib, f)
             set(f, 'Name', ['Board: ' num2str(idx_board) ' of ' num2str(num_boards) '; mode: ' mode '; (NOTE: press left, right, "w", and "esc" key arrows to toggle)']);
 
             % Set bounding box
-            switch mode
-                case 'whole'
-                    bb = bb_img(calib.extrin(idx_board).img_cb);
-                case 'worst'
-                    bb = bb_worst(res{idx_board}, calib.extrin(idx_board).p_cb_p_ds(calib.extrin(idx_board).idx_valid, :));
+            for i = 1:num_cams %#ok<FXUP>
+                switch mode
+                    case 'whole'
+                        bb = bb_img(calib.cam(i).extrin(idx_board).img_cb);
+                    case 'worst'
+                        bb = bb_worst(ress{idx_board, i}, calib.cam(i).extrin(idx_board).p_cb_p_ds(calib.cam(i).extrin(idx_board).idx_valid, :));
+                end
+                
+                set(axes_calib_cb_imgs(i), 'Xlim', bb(:, 1), 'Ylim', bb(:, 2));
             end
-
-            set(axes_calib_cb_img, 'Xlim', bb(:, 1), 'Ylim', bb(:, 2));
         catch e
             if ishandle(f)
                 rethrow(e);
@@ -193,12 +207,11 @@ end
 
 function bb = bb_img(img_cb)
     % Get size of image
-    height_img = img_cb.get_height();
-    width_img = img_cb.get_width();
+    size_img = img_cb.get_size();
 
     % Set bounding box
     bb = [0.5 0.5; ...
-          width_img+0.5 height_img+0.5];
+          size_img(2)+0.5 size_img(1)+0.5];
 end
 
 function bb = bb_worst(res, p_cb_p_ds)

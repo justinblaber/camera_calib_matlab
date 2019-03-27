@@ -1,26 +1,26 @@
-classdef base < class.img.intf
-    % This is the base class definition for an image.
+classdef path < class.img.intf
+    % This is the path class definition for an image.
 
     properties(Access = private)
-        path    % string
+        img_path
     end
 
     methods(Static, Access = public)
-        function imgs = validate_similar_imgs(paths)
+        function imgs = validate_similar_imgs(img_paths)
             % This function will make sure all image paths in the cell
-            % array "paths" exist, are the same size, have valid imfinfos,
-            % have valid colortypes and then returns all images as base img
-            % objects.
+            % array "img_paths" exist, are the same size, have valid
+            % imfinfos, have valid colortypes and then returns all images
+            % as base img objects.
 
             % Initialize imgs
-            imgs = class.img.base.empty();
-            if isempty(paths)
+            imgs = class.img.path.empty();
+            if isempty(img_paths)
                 return
             end
 
             % Set images
-            for i = 1:numel(paths)
-                imgs(i) = class.img.base(paths{i});
+            for i = 1:numel(img_paths)
+                imgs(i) = class.img.path(img_paths{i});
             end
 
             % Make sure all imgs exist, have valid imfinfos, and valid
@@ -32,20 +32,23 @@ classdef base < class.img.intf
             end
 
             % Make sure all images are the same size
-            img_size = [imgs(1).get_height() imgs(1).get_width()];
-            for i = 2:numel(imgs)
-                if ~isequal(img_size, [imgs(i).get_height() imgs(i).get_width()])
+            for i = 1:numel(imgs)
+                if ~isequal(imgs(1).get_size(), imgs(i).get_size())
                     error(['Expected all images to be the same size, but ' ...
                            'image: ' imgs(i).get_path() ' has size of [' ...
-                           num2str([imgs(i).get_height() imgs(i).get_width()]) ...
-                           '] while image: ' imgs(1).get_path() ' has a size ' ...
-                           'of [' num2str(img_size) '].']);
+                           num2str(imgs(i).get_size()) '] while image: ' ...
+                           imgs(1).get_path() ' has a size ' ...
+                           'of [' num2str(imgs(1).get_size()) '].']);
                 end
             end
         end
     end
 
-    methods(Access = private)
+    methods(Access = protected)
+        function img_path = get_path(obj)
+            img_path = obj.img_path;
+        end
+        
         function img_info = get_imfinfo(obj)
             obj.validate_exist();
 
@@ -80,20 +83,20 @@ classdef base < class.img.intf
     end
 
     methods(Access = public)
-        function obj = base(path)
-            obj.path = path;
+        function obj = path(img_path)
+            obj.img_path = img_path;
         end
 
         % Abstract methods -----------------------------------------------%
 
-        function path = get_path(obj)
-            path = obj.path;
-        end
-
         function success = exist(obj)
             success = exist(obj.get_path(), 'file') ~= 0;
         end
-
+        
+        function name = get_name(obj)
+            name = obj.get_path();
+        end
+        
         function array_gs = get_array_gs(obj)
             % This function returns the image as a double precision
             % grayscale array
@@ -114,28 +117,24 @@ classdef base < class.img.intf
             end
         end
 
-        function height = get_height(obj)
+        function s = get_size(obj)
             obj.validate_exist();
             obj.validate_imfinfo();
 
             img_info = obj.get_imfinfo();
-            height = img_info.Height;
+            s = [img_info.Height img_info.Width];
         end
-
-        function width = get_width(obj)
-            obj.validate_exist();
-            obj.validate_imfinfo();
-
-            img_info = obj.get_imfinfo();
-            width = img_info.Width;
-        end
-
+        
         function h = imshow(obj, varargin)
             obj.validate_exist();
             obj.validate_imfinfo();
             obj.validate_colortype();
 
             h = imshow(obj.get_array_gs(), varargin{:});
+        end
+        
+        function write(obj, name, file_path)
+            util.write_string(obj.get_path(), name, file_path);
         end
     end
 end

@@ -16,11 +16,11 @@ function [calib, data] = parse_single_calib(data, suffix)
     % Read extrinsics ----------------------------------------------------%
 
     i = 1;
-    while isfield(data, ['img_class' num2str(i) suffix])
+    while isfield(data, ['obj_img' num2str(i) suffix])
         % Calibration board image
-        [img_class, data] = util.read_and_remove(data, ['img_class' num2str(i) suffix]);             % Read class
-        [img_state, data] = util.read_and_remove(data, ['img_state' num2str(i) suffix]); %#ok<ASGLU> % Read state
-        calib.extrin(i).img_cb = eval([img_class '(img_state)']);                                    % Instantiate
+        [obj_img, data] = util.read_and_remove(data, ['obj_img' num2str(i) suffix]);                 % Read class
+        [state_img, data] = util.read_and_remove(data, ['state_img' num2str(i) suffix]); %#ok<ASGLU> % Read state
+        calib.extrin(i).img_cb = eval([obj_img '(state_img);']);                                     % Instantiate
 
         % TODO: maybe issue warning if image cant be found?
 

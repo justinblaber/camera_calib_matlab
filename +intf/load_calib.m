@@ -1,4 +1,4 @@
-function calib = load_multi_calib(file_path)
+function calib = load_calib(file_path)
 
     % Check to make sure data file exists
     if exist(file_path, 'file') ~= 2

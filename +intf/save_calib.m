@@ -1,4 +1,4 @@
-function save_multi_calib(calib, file_path)
+function save_calib(calib, file_path)
 
     % This will clear the file
     fclose(fopen(file_path, 'w'));

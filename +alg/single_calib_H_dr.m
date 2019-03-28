@@ -1,55 +1,9 @@
-function calib = single_calib_H_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, obj_cb_geom, img_cbs, H_w2ps, calib_config, intrin)
-    % Performs camera calibration using "homography distortion refinement"
-    % method.
-    %
-    % Inputs:
-    %   obj_A - class.calib.A_intf; parameterization for camera matrix
-    %   obj_R - class.calib.R_intf; parameterization for rotation matrix
-    %   obj_cb_w2p - class.calib.cb_w2p_intf; describes the mapping between
-    %       calibration board world points and calibration board pixel
-    %       points.
-    %   obj_distortion - class.distortion.intf; describes the mapping
-    %       between pixel coordinates and distorted pixel coordinates.
-    %   obj_cb_geom - class.cb_geom.target_intf; calibration board target
-    %       geometry interface.
-    %   img_cbs - class.img.intf; Nx1 calibration board image interfaces.
-    %   H_w2ps - cell; Nx1 cell of initial guesses of homographies which
-    %       map world coordinates to pixel coordinates
-    %   calib_config - struct; struct returned by intf.load_calib_config()
-    %   intrin - struct; optional. If passed in, intrinsics will not be
-    %       optimized.
-    %       .A - array; 3x3 camera matrix
-    %       .d - array; Mx1 array of distortion coefficients
-    %
-    % Outputs:
-    %   calib - struct;
-    %       .config - struct; copy of input calib_config
-    %       .intrin - struct;
-    %           .A - array; 3x3 camera matrix
-    %           .d - array; Mx1 array of distortion coefficients
-    %       .extrin - struct; Nx1 struct containing extrinsics
-    %           .img_cb - class.img.intf; calibration board image
-    %           .R - array; 3x3 rotation matrix
-    %           .t - array; 3x1 translation vector
-    %           .p_cb_p_ds - array; calibration board distorted pixel
-    %               points
-    %           .cov_cb_p_ds - cell; covariances of calibration board
-    %               distorted pixel points
-    %           .p_cb_p_d_ms - array; calibration board model distorted
-    %               pixel points
-    %           .idx_valid - array; valid calibration board points
+function calib = single_calib_H_dr(obj_calib, obj_cb_geom, img_cbs, H_w2ps, calib_config, intrin)
 
     util.verbose_disp('------', 1, calib_config);
     util.verbose_disp('Performing single calibration with distortion refinement method...', 1, calib_config);
 
     % Perform single calibration -----------------------------------------%
-
-    % Get calibration object
-    obj_single_calib = class.calib.single(obj_A, ...
-                                          obj_R, ...
-                                          obj_cb_w2p, ...
-                                          obj_distortion, ...
-                                          calib_config);
 
     % Get the calibration board points and boundaries in world coordinates
     p_cb_ws = obj_cb_geom.get_p_cb_ws();
@@ -70,7 +24,7 @@ function calib = single_calib_H_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, obj
     end
 
     % Get distortion refinement iterations
-    if exist('intrin', 'var') || obj_single_calib.get_num_params_d() == 0
+    if exist('intrin', 'var') || obj_calib.get_num_params_d() == 0
         % Do not perform distortion refinement if intrinsics are already
         % passed in or if distortion function has no distortion parameters.
         distortion_refinement_it_cutoff = 1;
@@ -82,10 +36,14 @@ function calib = single_calib_H_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, obj
     for it = 1:distortion_refinement_it_cutoff
         util.verbose_disp('---', 1, calib_config);
         util.verbose_disp(['Performing distortion refinement iteration: ' num2str(it) '...'], 1, calib_config);
-
-        % Get calibration board pixel points -----------------------------%
-
         util.verbose_disp('---', 2, calib_config);
+        
+        % Get calibration board pixel points -----------------------------%
+       
+        p_cb_pss = cell(num_boards, 1);
+        cov_cb_pss = cell(num_boards, 1);
+        idx_valids = cell(num_boards, 1);
+        debug = cell(num_boards, 1);
         for i = 1:num_boards
             t = tic;
             util.verbose_fprintf(['Refining "' calib_config.target '" points with method: "' calib_config.target_optimization '" for: ' img_cbs(i).get_name() '. '], 2, calib_config);
@@ -94,7 +52,7 @@ function calib = single_calib_H_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, obj
             if exist('A', 'var') && exist('d', 'var')
                 % undistort array
                 array_cb = alg.undistort_array(img_cbs(i).get_array_gs(), ...
-                                               obj_single_calib.get_obj_distortion(), ...
+                                               obj_calib, ...
                                                A, ...
                                                d, ...
                                                calib_config);
@@ -107,9 +65,9 @@ function calib = single_calib_H_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, obj
             [p_cb_pss{i}, cov_cb_pss{i}, idx_valids{i}, debug{i}] = alg.refine_target_points_cb_w2p(p_cb_ws, ...
                                                                                                     boundary_ws, ...
                                                                                                     array_cb, ...
-                                                                                                    @(p)obj_single_calib.p_cb_w2p_cb_p(p, H_w2ps{i}), ...
+                                                                                                    @(p)obj_calib.p_cb_w2p_cb_p(p, H_w2ps{i}), ...
                                                                                                     @(p)alg.apply_homography_p2p(p, H_w2ps{i}), ...
-                                                                                                    calib_config); %#ok<AGROW>
+                                                                                                    calib_config);
 
             time = toc(t);
             util.verbose_fprintf(['Time ellapsed: %f seconds.' newline], time, 2, calib_config);
@@ -125,12 +83,12 @@ function calib = single_calib_H_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, obj
                     cov_cb_p_sparse = cellfun(@sparse, cov_cb_pss{i}(idx_valids{i}), 'UniformOutput', false);
                     cov_cb_p_sparse = blkdiag(cov_cb_p_sparse{:});
 
-                    H_w2ps{i} = obj_single_calib.homography_cb_w2p(p_cb_ws(idx_valids{i}, :), ...
-                                                                   p_cb_pss{i}(idx_valids{i}, :), ...
-                                                                   cov_cb_p_sparse);
+                    H_w2ps{i} = obj_calib.homography_cb_w2p(p_cb_ws(idx_valids{i}, :), ...
+                                                            p_cb_pss{i}(idx_valids{i}, :), ...
+                                                            cov_cb_p_sparse);
                 else
-                    H_w2ps{i} = obj_single_calib.homography_cb_w2p(p_cb_ws(idx_valids{i}, :), ...
-                                                                   p_cb_pss{i}(idx_valids{i}, :));
+                    H_w2ps{i} = obj_calib.homography_cb_w2p(p_cb_ws(idx_valids{i}, :), ...
+                                                            p_cb_pss{i}(idx_valids{i}, :));
                 end
             end
 
@@ -140,13 +98,15 @@ function calib = single_calib_H_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, obj
             end
 
             % Get initial guess for extrinsics
+            Rs = cell(num_boards, 1);
+            ts = cell(num_boards, 1);
             for i = 1:num_boards
-                [Rs{i}, ts{i}] = alg.init_extrinsic_params(H_w2ps{i}, A); %#ok<AGROW>
+                [Rs{i}, ts{i}] = alg.init_extrinsic_params(H_w2ps{i}, A);
             end
 
             % Get initial distortion parameters
             if ~exist('d', 'var')
-                d = zeros(obj_single_calib.get_num_params_d(), 1);
+                d = zeros(obj_calib.get_num_params_d(), 1);
             end
         end
 
@@ -154,15 +114,17 @@ function calib = single_calib_H_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, obj
         % Apply distortion to calibration board pixel points and
         % covariances
 
+        p_cb_p_dss = cell(num_boards, 1);
+        cov_cb_p_dss = cell(num_boards, 1);
         for i = 1:num_boards
             % Update points
-            p_cb_p_dss{i} = obj_single_calib.p_p2p_p_d(p_cb_pss{i}, A, d); %#ok<AGROW>
+            p_cb_p_dss{i} = obj_calib.p_p2p_p_d(p_cb_pss{i}, A, d);
 
             % Update covariances
+            cov_cb_p_dss{i} = cell(numel(cov_cb_pss{i}), 1);
             for j = 1:numel(cov_cb_pss{i})
                 % Initialize updated covariance - this ensures number of
                 % elements match cov_cb_pss
-                cov_cb_p_dss{i}{j, 1} = []; %#ok<AGROW>
                 if idx_valids{i}(j)
                     % Use taylor series to approximate covariance of
                     % distorted coordinates; from:
@@ -175,11 +137,11 @@ function calib = single_calib_H_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, obj
                     cov_cb_p = cov_cb_pss{i}{j};
 
                     % Get Jacobian
-                    dp_p_d_dp_p = obj_single_calib.dp_p_d_dp_p(p_cb_p, A, d);
+                    dp_p_d_dp_p = obj_calib.dp_p_d_dp_p(p_cb_p, A, d);
                     dp_p_d_dp_p = full(dp_p_d_dp_p);
 
                     % Update covariance
-                    cov_cb_p_dss{i}{j} = dp_p_d_dp_p*cov_cb_p*dp_p_d_dp_p'; %#ok<AGROW>
+                    cov_cb_p_dss{i}{j} = dp_p_d_dp_p*cov_cb_p*dp_p_d_dp_p'; 
                 end
             end
         end
@@ -192,30 +154,38 @@ function calib = single_calib_H_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, obj
         if calib_config.apply_covariance_optimization
             util.verbose_disp('Applying covariance optimization.', 3, calib_config);
 
-            [A, d, Rs, ts] = obj_single_calib.refine(A, ...
-                                                     d, ...
-                                                     Rs, ...
-                                                     ts, ...
-                                                     p_cb_ws, ...
-                                                     p_cb_p_dss, ...
-                                                     idx_valids, ...
-                                                     optimization_type, ...
-                                                     cov_cb_p_dss);
+            [A, d, Rs, ts] = obj_calib.refine({A}, ...
+                                              {d}, ...
+                                              Rs, ...
+                                              ts, ...
+                                              {eye(3)}, ...
+                                              {zeros(3,1)}, ...
+                                              p_cb_ws, ...
+                                              p_cb_p_dss, ...
+                                              idx_valids, ...
+                                              optimization_type, ...
+                                              cov_cb_p_dss);
         else
-            [A, d, Rs, ts] = obj_single_calib.refine(A, ...
-                                                     d, ...
-                                                     Rs, ...
-                                                     ts, ...
-                                                     p_cb_ws, ...
-                                                     p_cb_p_dss, ...
-                                                     idx_valids, ...
-                                                     optimization_type);
+            [A, d, Rs, ts] = obj_calib.refine({A}, ...
+                                              {d}, ...
+                                              Rs, ...
+                                              ts, ...
+                                              {eye(3)}, ...
+                                              {zeros(3,1)}, ...
+                                              p_cb_ws, ...
+                                              p_cb_p_dss, ...
+                                              idx_valids, ...
+                                              optimization_type);
         end
+        
+        % Format outputs
+        A = A{1};   % Uncell A
+        d = d{1};   % Uncell d
 
         % Update homographies --------------------------------------------%
 
         for i = 1:num_boards
-            H_w2ps{i} = obj_single_calib.ARt2H(A, Rs{i}, ts{i});
+            H_w2ps{i} = obj_calib.ARt2H(A, Rs{i}, ts{i});
         end
     end
 
@@ -223,17 +193,20 @@ function calib = single_calib_H_dr(obj_A, obj_R, obj_cb_w2p, obj_distortion, obj
     % Config
     calib.config = calib_config;
     % Intrinsics
-    calib.intrin.A = A;
-    calib.intrin.d = d;
+    calib.cam.intrin.A = A;
+    calib.cam.intrin.d = d;
     % Extrinsics
     for i = 1:num_boards
-        calib.extrin(i).img_cb = img_cbs(i);
-        calib.extrin(i).R = Rs{i};
-        calib.extrin(i).t = ts{i};
-        calib.extrin(i).p_cb_p_ds = p_cb_p_dss{i};
-        calib.extrin(i).cov_cb_p_ds = cov_cb_p_dss{i};
-        calib.extrin(i).p_cb_p_d_ms = obj_single_calib.p_cb_w2p_cb_p_d(p_cb_ws, Rs{i}, ts{i}, A, d);
-        calib.extrin(i).idx_valid = idx_valids{i};
-        calib.extrin(i).debug = debug{i};
-    end
+        calib.cam.extrin(i).img_cb = img_cbs(i);
+        calib.cam.extrin(i).R = Rs{i};
+        calib.cam.extrin(i).t = ts{i};
+        calib.cam.extrin(i).p_cb_p_ds = p_cb_p_dss{i};
+        calib.cam.extrin(i).cov_cb_p_ds = cov_cb_p_dss{i};
+        calib.cam.extrin(i).p_cb_p_d_ms = obj_calib.p_cb_w2p_cb_p_d(p_cb_ws, Rs{i}, ts{i}, A, d);
+        calib.cam.extrin(i).idx_valid = idx_valids{i};
+        calib.cam.extrin(i).debug = debug{i};
+    end    
+    % Relative extrinsics
+    calib.cam.R_1 = eye(3);
+    calib.cam.t_1 = zeros(3,1);
 end

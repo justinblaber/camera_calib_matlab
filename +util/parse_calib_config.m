@@ -218,7 +218,7 @@ function calib_config = validate_obj_cb_geom(calib_config, field)
     end
 
     % Evaluate
-    [~, obj_cb_geom] = evalc([param '(calib_config)']);
+    obj_cb_geom = eval([param '(calib_config);']);
 
     % TODO: validate
 
@@ -235,7 +235,7 @@ function calib_config = validate_obj_A(calib_config, field)
     end
 
     % Evaluate
-    [~, obj_A] = evalc([param '()']);
+    obj_A = eval([param '();']);
 
     % TODO: validate
 
@@ -252,7 +252,7 @@ function calib_config = validate_obj_R(calib_config, field)
     end
 
     % Evaluate
-    [~, obj_R] = evalc([param '()']);
+    obj_R = eval([param '();']);
 
     % TODO: validate
 
@@ -270,7 +270,7 @@ function calib_config = validate_sym_p_p2p_p_d(calib_config, field)
     % +distortion, so just load it. Otherwise, its assumed to be a
     % "symbolic function string", so convert it.
     if startsWith(param, 'distortion.')
-        [~, sym_distortion] = evalc(param);
+        sym_distortion = eval([param ';']);
 
         % Validate that this is indeed a symbolic function
         if ~isa(sym_distortion, 'symfun')

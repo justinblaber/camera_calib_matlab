@@ -23,8 +23,8 @@ function write_single_calib(calib, file_path, suffix)
         util.write_comment(['Extrinsics' num2str(i) suffix], file_path);
 
         % Calibration board image
-        util.write_string(class(calib.extrin(i).img_cb), ['img_class' num2str(i) suffix], file_path);  % Write class
-        calib.extrin(i).img_cb.write(['img_state' num2str(i) suffix], file_path);                      % Write state
+        util.write_string(class(calib.extrin(i).img_cb), ['obj_img' num2str(i) suffix], file_path);  % Write class
+        calib.extrin(i).img_cb.write(['state_img' num2str(i) suffix], file_path);                    % Write state
         util.write_newline(file_path);
 
         % Rotation

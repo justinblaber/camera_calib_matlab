@@ -8,8 +8,8 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
         obj_distortion
         opts
     end
-    
-    methods(Access = private)        
+
+    methods(Access = private)
         function opts = get_opts(obj)
             opts = obj.opts;
         end
@@ -216,33 +216,33 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
         function print_param(obj, s_param, idx, params, cov_params, suffix)
             util.verbose_fprintf([pad(['    ' s_param ': '], 13) sprintf('% 10.4f', params(idx)) ' +- ' sprintf('% 8.4f', 3*sqrt(cov_params(idx, idx))) suffix], 1, obj.get_opts());
         end
-        
+
         function params = get_params(obj, As, ds, Rs, ts, R_1s, t_1s)
             % params: [a_1; d_1; a_2; d_2; ... a_M; d_M; ...
             %          r_1; t_1; r_2; t_2; ... r_N; t_N; ...
             %          r_1_1; t_1_1; r_1_2; t_1_2; ...; r_1_M, t_1_M]
-                        
+
             % Get number of cameras and boards
             num_cams = size(Rs, 2);
             num_boards = size(Rs, 1);
-            
+
             % Initialize params
             params = [];
-            
+
             % Intrinsics
             for i = 1:num_cams
                 params = vertcat(params, ...
                                  obj.A2a(As{i}), ...
                                  ds{i}); %#ok<AGROW>
             end
-                
+
             % Camera 1 extrinsics
             for i = 1:num_boards
                 params = vertcat(params, ...
                                  obj.R2r(Rs{i, 1}), ...
                                  ts{i, 1}); %#ok<AGROW>
             end
-            
+
             % Camera 1 to camera i extrinsics
             for i = 1:num_cams
                 params = vertcat(params, ...
@@ -261,11 +261,11 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
                 % Parse A
                 [a, params] = obj.pop_param(params, obj.get_num_params_a());
                 As{i} = obj.a2A(a); %#ok<AGROW>
-                
+
                 % Parse d
                 [ds{i}, params] = obj.pop_param(params, obj.get_num_params_d()); %#ok<AGROW>
             end
-            
+
             % Camera 1 extrinsics
             for i = 1:num_boards
                 % Parse R
@@ -275,7 +275,7 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
                 % Parse t
                 [ts{i, 1}, params] = obj.pop_param(params, obj.get_num_params_t()); %#ok<AGROW>
             end
-                        
+
             % Camera 1 to camera i extrinsics
             for i = 1:num_cams
                 % Parse R
@@ -289,19 +289,19 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
 
         % Residual and jacobian ------------------------------------------%
 
-        function [res, jacob] = calc_res_and_jacob(obj, params, p_cb_ws, p_cb_p_dss, idx_validss)            
+        function [res, jacob] = calc_res_and_jacob(obj, params, p_cb_ws, p_cb_p_dss, idx_validss)
             % Get number of params
             num_params = numel(params);
 
             % Get number of cameras and boards
             num_cams = size(p_cb_p_dss, 2);
             num_boards = size(p_cb_p_dss, 1);
-            
+
             % Parse params
             [As, ds, Rs, ts, R_1s, t_1s] = obj.parse_params(params, num_cams, num_boards);
 
             % Build residuals and jacobian -------------------------------%
-            
+
             res = [];
             jacob = sparse([]);
             for i = 1:num_cams % Iterate over cameras
@@ -309,12 +309,12 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
                 num_res_i = 2*sum(vertcat(idx_validss{:, i}));
                 res_i = zeros(num_res_i, 1);
                 jacob_i = sparse(num_res_i, num_params);
-                                                
-                for j = 1:num_boards % Iterate over boards        
-                    % Get rotation and translation for this board                    
+
+                for j = 1:num_boards % Iterate over boards
+                    % Get rotation and translation for this board
                     R_board = R_1s{i}*Rs{j, 1};
                     t_board = R_1s{i}*ts{j, 1} + t_1s{i};
-                    
+
                     % Get valid indices for this board
                     idx_valid_board = 2*sum(vertcat(idx_validss{1:j-1, i}))+1:2*sum(vertcat(idx_validss{1:j, i}));
 
@@ -357,17 +357,17 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
                 jacob = vertcat(jacob, jacob_i); %#ok<AGROW>
             end
         end
-        
+
         % Refine ---------------------------------------------------------%
-        
+
         function [As, ds, Rs, ts, R_1s, t_1s] = refine(obj, As, ds, Rs, ts, R_1s, t_1s, p_cb_ws, p_cb_p_dsss, idx_validss, optimization_type, cov_cb_p_dss)
             % Get opts
-            opts = obj.get_opts(); 
+            opts = obj.get_opts();
 
             % Get number of cameras and boards
             num_cams = size(Rs, 2);
             num_boards = size(Rs, 1);
-            
+
             % Get params
             params = obj.get_params(As, ds, Rs, ts, R_1s, t_1s);
 
@@ -389,18 +389,18 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
                 otherwise
                     error(['Input type of: "' optimization_type '" is not supported']);
             end
-            
+
             % Disable r_1_1 and t_1_1
             idx_update(num_cams*obj.get_num_params_i()+num_boards*obj.get_num_params_e()+1: ...
                        num_cams*obj.get_num_params_i()+(num_boards+1)*obj.get_num_params_e()) = false;
 
             % Get covariance matrix
-            if exist('cov_cb_p_dss', 'var')                
+            if exist('cov_cb_p_dss', 'var')
                 cov = vertcat(cov_cb_p_dss{:});                      % Append covarianced
                 cov = cov(vertcat(idx_validss{:}));                  % Apply valid indices
                 cov = cellfun(@sparse, cov, 'UniformOutput', false); % Make sparse
                 cov = blkdiag(cov{:});                               % Create sparse matrix
-            else                
+            else
                 cov = speye(2*sum(vertcat(idx_validss{:}))); % Sparse identity matrix is just least squares
             end
 
@@ -422,22 +422,22 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
             % Print params
             util.verbose_disp('------', 1, opts);
             util.verbose_disp('Intrinsic params (+- 3*sigma):', 1, opts);
-            
+
             % Camera matrix params
             util.verbose_fprintf('  ', 1, opts);
             for i = 1:num_cams
                 util.verbose_fprintf(['-Camera (' num2str(i) '):                         '], 1, opts);
             end
-            util.verbose_fprintf(newline, 1, opts);            
+            util.verbose_fprintf(newline, 1, opts);
             a_args = obj.get_a_args();
             for i = 1:obj.get_num_params_a()
                 for j = 1:num_cams
                     obj.print_param(a_args{i}, (j-1)*obj.get_num_params_i()+i, params, cov_params, '  ');
                 end
-                util.verbose_fprintf(newline, 1, opts); 
-            end 
-            
-            % Distortion params            
+                util.verbose_fprintf(newline, 1, opts);
+            end
+
+            % Distortion params
             util.verbose_fprintf('  ', 1, opts);
             for i = 1:num_cams
                 util.verbose_fprintf(['-Distortion (' num2str(i) '):                     '], 1, opts);
@@ -448,13 +448,13 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
                 for j = 1:num_cams
                     obj.print_param(d_args{i}, (j-1)*obj.get_num_params_i()+obj.get_num_params_a()+i, params, cov_params, '  ');
                 end
-                util.verbose_fprintf(newline, 1, opts); 
+                util.verbose_fprintf(newline, 1, opts);
             end
-                
+
             % Relative extrinsic params
             util.verbose_disp('Relative extrinsic params (+- 3*sigma):', 1, opts);
-            
-            % Relative rotation       
+
+            % Relative rotation
             util.verbose_fprintf('  ', 1, opts);
             for i = 1:num_cams
                 util.verbose_fprintf(['-Rotation (' num2str(1) ' => ' num2str(i) '):                  '], 1, opts);
@@ -465,10 +465,10 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
                 for j = 1:num_cams
                     obj.print_param(r_args{i}, num_cams*obj.get_num_params_i()+(num_boards+j-1)*obj.get_num_params_e()+i, params, cov_params, '  ');
                 end
-                util.verbose_fprintf(newline, 1, opts); 
+                util.verbose_fprintf(newline, 1, opts);
             end
-            
-            % Relative translation     
+
+            % Relative translation
             util.verbose_fprintf('  ', 1, opts);
             for i = 1:num_cams
                 util.verbose_fprintf(['-Translation (' num2str(1) ' => ' num2str(i) '):               '], 1, opts);
@@ -479,12 +479,12 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
                 for j = 1:num_cams
                     obj.print_param(t_args{i}, num_cams*obj.get_num_params_i()+(num_boards+j-1)*obj.get_num_params_e()+obj.get_num_params_r()+i, params, cov_params, '  ');
                 end
-                util.verbose_fprintf(newline, 1, opts); 
+                util.verbose_fprintf(newline, 1, opts);
             end
 
             % Parse params
             [As, ds, Rs, ts, R_1s, t_1s] = obj.parse_params(params, num_cams, num_boards);
-            
+
             % Set outputs
             for i = 1:num_cams
                 for j = 1:num_boards

@@ -8,12 +8,12 @@ function calib = load_calib(file_path)
     % Read data
     data = util.read_data(file_path);
 
-    % Parse calibration    
+    % Parse calibration
     i = 1;
     while isfield(data, ['A_cam' num2str(i)])
         % Parse single calibration
         [calib_cams(i), data] = util.parse_single_calib(data, ['_cam' num2str(i)]); %#ok<AGROW>
-                               
+
         % Increment
         i = i + 1;
     end

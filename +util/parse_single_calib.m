@@ -47,12 +47,12 @@ function [calib, data] = parse_single_calib(data, suffix)
         if isfield(data, ['p_fp_p_ds' num2str(i) suffix])
             [calib.extrin(i).p_fp_p_ds, data] = util.read_and_remove(data, ['p_fp_p_ds' num2str(i) suffix]);
         end
-        
+
         % Increment
         i = i + 1;
     end
-    
-    % R_1        
+
+    % R_1
     [calib.R_1, data] = util.read_and_remove(data, ['R_1' suffix]);
 
     % t_1

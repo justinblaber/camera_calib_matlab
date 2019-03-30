@@ -42,10 +42,10 @@ function calib = calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin)
     % Get number of cameras and boards
     num_cams = size(img_cbs, 2);
     num_boards = size(img_cbs, 1);
-    
+
     % Get the four point boxes in world coordinates
     p_fp_ws = calib_config.obj_cb_geom.get_p_fp_ws();
-     
+
     H_w2ps = cell(num_boards, num_cams);
     for i = 1:num_cams
         for j = 1:num_boards

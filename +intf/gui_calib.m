@@ -12,7 +12,7 @@ function gui_calib(calib, f)
     % Get number of cameras and boards
     num_cams = numel(calib.cam);
     num_boards = numel(calib.cam(1).extrin);
-    
+
     % Initialize parameters
     mode = 'whole';
     idx_board = 1;
@@ -124,13 +124,13 @@ function gui_calib(calib, f)
             for i = 1:num_cams %#ok<FXUP>
                 pos_res = [pos_cb_geom(1)+pos_cb_geom(3)+i*padding_width+(i-1)*width_res pos_extrinsics(2) width_res height_res];
                 axes_ress(i) = axes('Position', pos_res, 'Parent', f); %#ok<AGROW>
-                                
+
                 pos_calib_cb_img = [pos_res(1) pos_cb_geom(2) pos_res(3) pos_cb_geom(4)];
                 axes_calib_cb_imgs(i) = axes('Position', pos_calib_cb_img, 'Parent', f);
             end
-            
+
             % Plot extrinsics --------------------------------------------%
-            
+
             debug.plot_multi_extrinsics({calib.cam(1).extrin.R}, ...
                                         {calib.cam(1).extrin.t}, ...
                                         {calib.cam.R_1}, ...
@@ -194,7 +194,7 @@ function gui_calib(calib, f)
                     case 'worst'
                         bb = bb_worst(ress{idx_board, i}, calib.cam(i).extrin(idx_board).p_cb_p_ds(calib.cam(i).extrin(idx_board).idx_valid, :));
                 end
-                
+
                 set(axes_calib_cb_imgs(i), 'Xlim', bb(:, 1), 'Ylim', bb(:, 2));
             end
         catch e

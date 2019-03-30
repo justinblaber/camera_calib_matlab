@@ -14,7 +14,7 @@ function plot_multi_extrinsics(Rs, ts, R_1s, t_1s, colors, alphas, opts, a)
 
     % Hold
     hold(a, 'on');
-    
+
     % Get number of cameras and boards
     num_cams = numel(R_1s);
     num_boards = numel(Rs);

@@ -59,7 +59,7 @@ function write_single_calib(calib, file_path, suffix)
             util.write_newline(file_path);
         end
     end
-    
+
     % Write R_1
     util.write_array(calib.R_1, ['R_1' suffix], file_path);
     util.write_newline(file_path);

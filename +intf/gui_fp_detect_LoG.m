@@ -12,7 +12,7 @@ function gui_fp_detect_LoG(p_fpss, debug_multi_fp_detect_LoG, img_cbs, calib_con
     % Get number of cameras and boards
     num_cams = size(p_fpss, 2);
     num_boards = size(p_fpss, 1);
-    
+
     % Initialize parameters
     mode = 'whole';
     idx_board = 1;
@@ -133,7 +133,7 @@ function gui_fp_detect_LoG(p_fpss, debug_multi_fp_detect_LoG, img_cbs, calib_con
             for i = 1:num_cams
                 pos_cb = [i*padding_width+(i-1)*width_cb 2*padding_height+height_patch width_cb height_cb];
                 axes_cbs(i) = axes('Position', pos_cb, 'Parent', f);
-                
+
                 for j = 1:4
                     pos_patch = [pos_cb(1)+(j-1)*(width_patch+padding_width) ...
                                  padding_height  ...
@@ -142,7 +142,7 @@ function gui_fp_detect_LoG(p_fpss, debug_multi_fp_detect_LoG, img_cbs, calib_con
                     axes_patches(j, i) = axes('Position', pos_patch, 'Parent', f); %#ok<AGROW>
                 end
             end
-            
+
             % Plot debugging info ----------------------------------------%
 
             for i = 1:num_cams
@@ -166,7 +166,7 @@ function gui_fp_detect_LoG(p_fpss, debug_multi_fp_detect_LoG, img_cbs, calib_con
             end
 
             % Plot patch matches -----------------------------------------%
-            
+
             for i = 1:num_cams
                 for j = 1:4
                     debug.plot_patch_match(debug_multi_fp_detect_LoG(idx_board, i).patch_matches(j).patch, ...
@@ -194,14 +194,14 @@ function gui_fp_detect_LoG(p_fpss, debug_multi_fp_detect_LoG, img_cbs, calib_con
                         bb = bb_img(img_cbs(idx_board, i), sf);
                     case '1'
                         bb = bb_ellipse(debug_multi_fp_detect_LoG(idx_board, i).patch_matches(1).ellipse);
-                    case '2'                   
+                    case '2'
                         bb = bb_ellipse(debug_multi_fp_detect_LoG(idx_board, i).patch_matches(2).ellipse);
-                    case '3'                    
+                    case '3'
                         bb = bb_ellipse(debug_multi_fp_detect_LoG(idx_board, i).patch_matches(3).ellipse);
-                    case '4'    
+                    case '4'
                         bb = bb_ellipse(debug_multi_fp_detect_LoG(idx_board, i).patch_matches(4).ellipse);
                     case 'worst'
-                        % Get the worst patch                    
+                        % Get the worst patch
                         [~, idx] = min([debug_multi_fp_detect_LoG(idx_board, i).patch_matches.val_cc]);
                         bb = bb_ellipse(debug_multi_fp_detect_LoG(idx_board, i).patch_matches(idx).ellipse);
                 end

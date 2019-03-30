@@ -12,7 +12,7 @@ function [p_fp_pss, debug] = fp_detect(img_cbs, calib_config)
 
     % Get number of cams
     num_cams = size(img_cbs, 2);
-    
+
     for i = 1:num_cams
         util.verbose_disp('------', 1, calib_config);
         util.verbose_disp(['Performing four-point ' calib_config.fp_detector ' detection for camera ' num2str(i) ' images...'], 1, calib_config);

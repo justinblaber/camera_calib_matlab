@@ -48,7 +48,7 @@ classdef path < class.img.intf
         function img_path = get_path(obj)
             img_path = obj.img_path;
         end
-        
+
         function img_info = get_imfinfo(obj)
             obj.validate_exist();
 
@@ -92,11 +92,11 @@ classdef path < class.img.intf
         function success = exist(obj)
             success = exist(obj.get_path(), 'file') ~= 0;
         end
-        
+
         function name = get_name(obj)
             name = obj.get_path();
         end
-        
+
         function array_gs = get_array_gs(obj)
             % This function returns the image as a double precision
             % grayscale array
@@ -124,7 +124,7 @@ classdef path < class.img.intf
             img_info = obj.get_imfinfo();
             s = [img_info.Height img_info.Width];
         end
-        
+
         function h = imshow(obj, varargin)
             obj.validate_exist();
             obj.validate_imfinfo();
@@ -132,7 +132,7 @@ classdef path < class.img.intf
 
             h = imshow(obj.get_array_gs(), varargin{:});
         end
-        
+
         function write(obj, name, file_path)
             util.write_string(obj.get_path(), name, file_path);
         end

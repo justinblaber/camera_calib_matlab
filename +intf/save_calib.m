@@ -10,6 +10,6 @@ function save_calib(calib, file_path)
 
     % Write each cameras calibration
     for i = 1:numel(calib.cam)
-        util.write_single_calib(calib.cam(i), file_path, ['_cam' num2str(i)]);
+        util.write_single_cam(calib.cam(i), file_path, ['_cam' num2str(i)]);
     end
 end

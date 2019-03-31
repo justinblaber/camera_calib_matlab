@@ -81,17 +81,11 @@ function [calib_config, data] = parse_calib_config(data)
     % Distort array
     field_info(end+1) = struct('field', 'distort_array_interp'                          , 'required', false, 'default', 'spline'                       , 'validation_fun', @validate_interp);
 
-    % Single calibration
-    field_info(end+1) = struct('field', 'refine_single_params_it_cutoff'                , 'required', false, 'default', 200                            , 'validation_fun', @validate_pos_scalar_int);
-    field_info(end+1) = struct('field', 'refine_single_params_norm_cutoff'              , 'required', false, 'default', 1e-6                           , 'validation_fun', @validate_pos_scalar);
-    field_info(end+1) = struct('field', 'refine_single_params_lambda_init'              , 'required', false, 'default', 0.01                           , 'validation_fun', @validate_pos_scalar);
-    field_info(end+1) = struct('field', 'refine_single_params_lambda_factor'            , 'required', false, 'default', 10                             , 'validation_fun', @validate_pos_scalar);
-
-    % Stereo calibration
-    field_info(end+1) = struct('field', 'refine_stereo_params_it_cutoff'                , 'required', false, 'default', 200                            , 'validation_fun', @validate_pos_scalar_int);
-    field_info(end+1) = struct('field', 'refine_stereo_params_norm_cutoff'              , 'required', false, 'default', 1e-6                           , 'validation_fun', @validate_pos_scalar);
-    field_info(end+1) = struct('field', 'refine_stereo_params_lambda_init'              , 'required', false, 'default', 0.01                           , 'validation_fun', @validate_pos_scalar);
-    field_info(end+1) = struct('field', 'refine_stereo_params_lambda_factor'            , 'required', false, 'default', 10                             , 'validation_fun', @validate_pos_scalar);
+    % Calibration
+    field_info(end+1) = struct('field', 'refine_calib_params_it_cutoff'                 , 'required', false, 'default', 200                            , 'validation_fun', @validate_pos_scalar_int);
+    field_info(end+1) = struct('field', 'refine_calib_params_norm_cutoff'               , 'required', false, 'default', 1e-6                           , 'validation_fun', @validate_pos_scalar);
+    field_info(end+1) = struct('field', 'refine_calib_params_lambda_init'               , 'required', false, 'default', 0.01                           , 'validation_fun', @validate_pos_scalar);
+    field_info(end+1) = struct('field', 'refine_calib_params_lambda_factor'             , 'required', false, 'default', 10                             , 'validation_fun', @validate_pos_scalar);
 
     % Blob detection
     field_info(end+1) = struct('field', 'blob_detect_r_range1'                          , 'required', false, 'default', 1                              , 'validation_fun', @validate_pos_scalar);

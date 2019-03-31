@@ -44,7 +44,7 @@ classdef path < class.img.intf
         end
     end
 
-    methods(Access = protected)
+    methods(Access = private)
         function img_path = get_path(obj)
             img_path = obj.img_path;
         end

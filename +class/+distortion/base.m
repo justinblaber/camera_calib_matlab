@@ -10,7 +10,7 @@ classdef base < class.distortion.intf %#ok<*PROPLC>
 
     methods(Static, Access = public)
         function validate_sym_p_p2p_p_d(sym_p_p2p_p_d)
-            %   f(x_p, y_p, a_x, a_y, s, x_o, y_o, d_1, ..., d_N)
+            %   f(x_p, y_p, a_x, a_y, s, x_o, y_o, d_1, ..., d_M)
             args = arrayfun(@char, argnames(sym_p_p2p_p_d), 'UniformOutput', false);
             if ~all(strcmp(args(1:7), {'x_p', 'y_p', 'a_x', 'a_y', 's', 'x_o', 'y_o'}))
                 error('Symbolic distortion function must have arguments which start with: (x_p, y_p, a_x, a_y, s, x_o, y_o)');
@@ -18,7 +18,7 @@ classdef base < class.distortion.intf %#ok<*PROPLC>
         end
     end
 
-    methods(Static, Access = protected)
+    methods(Static, Access = private)
         function [a_x, a_y, s, x_o, y_o] = parse_A(A)
             % A = [a_x,   s, x_o;
             %        0, a_y, y_o;
@@ -69,7 +69,7 @@ classdef base < class.distortion.intf %#ok<*PROPLC>
         end
     end
 
-    methods(Access = protected)
+    methods(Access = private)
         function sym_p_p2p_p_d = get_sym_p_p2p_p_d(obj)
             sym_p_p2p_p_d = obj.sym_p_p2p_p_d;
         end
@@ -111,7 +111,7 @@ classdef base < class.distortion.intf %#ok<*PROPLC>
 
         function num_params_d = get_num_params_d(obj)
             % Distortion function has format:
-            %   f(x_p, y_p, a_x, a_y, s, x_o, y_o, d_1, ..., d_N)
+            %   f(x_p, y_p, a_x, a_y, s, x_o, y_o, d_1, ..., d_M)
             %
             % So number of distortion params is num_args - 7
 
@@ -194,7 +194,7 @@ classdef base < class.distortion.intf %#ok<*PROPLC>
         function jacob = dp_p_d_dd(obj, p_ps, A, d)
             %   Format of jacobian is:
             %
-            %            dd_1 ... dd_N
+            %            dd_1 ... dd_M
             %   dx_p_d_1
             %   dy_p_d_1
             %      .

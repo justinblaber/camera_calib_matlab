@@ -200,6 +200,10 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
             num_params_t = 3;
         end
 
+        function args = get_t_args(obj) %#ok<MANU>
+            args = {'x', 'y', 'z'};
+        end
+
         function num_params_i = get_num_params_i(obj)
             num_params_i = obj.get_num_params_a() + obj.get_num_params_d();
         end
@@ -289,7 +293,7 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
 
         % Residual and jacobian ------------------------------------------%
 
-        function [res, jacob] = calc_res_and_jacob(obj, params, p_cb_ws, p_cb_p_dss, idx_validss)
+        function [res, jacob] = calc_res_and_jacob(obj, params, p_cb_ws, p_cb_p_dss, idx_valids)
             % Get number of params
             num_params = numel(params);
 
@@ -304,52 +308,52 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
 
             res = [];
             jacob = sparse([]);
-            for i = 1:num_cams % Iterate over cameras
+            for i = 1:num_cams
                 % Get residuals and jacobian for this camera
-                num_res_i = 2*sum(vertcat(idx_validss{:, i}));
+                num_res_i = 2*sum(vertcat(idx_valids{:, i}));
                 res_i = zeros(num_res_i, 1);
                 jacob_i = sparse(num_res_i, num_params);
 
-                for j = 1:num_boards % Iterate over boards
+                for j = 1:num_boards
                     % Get rotation and translation for this board
-                    R_board = R_1s{i}*Rs{j, 1};
-                    t_board = R_1s{i}*ts{j, 1} + t_1s{i};
+                    R = R_1s{i}*Rs{j, 1};
+                    t = R_1s{i}*ts{j, 1} + t_1s{i};
 
-                    % Get valid indices for this board
-                    idx_valid_board = 2*sum(vertcat(idx_validss{1:j-1, i}))+1:2*sum(vertcat(idx_validss{1:j, i}));
+                    % Get valid indices
+                    idx_valid = 2*sum(vertcat(idx_valids{1:j-1, i}))+1:2*sum(vertcat(idx_valids{1:j, i}));
 
                     % Get valid points
-                    p_cb_ws_valid = p_cb_ws(idx_validss{j, i}, :);
-                    p_cb_p_ds_valid = p_cb_p_dss{j, i}(idx_validss{j, i}, :);
+                    p_cb_ws_valid = p_cb_ws(idx_valids{j, i}, :);
+                    p_cb_p_ds_valid = p_cb_p_dss{j, i}(idx_valids{j, i}, :);
 
                     % Get valid model calibration board distorted pixel points
-                    p_cb_p_d_ms_valid = obj.p_cb_w2p_cb_p_d(p_cb_ws_valid, R_board, t_board, As{i}, ds{i});
+                    p_cb_p_d_ms_valid = obj.p_cb_w2p_cb_p_d(p_cb_ws_valid, R, t, As{i}, ds{i});
 
                     % Store residuals
-                    res_i(idx_valid_board) = reshape((p_cb_p_d_ms_valid - p_cb_p_ds_valid)', [], 1);
+                    res_i(idx_valid) = reshape((p_cb_p_d_ms_valid - p_cb_p_ds_valid)', [], 1);
 
                     % Intrinsics
                     idx_intrinsic_i = (i-1)*obj.get_num_params_i()+1:i*obj.get_num_params_i();
-                    jacob_i(idx_valid_board, idx_intrinsic_i) = obj.dp_cb_p_d_dintrinsic(p_cb_ws_valid, R_board, t_board, As{i}, ds{i}); %#ok<SPRIX>
+                    jacob_i(idx_valid, idx_intrinsic_i) = obj.dp_cb_p_d_dintrinsic(p_cb_ws_valid, R, t, As{i}, ds{i}); %#ok<SPRIX>
 
-                    % Extrinsics - "1"
-                    dRt_i_dRt_1 = blkdiag(R_1s{i}, R_1s{i}, R_1s{i}, R_1s{i});
+                    % Extrinsics - camera "1"
+                    dRt_dRt_1 = blkdiag(R_1s{i}, R_1s{i}, R_1s{i}, R_1s{i});
                     dR_1_dr_1 = obj.dR_dr(obj.R2r(Rs{j, 1}));
                     dRt_1_dextrinsic_1 = blkdiag(dR_1_dr_1, eye(3));
-                    dRt_i_dextrinsic_1 = dRt_i_dRt_1*dRt_1_dextrinsic_1;
+                    dRt_dextrinsic_1 = dRt_dRt_1*dRt_1_dextrinsic_1;
                     idx_extrinsic_1 = num_cams*obj.get_num_params_i()+(j-1)*obj.get_num_params_e()+1:num_cams*obj.get_num_params_i()+j*obj.get_num_params_e();
-                    jacob_i(idx_valid_board, idx_extrinsic_1) = obj.dp_cb_p_d_dextrinsic(p_cb_ws_valid, R_board, t_board, As{i}, ds{i}, dRt_i_dextrinsic_1); %#ok<SPRIX>
+                    jacob_i(idx_valid, idx_extrinsic_1) = obj.dp_cb_p_d_dextrinsic(p_cb_ws_valid, R, t, As{i}, ds{i}, dRt_dextrinsic_1); %#ok<SPRIX>
 
-                    % Extrinsics - "1_i"
-                    dRt_i_dRt_1_i = [Rs{j, 1}(1, 1)*eye(3), Rs{j, 1}(2, 1)*eye(3), Rs{j, 1}(3, 1)*eye(3), zeros(3);
-                                     Rs{j, 1}(1, 2)*eye(3), Rs{j, 1}(2, 2)*eye(3), Rs{j, 1}(3, 2)*eye(3), zeros(3);
-                                     Rs{j, 1}(1, 3)*eye(3), Rs{j, 1}(2, 3)*eye(3), Rs{j, 1}(3, 3)*eye(3), zeros(3);
-                                        ts{j, 1}(1)*eye(3),    ts{j, 1}(2)*eye(3),    ts{j, 1}(3)*eye(3),   eye(3)];
+                    % Extrinsics - relative extrinsics from camera "1" to camera "i"
+                    dRt_dRt_1_i = [Rs{j, 1}(1, 1)*eye(3), Rs{j, 1}(2, 1)*eye(3), Rs{j, 1}(3, 1)*eye(3), zeros(3);
+                                   Rs{j, 1}(1, 2)*eye(3), Rs{j, 1}(2, 2)*eye(3), Rs{j, 1}(3, 2)*eye(3), zeros(3);
+                                   Rs{j, 1}(1, 3)*eye(3), Rs{j, 1}(2, 3)*eye(3), Rs{j, 1}(3, 3)*eye(3), zeros(3);
+                                      ts{j, 1}(1)*eye(3),    ts{j, 1}(2)*eye(3),    ts{j, 1}(3)*eye(3),   eye(3)];
                     dR_1_i_dr_1_i = obj.dR_dr(obj.R2r(R_1s{i}));
                     dRt_1_i_dextrinsic_1_i = blkdiag(dR_1_i_dr_1_i, eye(3));
-                    dRt_i_dextrinsic_1_i = dRt_i_dRt_1_i*dRt_1_i_dextrinsic_1_i;
+                    dRt_dextrinsic_1_i = dRt_dRt_1_i*dRt_1_i_dextrinsic_1_i;
                     idx_extrinsic_1_i = num_cams*obj.get_num_params_i()+num_boards*obj.get_num_params_e()+(i-1)*obj.get_num_params_e()+1:num_cams*obj.get_num_params_i()+num_boards*obj.get_num_params_e()+i*obj.get_num_params_e();
-                    jacob_i(idx_valid_board, idx_extrinsic_1_i) = obj.dp_cb_p_d_dextrinsic(p_cb_ws_valid, R_board, t_board, As{i}, ds{i}, dRt_i_dextrinsic_1_i); %#ok<SPRIX>
+                    jacob_i(idx_valid, idx_extrinsic_1_i) = obj.dp_cb_p_d_dextrinsic(p_cb_ws_valid, R, t, As{i}, ds{i}, dRt_dextrinsic_1_i); %#ok<SPRIX>
                 end
 
                 % Concat
@@ -360,7 +364,7 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
 
         % Refine ---------------------------------------------------------%
 
-        function [As, ds, Rs, ts, R_1s, t_1s] = refine(obj, As, ds, Rs, ts, R_1s, t_1s, p_cb_ws, p_cb_p_dsss, idx_validss, optimization_type, cov_cb_p_dss)
+        function [As, ds, Rs, ts, R_1s, t_1s] = refine(obj, As, ds, Rs, ts, R_1s, t_1s, p_cb_ws, p_cb_p_dss, idx_valids, optimization_type, cov_cb_p_dss)
             % Get opts
             opts = obj.get_opts();
 
@@ -390,32 +394,33 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
                     error(['Input type of: "' optimization_type '" is not supported']);
             end
 
-            % Disable r_1_1 and t_1_1
+            % Disable r_1_1 and t_1_1 (these should be the indentity matrix
+            % and zero vector, respectively, and are constant)
             idx_update(num_cams*obj.get_num_params_i()+num_boards*obj.get_num_params_e()+1: ...
                        num_cams*obj.get_num_params_i()+(num_boards+1)*obj.get_num_params_e()) = false;
 
             % Get covariance matrix
             if exist('cov_cb_p_dss', 'var')
-                cov = vertcat(cov_cb_p_dss{:});                      % Append covarianced
-                cov = cov(vertcat(idx_validss{:}));                  % Apply valid indices
+                cov = vertcat(cov_cb_p_dss{:});                      % Append covariances in this order
+                cov = cov(vertcat(idx_valids{:}));                   % Apply valid indices
                 cov = cellfun(@sparse, cov, 'UniformOutput', false); % Make sparse
                 cov = blkdiag(cov{:});                               % Create sparse matrix
             else
-                cov = speye(2*sum(vertcat(idx_validss{:}))); % Sparse identity matrix is just least squares
+                cov = speye(2*sum(vertcat(idx_valids{:})));          % Sparse identity matrix is just least squares
             end
 
             % Get residual and jacobian function
-            f_calc_res_and_jacob = @(params)obj.calc_res_and_jacob(params, p_cb_ws, p_cb_p_dsss, idx_validss);
+            f_calc_res_and_jacob = @(params)obj.calc_res_and_jacob(params, p_cb_ws, p_cb_p_dss, idx_valids);
 
             % Levenberg-Marquardt with covariance estimate optimization
             [params, cov_params] = alg.lmcov(f_calc_res_and_jacob, ...
                                              params, ...
                                              cov, ...
                                              idx_update, ...
-                                             opts.refine_stereo_params_lambda_init, ...
-                                             opts.refine_stereo_params_lambda_factor, ...
-                                             opts.refine_stereo_params_it_cutoff, ...
-                                             opts.refine_stereo_params_norm_cutoff, ...
+                                             opts.refine_calib_params_lambda_init, ...
+                                             opts.refine_calib_params_lambda_factor, ...
+                                             opts.refine_calib_params_it_cutoff, ...
+                                             opts.refine_calib_params_norm_cutoff, ...
                                              2, ...
                                              opts);
 
@@ -474,7 +479,7 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
                 util.verbose_fprintf(['-Translation (' num2str(1) ' => ' num2str(i) '):               '], 1, opts);
             end
             util.verbose_fprintf(newline, 1, opts);
-            t_args = {'x', 'y', 'z'};
+            t_args = obj.get_t_args();
             for i = 1:obj.get_num_params_t()
                 for j = 1:num_cams
                     obj.print_param(t_args{i}, num_cams*obj.get_num_params_i()+(num_boards+j-1)*obj.get_num_params_e()+obj.get_num_params_r()+i, params, cov_params, '  ');

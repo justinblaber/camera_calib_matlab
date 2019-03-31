@@ -9,7 +9,7 @@ classdef csgrid < class.cb_geom.target_base
         idx_target_removal      % int array
     end
 
-    methods(Access = protected)
+    methods(Access = private)
         function num = get_num_targets_height(obj)
             num = obj.num_targets_height;
         end

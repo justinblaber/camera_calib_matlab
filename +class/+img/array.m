@@ -2,18 +2,18 @@ classdef array < class.img.intf
     % This is the array class definition for an image.
 
     properties(Access = private)
-        img_array
+        array_img
     end
 
-    methods(Access = protected)
-        function img_array = get_array(obj)
-            img_array = obj.img_array;
+    methods(Access = private)
+        function array_img = get_array(obj)
+            array_img = obj.array_img;
         end
     end
 
     methods(Access = public)
-        function obj = array(img_array)
-            obj.img_array = img_array;
+        function obj = array(array_img)
+            obj.array_img = array_img;
         end
 
         % Abstract methods -----------------------------------------------%

@@ -12,6 +12,10 @@ function plot_cb_3D(xform_w2s, color, alpha, opts, a)
         a = axes(f);
     end
 
+    if ~isa(opts.obj_cb_geom, 'class.cb_geom.size_intf')
+        error('calibration board geometry must inherit from size interface to use this function');
+    end
+
     % Form box
     % Note:
     %    p1 - p3

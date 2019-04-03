@@ -3,7 +3,7 @@ function [params, cov_params] = lmcov(f_calc_res_and_jacob, params, cov, idx_upd
     %
     % Inputs:
     %   f_calc_res_and_jacob - function handle; returns residuals and
-    %    jacobian of residuals when params is input
+    %       jacobian of residuals when params is input
     %   params - array; Nx1 array of parameters
     %   cov - array; covariance of residuals
     %   idx_update - array; Nx1 indices which indicate parameters to
@@ -98,7 +98,12 @@ function [params, cov_params] = lmcov(f_calc_res_and_jacob, params, cov, idx_upd
 
     % Get covariance of parameters
     [res, jacob] = f_calc_res_and_jacob(params);
-    [~, ~, ~, cov_params] = alg.safe_lscov(jacob, res, cov);
+    [~, ~, ~, cov_params_update] = alg.safe_lscov(jacob(:, idx_update), res, cov);
+
+    % Expand covariance array to same size as params. Note that any
+    % non-updated parameters are assumed to have a covariance of zero.
+    cov_params = zeros(numel(params));
+    cov_params(logical(idx_update*idx_update')) = cov_params_update;
 end
 
 function cost = calc_cost(f_calc_res_and_jacob, params, cov_inv)

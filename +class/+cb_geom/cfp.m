@@ -7,20 +7,22 @@ classdef cfp < class.cb_geom.fp_base
         width_fp                % float
     end
 
-    methods(Access = public)
-        function obj = cfp(opts)
-            obj@class.cb_geom.fp_base(opts);
-
-            obj.height_fp = opts.height_fp;
-            obj.width_fp = opts.width_fp;
-        end
-
+    methods(Access = private)
         function h = get_fp_height(obj)
             h = obj.height_fp;
         end
 
         function w = get_fp_width(obj)
             w = obj.width_fp;
+        end
+    end
+
+    methods(Access = public)
+        function obj = cfp(opts)
+            obj@class.cb_geom.fp_base(opts);
+
+            obj.height_fp = opts.height_fp;
+            obj.width_fp = opts.width_fp;
         end
 
         % Abstract methods -----------------------------------------------%

@@ -6,15 +6,15 @@ classdef cb_w2p_base < class.calib.cb_w2p_intf
         opts
     end
 
-    methods(Access = public)
-        function obj = cb_w2p_base(opts)
-            obj.opts = opts;
-        end
-    end
-
     methods(Access = protected)
         function opts = get_opts(obj)
             opts = obj.opts;
+        end
+    end
+
+    methods(Access = public)
+        function obj = cb_w2p_base(opts)
+            obj.opts = opts;
         end
     end
 end

@@ -13,8 +13,8 @@ function sym_f = str2sym(str_f) %#ok<STOUT>
     [~, args, val] = util.parse_str_f(str_f);
 
     % Declare symbolic arguments
-    evalc(['syms sym_f(' strjoin(args, ', ') ')']);
+    eval(['syms sym_f(' strjoin(args, ', ') ');']);
 
     % Assign symbolic function
-    evalc(['sym_f(' strjoin(args, ', ') ') = ' val]);
+    eval(['sym_f(' strjoin(args, ', ') ') = ' val ';']);
 end

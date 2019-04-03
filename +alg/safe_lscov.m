@@ -28,7 +28,7 @@ function varargout = safe_lscov(varargin)
         %   2) If w_or_V is a sparse covariance matrix which is not
         %       positive definite; this is not supported by lscov()
         if any(isnan(w_or_V(:))) || ...
-           (isequal(size(w_or_V), [size(A, 2), size(A, 2)]) && issparse(w_or_V) && ~alg.is_pos_def(w_or_V))
+           (isequal(size(w_or_V), [size(A, 1), size(A, 1)]) && issparse(w_or_V) && ~alg.is_pos_def(w_or_V))
             safe = false;
         end
     end

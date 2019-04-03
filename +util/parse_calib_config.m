@@ -81,17 +81,11 @@ function [calib_config, data] = parse_calib_config(data)
     % Distort array
     field_info(end+1) = struct('field', 'distort_array_interp'                          , 'required', false, 'default', 'spline'                       , 'validation_fun', @validate_interp);
 
-    % Single calibration
-    field_info(end+1) = struct('field', 'refine_single_params_it_cutoff'                , 'required', false, 'default', 200                            , 'validation_fun', @validate_pos_scalar_int);
-    field_info(end+1) = struct('field', 'refine_single_params_norm_cutoff'              , 'required', false, 'default', 1e-6                           , 'validation_fun', @validate_pos_scalar);
-    field_info(end+1) = struct('field', 'refine_single_params_lambda_init'              , 'required', false, 'default', 0.01                           , 'validation_fun', @validate_pos_scalar);
-    field_info(end+1) = struct('field', 'refine_single_params_lambda_factor'            , 'required', false, 'default', 10                             , 'validation_fun', @validate_pos_scalar);
-
-    % Stereo calibration
-    field_info(end+1) = struct('field', 'refine_stereo_params_it_cutoff'                , 'required', false, 'default', 200                            , 'validation_fun', @validate_pos_scalar_int);
-    field_info(end+1) = struct('field', 'refine_stereo_params_norm_cutoff'              , 'required', false, 'default', 1e-6                           , 'validation_fun', @validate_pos_scalar);
-    field_info(end+1) = struct('field', 'refine_stereo_params_lambda_init'              , 'required', false, 'default', 0.01                           , 'validation_fun', @validate_pos_scalar);
-    field_info(end+1) = struct('field', 'refine_stereo_params_lambda_factor'            , 'required', false, 'default', 10                             , 'validation_fun', @validate_pos_scalar);
+    % Calibration
+    field_info(end+1) = struct('field', 'refine_calib_params_it_cutoff'                 , 'required', false, 'default', 200                            , 'validation_fun', @validate_pos_scalar_int);
+    field_info(end+1) = struct('field', 'refine_calib_params_norm_cutoff'               , 'required', false, 'default', 1e-6                           , 'validation_fun', @validate_pos_scalar);
+    field_info(end+1) = struct('field', 'refine_calib_params_lambda_init'               , 'required', false, 'default', 0.01                           , 'validation_fun', @validate_pos_scalar);
+    field_info(end+1) = struct('field', 'refine_calib_params_lambda_factor'             , 'required', false, 'default', 10                             , 'validation_fun', @validate_pos_scalar);
 
     % Blob detection
     field_info(end+1) = struct('field', 'blob_detect_r_range1'                          , 'required', false, 'default', 1                              , 'validation_fun', @validate_pos_scalar);
@@ -218,7 +212,7 @@ function calib_config = validate_obj_cb_geom(calib_config, field)
     end
 
     % Evaluate
-    [~, obj_cb_geom] = evalc([param '(calib_config)']);
+    obj_cb_geom = eval([param '(calib_config);']);
 
     % TODO: validate
 
@@ -235,7 +229,7 @@ function calib_config = validate_obj_A(calib_config, field)
     end
 
     % Evaluate
-    [~, obj_A] = evalc([param '()']);
+    obj_A = eval([param '();']);
 
     % TODO: validate
 
@@ -252,7 +246,7 @@ function calib_config = validate_obj_R(calib_config, field)
     end
 
     % Evaluate
-    [~, obj_R] = evalc([param '()']);
+    obj_R = eval([param '();']);
 
     % TODO: validate
 
@@ -270,7 +264,7 @@ function calib_config = validate_sym_p_p2p_p_d(calib_config, field)
     % +distortion, so just load it. Otherwise, its assumed to be a
     % "symbolic function string", so convert it.
     if startsWith(param, 'distortion.')
-        [~, sym_distortion] = evalc(param);
+        sym_distortion = eval([param ';']);
 
         % Validate that this is indeed a symbolic function
         if ~isa(sym_distortion, 'symfun')

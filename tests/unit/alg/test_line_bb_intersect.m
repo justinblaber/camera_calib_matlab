@@ -6,7 +6,6 @@ function test_line_bb_intersect
     bb = [ 1  1;
           57 62];
 
-
     [p1, p2] = alg.line_bb_intersect(l, bb);
 
     %{

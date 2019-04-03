@@ -1,4 +1,4 @@
-function A = init_intrinsic_params(Hs, width, height)
+function A = init_intrinsic_params(Hs, s)
     % This will initialize the intrinsic parameters of a given set of
     % homographies.
     %
@@ -7,15 +7,15 @@ function A = init_intrinsic_params(Hs, width, height)
     %
     % Inputs:
     %   Hs - cell; cell of 3x3 homographies
-    %   width - scalar; width of the calibration board image
-    %   height - scalar; height of the calibration board image
+    %   s - array; size of calibration board image in form of:
+    %       [height width]
     %
     % Outputs:
     %   A - array; 3x3 camera matrix
 
     % Set principle point
-    x_o = (width+1)/2;
-    y_o = (height+1)/2;
+    x_o = (s(2)+1)/2;
+    y_o = (s(1)+1)/2;
 
     % p_o_inv removes the principle point from the homography so alpha can
     % be computed.

@@ -9,7 +9,7 @@ function test_init_intrinsic_params
                           -0.006871272156809   0.002017622618937   6.489005558051406;
                            0.000001152940885   0.000006987996734   0.010000000000000];
 
-    A = alg.init_intrinsic_params(Hw2ps, 640, 480);
+    A = alg.init_intrinsic_params(Hw2ps, [480 640]);
 
     % Assert
     assert(all(all(abs(A - [580.0179  0         320.5000;

@@ -12,7 +12,7 @@ function test_single_calib_H_dr
                 fullfile(tests_path, 'data', 'checker', '3.jpg')};
 
     % Validate all calibration board images
-    img_cbs = intf.validate_single_imgs(path_cbs);
+    img_cbs = class.img.path.validate_similar_imgs(path_cbs);
 
     H_w2ps{1} = 1.0e+02 * [ 0.001304184447162   0.006215160306952  -0.158506044500098
                            -0.004380249891446   0.000566936427656   5.454688718406464
@@ -24,11 +24,15 @@ function test_single_calib_H_dr
                            -0.005264814064386   0.000813214136621   5.935510362600152
                            -0.000002387039235   0.000003143417853   0.010000000000000];
 
+    % Get calibration object
+    obj_calib = class.calib.base(calib_config.obj_A, ...
+                                 calib_config.obj_R, ...
+                                 class.calib.cb_w2p_p2p(calib_config), ...  % Point to point
+                                 class.distortion.base(calib_config.sym_p_p2p_p_d, calib_config), ...
+                                 calib_config);
+
     % Perform single calibration
-    calib_test = alg.single_calib_H_dr(calib_config.obj_A, ...
-                                       calib_config.obj_R, ...
-                                       class.calib.cb_w2p_p2p(calib_config), ...
-                                       class.distortion.base(calib_config.sym_p_p2p_p_d, calib_config), ...
+    calib_test = alg.single_calib_H_dr(obj_calib, ...
                                        calib_config.obj_cb_geom, ...
                                        img_cbs, ...
                                        H_w2ps, ...
@@ -36,11 +40,11 @@ function test_single_calib_H_dr
 
     % Assert
     load(fullfile(tests_path, 'data', 'checker', 'calib.mat'));
-    assert(all(all(abs(calib_test.intrin.A - calib.intrin.A) < 1e-4)));
-    assert(all(all(abs(calib_test.intrin.d - calib.intrin.d) < 1e-4)));
+    assert(all(all(abs(calib_test.cam.intrin.A - calib.cam.intrin.A) < 1e-4)));
+    assert(all(all(abs(calib_test.cam.intrin.d - calib.cam.intrin.d) < 1e-4)));
     for i = 1:numel(img_cbs)
-        assert(all(all(abs(calib_test.extrin(i).R - calib.extrin(i).R) < 1e-4)));
-        assert(all(all(abs(calib_test.extrin(i).t - calib.extrin(i).t) < 1e-4)));
+        assert(all(all(abs(calib_test.cam.extrin(i).R - calib.cam.extrin(i).R) < 1e-4)));
+        assert(all(all(abs(calib_test.cam.extrin(i).t - calib.cam.extrin(i).t) < 1e-4)));
     end
 
     clear
@@ -58,7 +62,7 @@ function test_single_calib_H_dr
                 fullfile(tests_path, 'data', 'circle', '3.jpg')};
 
     % Validate all calibration board images
-    img_cbs = intf.validate_single_imgs(path_cbs);
+    img_cbs = class.img.path.validate_similar_imgs(path_cbs);
 
     H_w2ps{1} = 1.0e+02 * [ 0.001802256209152   0.006214020050158  -1.126612165558416
                            -0.004809098151523   0.000037084950548   5.896016709922130
@@ -70,11 +74,15 @@ function test_single_calib_H_dr
                            -0.007475581537464   0.002192787577082   7.605609328773577
                             0.000001425460400   0.000007559557856   0.010000000000000];
 
+    % Get calibration object
+    obj_calib = class.calib.base(calib_config.obj_A, ...
+                                 calib_config.obj_R, ...
+                                 class.calib.cb_w2p_c2e(calib_config), ... % center of circle to center of ellipse
+                                 class.distortion.base(calib_config.sym_p_p2p_p_d, calib_config), ...
+                                 calib_config);
+
     % Perform single calibration
-    calib_test = alg.single_calib_H_dr(calib_config.obj_A, ...
-                                       calib_config.obj_R, ...
-                                       class.calib.cb_w2p_c2e(calib_config), ...
-                                       class.distortion.base(calib_config.sym_p_p2p_p_d, calib_config), ...
+    calib_test = alg.single_calib_H_dr(obj_calib, ...
                                        calib_config.obj_cb_geom, ...
                                        img_cbs, ...
                                        H_w2ps, ...
@@ -82,10 +90,10 @@ function test_single_calib_H_dr
 
     % Assert
     load(fullfile(tests_path, 'data', 'circle', 'calib.mat'));
-    assert(all(all(abs(calib_test.intrin.A - calib.intrin.A) < 1e-4)));
-    assert(all(all(abs(calib_test.intrin.d - calib.intrin.d) < 1e-4)));
+    assert(all(all(abs(calib_test.cam.intrin.A - calib.cam.intrin.A) < 1e-4)));
+    assert(all(all(abs(calib_test.cam.intrin.d - calib.cam.intrin.d) < 1e-4)));
     for i = 1:numel(img_cbs)
-        assert(all(all(abs(calib_test.extrin(i).R - calib.extrin(i).R) < 1e-4)));
-        assert(all(all(abs(calib_test.extrin(i).t - calib.extrin(i).t) < 1e-4)));
+        assert(all(all(abs(calib_test.cam.extrin(i).R - calib.cam.extrin(i).R) < 1e-4)));
+        assert(all(all(abs(calib_test.cam.extrin(i).t - calib.cam.extrin(i).t) < 1e-4)));
     end
 end

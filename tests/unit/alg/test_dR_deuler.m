@@ -3,7 +3,7 @@ function test_dR_deuler
               0.262166472859945;
              -1.516780216333023];
 
-    r = reshape(alg.euler2R(euler), [], 1);
+    R = reshape(alg.euler2R(euler), [], 1);
 
     % Get finite difference approximation
     delta = 1e-5;
@@ -12,7 +12,7 @@ function test_dR_deuler
         euler_delta = euler;
         euler_delta(i) = euler(i) + delta;
         R_delta = reshape(alg.euler2R(euler_delta), [], 1);
-        dR_deuler(:, i) = (R_delta-r)./delta;
+        dR_deuler(:, i) = (R_delta-R)./delta;
     end
 
     % Assert

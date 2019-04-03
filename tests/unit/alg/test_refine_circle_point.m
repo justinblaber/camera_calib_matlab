@@ -21,6 +21,7 @@ function test_refine_circle_point
     f = figure;
     imshow(array_cb, []);
     hold on;
+    plot(boundary_p_center([1 2 3 4 1], 1) + p_cb_p_init(1), boundary_p_center([1 2 3 4 1], 2) + p_cb_p_init(2), '-r');
     plot(p_cb_p_init(1), p_cb_p_init(2), 'rs');
     plot(p_cb_p(1), p_cb_p(2), 'gs');
     close(f);
@@ -52,6 +53,7 @@ function test_refine_circle_point
     f = figure;
     imshow(array_cb, []);
     hold on;
+    plot(boundary_p_center([1 2 3 4 1], 1) + p_cb_p_init(1), boundary_p_center([1 2 3 4 1], 2) + p_cb_p_init(2), '-r');
     plot(p_cb_p_init(1), p_cb_p_init(2), 'rs');
     plot(p_cb_p(1), p_cb_p(2), 'gs');
     close(f);

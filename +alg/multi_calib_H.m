@@ -7,8 +7,8 @@ function calib = multi_calib_H(f_single_calib_H, obj_calib, obj_cb_geom, img_cbs
     %   obj_calib - class.calib.base; calibration object
     %   obj_cb_geom - class.cb_geom.target_intf; calibration board target
     %       geometry interface.
-    %   img_cbs - class.img.intf; NxM calibration board image interfaces.
-    %   H_w2ps - cell; NxM cell of initial guesses of homographies which
+    %   img_cbs - class.img.intf; MxN calibration board image interfaces.
+    %   H_w2ps - cell; MxN cell of initial guesses of homographies which
     %       map world coordinates to pixel coordinates
     %   calib_config - struct; struct returned by intf.load_calib_config()
     %   intrins - struct; optional. If passed in, intrinsics will not be

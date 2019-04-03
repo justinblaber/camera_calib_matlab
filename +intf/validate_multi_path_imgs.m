@@ -1,5 +1,5 @@
 function imgs = validate_multi_path_imgs(paths)
-    % Validates paths for images to multi calibration.
+    % Validates paths for multi images.
     %
     % Inputs:
     %   paths - cell; MxN paths to image files

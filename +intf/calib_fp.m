@@ -1,6 +1,22 @@
-function calib = calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin)
+function calib = calib_fp(img_cbs, p_fp_p_dss, calib_config, intrins)
+    % Performs four point calibration.
+    %
+    % Inputs:
+    %   img_cbs - class.img.intf; MxN calibration board image interfaces.
+    %   p_fp_p_dss - cell; MxN cell of four point boxes around the
+    %       calibration board images in distorted pixel coordinates
+    %   calib_config - struct; struct returned by intf.load_calib_config()
+    %   intrins - struct; optional. If passed in, intrinsics will not be
+    %       optimized.
+    %       .A - array; camera matrix
+    %       .d - array; array of distortion coefficients
+    %
+    % Outputs:
+    %   calib - struct;
+    %       .config - struct; copy of input calib_config
+    %       .cam - struct; calibration for i'th camera
 
-    % Get single four point calibration function
+    % Get single homography calibration function
     switch calib_config.calib_optimization
         case 'distortion_refinement'
             f_single_calib_H = @alg.single_calib_H_dr;
@@ -50,12 +66,12 @@ function calib = calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin)
     for i = 1:num_cams
         for j = 1:num_boards
             % Get four point box in pixel coordinates
-            if exist('intrin', 'var')
+            if exist('intrins', 'var')
                 % If intrinsics are passed in, undistort four point box
                 p_fp_ps = obj_distortion.p_p_d2p_p(p_fp_p_dss{j, i}, ...
                                                    p_fp_p_dss{j, i}, ...     % Use distorted points for initial guess
-                                                   intrin(i).A, ...
-                                                   intrin(i).d);
+                                                   intrins(i).A, ...
+                                                   intrins(i).d);
             else
                 % If intrinsics arent available, assume distortion is small
                 p_fp_ps = p_fp_p_dss{j, i};
@@ -68,16 +84,16 @@ function calib = calib_fp(img_cbs, p_fp_p_dss, calib_config, intrin)
         end
     end
 
-    % Call stereo homography calibration function ------------------------%
+    % Call multi homography calibration function -------------------------%
 
-    if exist('intrin', 'var')
+    if exist('intrins', 'var')
         calib = alg.multi_calib_H(f_single_calib_H, ...
                                   obj_calib, ...
                                   calib_config.obj_cb_geom, ...
                                   img_cbs, ...
                                   H_w2ps, ...
                                   calib_config, ...
-                                  intrin);
+                                  intrins);
     else
         calib = alg.multi_calib_H(f_single_calib_H, ...
                                   obj_calib, ...

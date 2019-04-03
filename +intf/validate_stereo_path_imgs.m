@@ -1,12 +1,12 @@
 function imgs = validate_stereo_path_imgs(paths)
-    % Validates paths for images to stereo calibration.
+    % Validates paths for stereo images.
     %
     % Inputs:
     %   paths - struct;
     %       .L and .R - paths to image files
     %
     % Outputs:
-    %   imgs - class.img.path; MxN img objects
+    %   imgs - class.img.path; Mx2 img objects
 
     % Make sure there are the same number of elements
     num_L = numel(paths.L);

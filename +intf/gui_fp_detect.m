@@ -1,4 +1,4 @@
-function gui_fp_detect_LoG(p_fpss, debug_multi_fp_detect_LoG, img_cbs, calib_config, f)
+function gui_fp_detect(p_fpss, img_cbs, debug_fp, calib_config, f)
     % GUI for debugging four point LoG detection
 
     if ~exist('f', 'var')
@@ -143,7 +143,7 @@ function gui_fp_detect_LoG(p_fpss, debug_multi_fp_detect_LoG, img_cbs, calib_con
                 end
             end
 
-            % Plot debugging info ----------------------------------------%
+            % Plot Calibration board -------------------------------------%
 
             for i = 1:num_cams
                 % Resize array
@@ -153,26 +153,49 @@ function gui_fp_detect_LoG(p_fpss, debug_multi_fp_detect_LoG, img_cbs, calib_con
                 % Rescale four points
                 p_fps = alg.p2imresize(p_fpss{idx_board, i}, sf);
 
-                % Plot
-                debug.plot_single_fp_detect_LoG(array, ...
-                                                p_fps, ...
-                                                debug_multi_fp_detect_LoG(idx_board, i).blobs, ...
-                                                debug_multi_fp_detect_LoG(idx_board, i).ellipses, ...
-                                                axes_cbs(i));
-                title(axes_cbs(i), ['Blobs, ellipses, and four points (' num2str(i) ')'], 'FontSize', 10);
+                % Plot four points
+                debug.plot_single_fp_detect(array, p_fps, axes_cbs(i));
+
+                if strcmp(calib_config.fp_detector, 'LoG')
+                    % Plot blobs and ellipses
+                    axes(axes_cbs(i)); %#ok<LAXES>
+                    hold(axes_cbs(i), 'on');
+                    for j = 1:size(debug_fp(idx_board, i).blobs, 1)
+                        external.ellipse(debug_fp(idx_board, i).blobs(j, 3), ...
+                                         debug_fp(idx_board, i).blobs(j, 4), ...
+                                         debug_fp(idx_board, i).blobs(j, 5), ...
+                                         debug_fp(idx_board, i).blobs(j, 1), ...
+                                         debug_fp(idx_board, i).blobs(j, 2), ...
+                                         'r');
+                    end
+                    for j = 1:size(debug_fp(idx_board, i).ellipses, 1)
+                        external.ellipse(debug_fp(idx_board, i).ellipses(j, 3), ...
+                                         debug_fp(idx_board, i).ellipses(j, 4), ...
+                                         debug_fp(idx_board, i).ellipses(j, 5), ...
+                                         debug_fp(idx_board, i).ellipses(j, 1), ...
+                                         debug_fp(idx_board, i).ellipses(j, 2), ...
+                                         'g');
+                    end
+                    % Remove hold
+                    hold(axes_cbs(i), 'off');
+                end
+
+                title(axes_cbs(i), 'Four point debugging info', 'FontSize', 10);
                 xlabel(axes_cbs(i), ...
                        ['Name: ' img_cbs(idx_board, i).get_name()], ...
                        'FontSize', 8, 'Interpreter', 'none');
             end
 
-            % Plot patch matches -----------------------------------------%
+            % Plot four point patches ------------------------------------%
 
             for i = 1:num_cams
                 for j = 1:4
-                    debug.plot_patch_match(debug_multi_fp_detect_LoG(idx_board, i).patch_matches(j).patch, ...
-                                           debug_multi_fp_detect_LoG(idx_board, i).patch_matches(j).template, ...
-                                           axes_patches(j, i));
-                    title(axes_patches(j, i), [num2str(j) ' (CC val: ' num2str(debug_multi_fp_detect_LoG(idx_board, i).patch_matches(j).val_cc) ')'], 'FontSize', 7);
+                    if strcmp(calib_config.fp_detector, 'LoG')
+                        debug.plot_patch_match(debug_fp(idx_board, i).patch_matches(j).patch, ...
+                                               debug_fp(idx_board, i).patch_matches(j).template, ...
+                                               axes_patches(j, i));
+                        title(axes_patches(j, i), [num2str(j) ' (CC val: ' num2str(debug_fp(idx_board, i).patch_matches(j).val_cc) ')'], 'FontSize', 7);
+                    end
                 end
             end
         catch e
@@ -187,26 +210,28 @@ function gui_fp_detect_LoG(p_fpss, debug_multi_fp_detect_LoG, img_cbs, calib_con
             % Set name
             set(f, 'Name', ['Board: ' num2str(idx_board) ' of ' num2str(num_boards) '; mode: ' mode '; (NOTE: press left, right, "1", "2", "3", "4", "w", and "esc" key arrows to toggle)']);
 
-            % Set bounding box
-            for i = 1:num_cams
-                switch mode
-                    case 'whole'
-                        bb = bb_img(img_cbs(idx_board, i), sf);
-                    case '1'
-                        bb = bb_ellipse(debug_multi_fp_detect_LoG(idx_board, i).patch_matches(1).ellipse);
-                    case '2'
-                        bb = bb_ellipse(debug_multi_fp_detect_LoG(idx_board, i).patch_matches(2).ellipse);
-                    case '3'
-                        bb = bb_ellipse(debug_multi_fp_detect_LoG(idx_board, i).patch_matches(3).ellipse);
-                    case '4'
-                        bb = bb_ellipse(debug_multi_fp_detect_LoG(idx_board, i).patch_matches(4).ellipse);
-                    case 'worst'
-                        % Get the worst patch
-                        [~, idx] = min([debug_multi_fp_detect_LoG(idx_board, i).patch_matches.val_cc]);
-                        bb = bb_ellipse(debug_multi_fp_detect_LoG(idx_board, i).patch_matches(idx).ellipse);
-                end
+            if strcmp(calib_config.fp_detector, 'LoG')
+                % Set bounding box
+                for i = 1:num_cams
+                    switch mode
+                        case 'whole'
+                            bb = bb_img(img_cbs(idx_board, i), sf);
+                        case '1'
+                            bb = bb_ellipse(debug_fp(idx_board, i).patch_matches(1).ellipse);
+                        case '2'
+                            bb = bb_ellipse(debug_fp(idx_board, i).patch_matches(2).ellipse);
+                        case '3'
+                            bb = bb_ellipse(debug_fp(idx_board, i).patch_matches(3).ellipse);
+                        case '4'
+                            bb = bb_ellipse(debug_fp(idx_board, i).patch_matches(4).ellipse);
+                        case 'worst'
+                            % Get the worst patch
+                            [~, idx] = min([debug_fp(idx_board, i).patch_matches.val_cc]);
+                            bb = bb_ellipse(debug_fp(idx_board, i).patch_matches(idx).ellipse);
+                    end
 
-                set(axes_cbs(i), 'Xlim', bb(:, 1), 'Ylim', bb(:, 2));
+                    set(axes_cbs(i), 'Xlim', bb(:, 1), 'Ylim', bb(:, 2));
+                end
             end
         catch e
             if ishandle(f)

@@ -1,4 +1,12 @@
 function save_calib(calib, file_path)
+    % Saves a calibration to file path
+    %
+    % Inputs:
+    %   calib - struct; calibration
+    %   file_path - string; path to save calibration
+    %
+    % Outputs:
+    %   none
 
     % This will clear the file
     fclose(fopen(file_path, 'w'));

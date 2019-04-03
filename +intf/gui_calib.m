@@ -158,7 +158,7 @@ function gui_calib(calib, f)
             % Plot calibration board class -------------------------------%
 
             debug.plot_cb_geom(calib.config.obj_cb_geom, axes_cb_geom);
-            title(axes_cb_geom, 'Calibration board', 'FontSize', 10);
+            title(axes_cb_geom, 'Calibration board geometry', 'FontSize', 10);
             drawnow
 
             % Plot calibrated board image --------------------------------%

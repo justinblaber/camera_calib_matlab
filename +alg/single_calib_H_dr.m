@@ -88,6 +88,8 @@ function calib = single_calib_H_dr(obj_calib, obj_cb_geom, img_cbs, H_w2ps, cali
 
             % Get undistorted calibration board image array
             if exist('A', 'var') && exist('d', 'var')
+                util.verbose_fprintf('Intrinsics available... undistorting image. ', 2, calib_config);
+
                 % undistort array
                 array_cb = alg.undistort_array(img_cbs(i).get_array_gs(), ...
                                                obj_calib, ...

@@ -15,7 +15,7 @@ function R = approx_R(R)
     end
 
     % Use SVD and set singular values to 1
-    [U, ~, V] = svd(R);
+    [U, ~, V] = alg.safe_svd(R);
     R = U*V';
 
     % Rotation matrix must have a determinant of positive 1

@@ -33,7 +33,7 @@ function H_12 = homography_p2p_lin(p_1s, p_2s)
                 [zeros(size(p_1_norms')) p_1_norms' -p_2_norms(2, :)'.*p_1_norms']);
 
     % Solution is the last column of V
-    [~, ~, V] = svd(L);
+    [~, ~, V] = alg.safe_svd(L);
     H_12_norm = reshape(V(:, end), 3, 3)';
 
     % "Undo" normalization to get desired homography

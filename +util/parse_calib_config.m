@@ -17,8 +17,8 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'target_optimization'                           , 'required', true , 'default', ''                             , 'validation_fun', @validate_target_optimization);
 
     % Calibration board geometry
-    field_info(end+1) = struct('field', 'height_cb'                                     , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar);
-    field_info(end+1) = struct('field', 'width_cb'                                      , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar);
+    field_info(end+1) = struct('field', 'height_cb'                                     , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_or_nan);
+    field_info(end+1) = struct('field', 'width_cb'                                      , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_or_nan);
     field_info(end+1) = struct('field', 'num_targets_height'                            , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_int_or_nan);
     field_info(end+1) = struct('field', 'num_targets_width'                             , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_int_or_nan);
     field_info(end+1) = struct('field', 'target_spacing'                                , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_or_nan);

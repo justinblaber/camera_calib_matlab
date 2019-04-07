@@ -67,12 +67,13 @@ classdef csgrid < class.cb_geom.target_base
             hs = obj.get_target_spacing()/2;
 
             % Iterate
+            boundary_ws = cell(size(p_cb_ws, 1), 1);
             for i = 1:size(p_cb_ws, 1)
                 % Get boundary around this point
                 boundary_ws{i} = [p_cb_ws(i, 1)-hs p_cb_ws(i, 2)-hs; ...
                                   p_cb_ws(i, 1)-hs p_cb_ws(i, 2)+hs; ...
                                   p_cb_ws(i, 1)+hs p_cb_ws(i, 2)+hs; ...
-                                  p_cb_ws(i, 1)+hs p_cb_ws(i, 2)-hs]; %#ok<AGROW>
+                                  p_cb_ws(i, 1)+hs p_cb_ws(i, 2)-hs];
             end
         end
     end

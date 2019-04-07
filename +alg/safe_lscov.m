@@ -38,16 +38,18 @@ function varargout = safe_lscov(varargin)
         [varargout{1:nargout}] = lscov(varargin{:});
     else
         % Output nans
-        for i = 1:max(1, nargout)
+        num_outputs = max(1, nargout);
+        varargout = cell(1, num_outputs);
+        for i = 1:num_outputs
             switch i
                 case 1 % x
-                    varargout{i} = nan(size(A, 2), size(B, 2)); %#ok<AGROW>
+                    varargout{i} = nan(size(A, 2), size(B, 2));
                 case 2 % stdx
-                    varargout{i} = nan(size(A, 2), 1); %#ok<AGROW>
+                    varargout{i} = nan(size(A, 2), 1);
                 case 3 % mse
-                    varargout{i} = nan; %#ok<AGROW>
+                    varargout{i} = nan;
                 case 4 % S
-                    varargout{i} = nan(size(A, 2), size(A, 2)); %#ok<AGROW>
+                    varargout{i} = nan(size(A, 2), size(A, 2));
                 otherwise
                     error('There must only be 1 to 4 output arguments!')
             end

@@ -22,11 +22,11 @@ function gui_calib(calib, f)
     axes_calib_cb_imgs = matlab.graphics.axis.Axes.empty();
 
     % Get residuals
-    ress = {};
+    ress = cell(num_boards, num_cams);
     for i = 1:num_cams %#ok<FXUP>
         for j = 1:num_boards
-            ress{j, i} = calib.cam(i).extrin(j).p_cb_p_d_ms - calib.cam(i).extrin(j).p_cb_p_ds; %#ok<AGROW>
-            ress{j, i} = ress{j, i}(calib.cam(i).extrin(j).idx_valid, :); %#ok<AGROW>
+            ress{j, i} = calib.cam(i).extrin(j).p_cb_p_d_ms - calib.cam(i).extrin(j).p_cb_p_ds;
+            ress{j, i} = ress{j, i}(calib.cam(i).extrin(j).idx_valid, :);
         end
     end
     max_res = max(max(vertcat(ress{:})));
@@ -121,9 +121,10 @@ function gui_calib(calib, f)
             pos_cb_geom = [padding_width padding_height pos_extrinsics(3) 1-height_extrinsics-3*padding_height];
             axes_cb_geom = axes('Position', pos_cb_geom, 'Parent', f);
 
+            axes_ress = matlab.graphics.axis.Axes.empty();
             for i = 1:num_cams %#ok<FXUP>
                 pos_res = [pos_cb_geom(1)+pos_cb_geom(3)+i*padding_width+(i-1)*width_res pos_extrinsics(2) width_res height_res];
-                axes_ress(i) = axes('Position', pos_res, 'Parent', f); %#ok<AGROW>
+                axes_ress(i) = axes('Position', pos_res, 'Parent', f);
 
                 pos_calib_cb_img = [pos_res(1) pos_cb_geom(2) pos_res(3) pos_cb_geom(4)];
                 axes_calib_cb_imgs(i) = axes('Position', pos_calib_cb_img, 'Parent', f);

@@ -93,7 +93,7 @@ classdef base < class.distortion.intf %#ok<*PROPLC>
             f_p_p2p_p_d = matlabFunction(sym_p_p2p_p_d);
 
             % Get function handles for distortion function partial derivatives
-            args_p_p2p_p_d = argnames(sym_p_p2p_p_d);            
+            args_p_p2p_p_d = argnames(sym_p_p2p_p_d);
             f_dp_p_d_dargs = cell(numel(args_p_p2p_p_d), 1);
             for i = 1:numel(args_p_p2p_p_d)
                 % Differentiate
@@ -123,9 +123,9 @@ classdef base < class.distortion.intf %#ok<*PROPLC>
             num_params_d = num_args - 7;
         end
 
-        function args = get_d_args(obj)                        
+        function args = get_d_args(obj)
             num_params_d = obj.get_num_params_d();
-            
+
             sym_args = argnames(obj.get_sym_p_p2p_p_d());
             args = cell(num_params_d, 1);
             for i = 1:num_params_d
@@ -210,7 +210,7 @@ classdef base < class.distortion.intf %#ok<*PROPLC>
             f_dp_p_d_dargs = obj.get_f_dp_p_d_dargs();
 
             num_params_d = obj.get_num_params_d();
-            
+
             jacob = zeros(2*size(p_ps, 1), num_params_d);
             for i = 1:num_params_d
                 dp_p_d_dd_i = class.distortion.base.dp_p_d_darg(f_dp_p_d_dargs{7+i}, p_ps, A, d); % Offset of 7

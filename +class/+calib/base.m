@@ -273,8 +273,8 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
             end
 
             % Camera 1 extrinsics
-            Rs = cell(num_boards, num_cams);
-            ts = cell(num_boards, num_cams);
+            Rs = cell(num_boards, 1);
+            ts = cell(num_boards, 1);
             for i = 1:num_boards
                 % Parse R
                 [r, params] = obj.pop_param(params, obj.get_num_params_r());

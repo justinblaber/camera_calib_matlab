@@ -3,8 +3,8 @@ classdef custom < class.cb_geom.size_intf & class.cb_geom.fp_intf & class.cb_geo
 
     methods(Access = public)
         function obj = custom(opts) %#ok<INUSD>
-        end        
-        
+        end
+
         % Abstract methods -----------------------------------------------%
 
         function h = get_cb_height(obj) %#ok<MANU>

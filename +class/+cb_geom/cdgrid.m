@@ -87,12 +87,13 @@ classdef cdgrid < class.cb_geom.target_base
             s = obj.get_target_spacing();
 
             % Iterate
+            boundary_ws = cell(size(p_cb_ws, 1), 1);
             for i = 1:size(p_cb_ws, 1)
                 % Get boundary around this point
                 boundary_ws{i} = [p_cb_ws(i, 1)-s p_cb_ws(i, 2); ...
                                   p_cb_ws(i, 1)   p_cb_ws(i, 2)+s; ...
                                   p_cb_ws(i, 1)+s p_cb_ws(i, 2); ...
-                                  p_cb_ws(i, 1)   p_cb_ws(i, 2)-s]; %#ok<AGROW>
+                                  p_cb_ws(i, 1)   p_cb_ws(i, 2)-s];
             end
         end
     end

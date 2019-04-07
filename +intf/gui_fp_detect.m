@@ -130,6 +130,7 @@ function gui_fp_detect(p_fpss, img_cbs, debug_fp, calib_config, f)
             width_patch = (1-(4*num_cams+1)*padding_width)/(4*num_cams);
             width_cb = (1-(num_cams+1)*padding_width)/num_cams;
 
+            axes_patches = matlab.graphics.axis.Axes.empty();
             for i = 1:num_cams
                 pos_cb = [i*padding_width+(i-1)*width_cb 2*padding_height+height_patch width_cb height_cb];
                 axes_cbs(i) = axes('Position', pos_cb, 'Parent', f);
@@ -139,7 +140,7 @@ function gui_fp_detect(p_fpss, img_cbs, debug_fp, calib_config, f)
                                  padding_height  ...
                                  width_patch ...
                                  height_patch];
-                    axes_patches(j, i) = axes('Position', pos_patch, 'Parent', f); %#ok<AGROW>
+                    axes_patches(j, i) = axes('Position', pos_patch, 'Parent', f);
                 end
             end
 
@@ -160,20 +161,20 @@ function gui_fp_detect(p_fpss, img_cbs, debug_fp, calib_config, f)
                     % Plot blobs and ellipses
                     axes(axes_cbs(i)); %#ok<LAXES>
                     hold(axes_cbs(i), 'on');
-                    for j = 1:size(debug_fp(idx_board, i).blobs, 1)
-                        external.ellipse(debug_fp(idx_board, i).blobs(j, 3), ...
-                                         debug_fp(idx_board, i).blobs(j, 4), ...
-                                         debug_fp(idx_board, i).blobs(j, 5), ...
-                                         debug_fp(idx_board, i).blobs(j, 1), ...
-                                         debug_fp(idx_board, i).blobs(j, 2), ...
+                    for j = 1:size(debug_fp{idx_board, i}.blobs, 1)
+                        external.ellipse(debug_fp{idx_board, i}.blobs(j, 3), ...
+                                         debug_fp{idx_board, i}.blobs(j, 4), ...
+                                         debug_fp{idx_board, i}.blobs(j, 5), ...
+                                         debug_fp{idx_board, i}.blobs(j, 1), ...
+                                         debug_fp{idx_board, i}.blobs(j, 2), ...
                                          'r');
                     end
-                    for j = 1:size(debug_fp(idx_board, i).ellipses, 1)
-                        external.ellipse(debug_fp(idx_board, i).ellipses(j, 3), ...
-                                         debug_fp(idx_board, i).ellipses(j, 4), ...
-                                         debug_fp(idx_board, i).ellipses(j, 5), ...
-                                         debug_fp(idx_board, i).ellipses(j, 1), ...
-                                         debug_fp(idx_board, i).ellipses(j, 2), ...
+                    for j = 1:size(debug_fp{idx_board, i}.ellipses, 1)
+                        external.ellipse(debug_fp{idx_board, i}.ellipses(j, 3), ...
+                                         debug_fp{idx_board, i}.ellipses(j, 4), ...
+                                         debug_fp{idx_board, i}.ellipses(j, 5), ...
+                                         debug_fp{idx_board, i}.ellipses(j, 1), ...
+                                         debug_fp{idx_board, i}.ellipses(j, 2), ...
                                          'g');
                     end
                     % Remove hold
@@ -191,10 +192,10 @@ function gui_fp_detect(p_fpss, img_cbs, debug_fp, calib_config, f)
             for i = 1:num_cams
                 for j = 1:4
                     if strcmp(calib_config.fp_detector, 'LoG')
-                        debug.plot_patch_match(debug_fp(idx_board, i).patch_matches(j).patch, ...
-                                               debug_fp(idx_board, i).patch_matches(j).template, ...
+                        debug.plot_patch_match(debug_fp{idx_board, i}.patch_matches(j).patch, ...
+                                               debug_fp{idx_board, i}.patch_matches(j).template, ...
                                                axes_patches(j, i));
-                        title(axes_patches(j, i), [num2str(j) ' (CC val: ' num2str(debug_fp(idx_board, i).patch_matches(j).val_cc) ')'], 'FontSize', 7);
+                        title(axes_patches(j, i), [num2str(j) ' (CC val: ' num2str(debug_fp{idx_board, i}.patch_matches(j).val_cc) ')'], 'FontSize', 7);
                     end
                 end
             end
@@ -217,17 +218,17 @@ function gui_fp_detect(p_fpss, img_cbs, debug_fp, calib_config, f)
                         case 'whole'
                             bb = bb_img(img_cbs(idx_board, i), sf);
                         case '1'
-                            bb = bb_ellipse(debug_fp(idx_board, i).patch_matches(1).ellipse);
+                            bb = bb_ellipse(debug_fp{idx_board, i}.patch_matches(1).ellipse);
                         case '2'
-                            bb = bb_ellipse(debug_fp(idx_board, i).patch_matches(2).ellipse);
+                            bb = bb_ellipse(debug_fp{idx_board, i}.patch_matches(2).ellipse);
                         case '3'
-                            bb = bb_ellipse(debug_fp(idx_board, i).patch_matches(3).ellipse);
+                            bb = bb_ellipse(debug_fp{idx_board, i}.patch_matches(3).ellipse);
                         case '4'
-                            bb = bb_ellipse(debug_fp(idx_board, i).patch_matches(4).ellipse);
+                            bb = bb_ellipse(debug_fp{idx_board, i}.patch_matches(4).ellipse);
                         case 'worst'
                             % Get the worst patch
-                            [~, idx] = min([debug_fp(idx_board, i).patch_matches.val_cc]);
-                            bb = bb_ellipse(debug_fp(idx_board, i).patch_matches(idx).ellipse);
+                            [~, idx] = min([debug_fp{idx_board, i}.patch_matches.val_cc]);
+                            bb = bb_ellipse(debug_fp{idx_board, i}.patch_matches(idx).ellipse);
                     end
 
                     set(axes_cbs(i), 'Xlim', bb(:, 1), 'Ylim', bb(:, 2));

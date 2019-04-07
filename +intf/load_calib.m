@@ -17,9 +17,10 @@ function calib = load_calib(file_path)
 
     % Parse calibration
     i = 1;
+    calib_cams = struct('intrin', {}, 'extrin', {}, 'R_1', {}, 't_1', {});
     while isfield(data, ['A_cam' num2str(i)])
         % Parse single cameras
-        [calib_cams(i), data] = util.parse_single_cam(data, ['_cam' num2str(i)]); %#ok<AGROW>
+        [calib_cams(i), data] = util.parse_single_cam(data, ['_cam' num2str(i)]);
 
         % Increment
         i = i + 1;

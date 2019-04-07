@@ -27,14 +27,16 @@ function [p_cb_p, cov_cb_p, debug] = refine_checker_point(p_cb_p_init, boundary_
     % Compute half window ------------------------------------------------%
 
     % Form lines from boundary points
+    l_ps = cell(size(boundary_p_center, 1), 1);
     for i = 1:size(boundary_p_center, 1)-1
-        l_ps{i} = alg.points2line(boundary_p_center(i, :), boundary_p_center(i+1, :)); %#ok<AGROW>
+        l_ps{i} = alg.points2line(boundary_p_center(i, :), boundary_p_center(i+1, :));
     end
-    l_ps{end+1} = alg.points2line(boundary_p_center(end, :), boundary_p_center(1, :));
+    l_ps{end} = alg.points2line(boundary_p_center(end, :), boundary_p_center(1, :));
 
     % Get shortest distance from lines to center (zero)
+    d_ps = Inf(numel(l_ps), 1);
     for i = 1:numel(l_ps)
-        d_ps(i) = alg.point_line_distance([0 0], l_ps{i}); %#ok<AGROW>
+        d_ps(i) = alg.point_line_distance([0 0], l_ps{i});
     end
 
     % Get minimum distance

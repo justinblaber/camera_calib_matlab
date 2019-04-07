@@ -23,14 +23,16 @@ function varargout = safe_svd(varargin)
         [varargout{1:nargout}] = svd(varargin{:});
     else
         % Output nans
-        for i = 1:max(1, nargout)
+        num_outputs = max(1, nargout);
+        varargout = cell(1, num_outputs);
+        for i = 1:num_outputs
             switch i
                 case 1 % U
-                    varargout{i} = nan(size(A, 1), size(A, 1)); %#ok<AGROW>
+                    varargout{i} = nan(size(A, 1), size(A, 1));
                 case 2 % S
-                    varargout{i} = nan(size(A)); %#ok<AGROW>
+                    varargout{i} = nan(size(A));
                 case 3 % V
-                    varargout{i} = nan(size(A, 2), size(A, 2)); %#ok<AGROW>
+                    varargout{i} = nan(size(A, 2), size(A, 2));
                 otherwise
                     error('There must only be 1 to 3 output arguments!')
             end

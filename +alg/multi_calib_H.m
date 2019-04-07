@@ -30,6 +30,7 @@ function calib = multi_calib_H(f_single_calib_H, obj_calib, obj_cb_geom, img_cbs
     num_cams = size(img_cbs, 2);
     num_boards = size(img_cbs, 1);
 
+    calib_singles = struct('config', cell(1, num_cams), 'cam', []);
     for i = 1:num_cams
         % Calibrate camera
         util.verbose_disp('---------', 1, calib_config);
@@ -41,13 +42,13 @@ function calib = multi_calib_H(f_single_calib_H, obj_calib, obj_cb_geom, img_cbs
                                                 img_cbs(:, i), ...
                                                 H_w2ps(:, i), ...
                                                 calib_config, ...
-                                                intrins(i)); %#ok<AGROW>
+                                                intrins(i));
         else
             calib_singles(i) = f_single_calib_H(obj_calib, ...
                                                 obj_cb_geom, ...
                                                 img_cbs(:, i), ...
                                                 H_w2ps(:, i), ...
-                                                calib_config); %#ok<AGROW>
+                                                calib_config);
         end
     end
 
@@ -60,18 +61,25 @@ function calib = multi_calib_H(f_single_calib_H, obj_calib, obj_cb_geom, img_cbs
 
     % Package initial guesses and other parameters -----------------------%
 
+    As = cell(1, num_cams);
+    ds = cell(1, num_cams);
+    Rs = cell(num_boards, num_cams);
+    ts = cell(num_boards, num_cams);
+    p_cb_p_dss = cell(num_boards, num_cams);
+    cov_cb_p_dss = cell(num_boards, num_cams);
+    idx_valids = cell(num_boards, num_cams);
     for i = 1:num_cams
         % Get intrinsics
-        As{i} = calib_singles(i).cam.intrin.A; %#ok<AGROW>
-        ds{i} = calib_singles(i).cam.intrin.d; %#ok<AGROW>
+        As{i} = calib_singles(i).cam.intrin.A;
+        ds{i} = calib_singles(i).cam.intrin.d;
 
         % Get extrinsics
         for j = 1:num_boards
-            Rs{j, i} = calib_singles(i).cam.extrin(j).R; %#ok<AGROW>
-            ts{j, i} = calib_singles(i).cam.extrin(j).t; %#ok<AGROW>
-            p_cb_p_dss{j, i} = calib_singles(i).cam.extrin(j).p_cb_p_ds; %#ok<AGROW>
-            cov_cb_p_dss{j, i} = calib_singles(i).cam.extrin(j).cov_cb_p_ds; %#ok<AGROW>
-            idx_valids{j, i} = calib_singles(i).cam.extrin(j).idx_valid; %#ok<AGROW>
+            Rs{j, i} = calib_singles(i).cam.extrin(j).R;
+            ts{j, i} = calib_singles(i).cam.extrin(j).t;
+            p_cb_p_dss{j, i} = calib_singles(i).cam.extrin(j).p_cb_p_ds;
+            cov_cb_p_dss{j, i} = calib_singles(i).cam.extrin(j).cov_cb_p_ds;
+            idx_valids{j, i} = calib_singles(i).cam.extrin(j).idx_valid;
         end
     end
 
@@ -89,6 +97,8 @@ function calib = multi_calib_H(f_single_calib_H, obj_calib, obj_cb_geom, img_cbs
 
     % Get initial guesses for transform between camera 1 and camera i ----%
 
+    R_1s = cell(1, num_cams);
+    t_1s = cell(1, num_cams);
     for i = 1:num_cams
         % Get least squares linear initial guess for R_1
         r = [];
@@ -101,8 +111,8 @@ function calib = multi_calib_H(f_single_calib_H, obj_calib, obj_cb_geom, img_cbs
         end
 
         % Get least squares approximation
-        R_1s{i} = reshape(alg.safe_lscov(R, r), 3, 3); %#ok<AGROW>
-        R_1s{i} = alg.approx_R(R_1s{i}); %#ok<AGROW> % Get best rotational approximation
+        R_1s{i} = reshape(alg.safe_lscov(R, r), 3, 3);
+        R_1s{i} = alg.approx_R(R_1s{i}); % Get best rotational approximation
 
         % Get least squares linear guess for t_1
         t = [];
@@ -113,7 +123,7 @@ function calib = multi_calib_H(f_single_calib_H, obj_calib, obj_cb_geom, img_cbs
         end
 
         % Get least squares approximation
-        t_1s{i} = alg.safe_lscov(T, t); %#ok<AGROW>
+        t_1s{i} = alg.safe_lscov(T, t);
     end
 
     % NOTE: R_1s{1} should be identity and t_1s{1} should be zero vector.

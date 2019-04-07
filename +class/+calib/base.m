@@ -261,33 +261,39 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
             %          r_1_1; t_1_1; r_1_2; t_1_2; ...; r_1_M, t_1_M]
 
             % Intrinsics
+            As = cell(1, num_cams);
+            ds = cell(1, num_cams);
             for i = 1:num_cams
                 % Parse A
                 [a, params] = obj.pop_param(params, obj.get_num_params_a());
-                As{i} = obj.a2A(a); %#ok<AGROW>
+                As{i} = obj.a2A(a);
 
                 % Parse d
-                [ds{i}, params] = obj.pop_param(params, obj.get_num_params_d()); %#ok<AGROW>
+                [ds{i}, params] = obj.pop_param(params, obj.get_num_params_d());
             end
 
             % Camera 1 extrinsics
+            Rs = cell(num_boards, 1);
+            ts = cell(num_boards, 1);
             for i = 1:num_boards
                 % Parse R
                 [r, params] = obj.pop_param(params, obj.get_num_params_r());
-                Rs{i, 1} = obj.r2R(r); %#ok<AGROW>
+                Rs{i, 1} = obj.r2R(r);
 
                 % Parse t
-                [ts{i, 1}, params] = obj.pop_param(params, obj.get_num_params_t()); %#ok<AGROW>
+                [ts{i, 1}, params] = obj.pop_param(params, obj.get_num_params_t());
             end
 
             % Camera 1 to camera i extrinsics
+            R_1s = cell(1, num_cams);
+            t_1s = cell(1, num_cams);
             for i = 1:num_cams
                 % Parse R
                 [r, params] = obj.pop_param(params, obj.get_num_params_r());
-                R_1s{i} = obj.r2R(r); %#ok<AGROW>
+                R_1s{i} = obj.r2R(r);
 
                 % Parse t
-                [t_1s{i}, params] = obj.pop_param(params, obj.get_num_params_t()); %#ok<AGROW>
+                [t_1s{i}, params] = obj.pop_param(params, obj.get_num_params_t());
             end
         end
 

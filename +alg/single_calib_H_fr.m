@@ -92,7 +92,7 @@ function calib = single_calib_H_fr(obj_calib, obj_cb_geom, img_cbs, H_w2ps, cali
         util.verbose_disp(['Performing frontal refinement iteration: ' num2str(it) '...'], 1, calib_config);
         util.verbose_disp('---', 2, calib_config);
 
-        % Get calibration board world points -----------------------------%
+        % Get calibration board pixel points -----------------------------%
 
         p_cb_pss = cell(num_boards, 1);
         cov_cb_pss = cell(num_boards, 1);
@@ -113,15 +113,15 @@ function calib = single_calib_H_fr(obj_calib, obj_cb_geom, img_cbs, H_w2ps, cali
             end
 
             % Resample array
-            array_frontal = alg.interp_array(img_cbs(i).get_array_gs(), ...
-                                             p_frontal_p_d, ...
-                                             calib_config.frontal_refinement_interp);
-            array_frontal = reshape(array_frontal, num_samples_height, num_samples_width);
+            array_cb_frontal = alg.interp_array(img_cbs(i).get_array_gs(), ...
+                                                p_frontal_p_d, ...
+                                                calib_config.frontal_refinement_interp);
+            array_cb_frontal = reshape(array_cb_frontal, num_samples_height, num_samples_width);
 
             % Refine points
             [p_cb_frontals, cov_cb_frontals, idx_valids{i}, debug{i}] = alg.refine_target_points_cb_w2p(p_cb_ws, ...
                                                                                                         boundary_ws, ...
-                                                                                                        array_frontal, ...
+                                                                                                        array_cb_frontal, ...
                                                                                                         @(p)(p.*samples_per_unit+1), ...
                                                                                                         @(p)(p.*samples_per_unit+1), ...
                                                                                                         calib_config);
@@ -135,8 +135,22 @@ function calib = single_calib_H_fr(obj_calib, obj_cb_geom, img_cbs, H_w2ps, cali
             cov_cb_pss{i} = cell(size(p_cb_pss{i}, 1), 1);
             for j = 1:numel(cov_cb_frontals)
                 if idx_valids{i}(j)
-                    % TODO: Update covariance
-                    cov_cb_pss{i}{j} = eye(2);
+                    % Use taylor series to approximate covariance of
+                    % distorted coordinates; from:
+                    %
+                    %   http://www.stat.cmu.edu/~hseltman/files/ratio.pdf
+                    %   https://en.wikipedia.org/wiki/Propagation_of_uncertainty#Non-linear_combinations
+                    %
+                    % Note that only covariances from x_cb_w and y_cb_w are used
+                    p_cb_w = (p_cb_frontals(j, :)-1)./samples_per_unit;    % Note this is the MEASURED calibration board world point
+                    cov_cb_w = cov_cb_frontals{j}./(samples_per_unit^2);   % Must square scaling factor for covariance
+
+                    % Get Jacobian
+                    dp_cb_p_dp_cb_w = obj_calib.dp_cb_p_dp_cb_w(p_cb_w, H_w2ps{i});
+                    dp_cb_p_dp_cb_w = full(dp_cb_p_dp_cb_w);
+
+                    % Update covariance
+                    cov_cb_pss{i}{j} = dp_cb_p_dp_cb_w*cov_cb_w*dp_cb_p_dp_cb_w';
                 end
             end
 

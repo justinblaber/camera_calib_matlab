@@ -78,6 +78,10 @@ classdef base < class.calib.A_intf & class.calib.R_intf & class.calib.cb_w2p_int
             jacob = obj.obj_cb_w2p.dp_cb_p_dH(p_cb_ws, H);
         end
 
+        function jacob = dp_cb_p_dp_cb_w(obj, p_cb_ws, H)
+            jacob = obj.obj_cb_w2p.dp_cb_p_dp_cb_w(p_cb_ws, H);
+        end
+
         function H_w2p = homography_cb_w2p(obj, p_cb_ws, p_cb_ps, cov)
             if ~exist('cov', 'var')
                 H_w2p = obj.obj_cb_w2p.homography_cb_w2p(p_cb_ws, p_cb_ps);

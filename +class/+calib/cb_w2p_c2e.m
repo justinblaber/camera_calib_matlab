@@ -16,7 +16,7 @@ classdef cb_w2p_c2e < class.calib.cb_w2p_base
         end
 
         function jacob = dp_cb_p_dH(obj, p_cb_ws, H)
-            jacob = alg.dp_dH_c2e(p_cb_ws, H, obj.get_opts().circle_radius);
+            jacob = alg.dp_2_dH_c2e(p_cb_ws, H, obj.get_opts().circle_radius);
         end
 
         function H_w2p = homography_cb_w2p(obj, p_cb_ws, p_cb_ps, cov)

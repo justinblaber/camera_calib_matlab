@@ -42,7 +42,7 @@ function H_12 = homography_c2e_nonlin(p_1s, p_2s, H_12_init, r_1, opts, cov)
         H_12 = reshape([params; 1], 3, 3);
 
         % Compute jacobian
-        jacob = alg.dp_dH_c2e(p_1s, H_12, r_1);
+        jacob = alg.dp_2_dH_c2e(p_1s, H_12, r_1);
         jacob = jacob(:, 1:end-1); % Remove last column since H_12(3, 3) is constant
 
         % Get residual

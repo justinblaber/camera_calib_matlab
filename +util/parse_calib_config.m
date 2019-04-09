@@ -46,6 +46,11 @@ function [calib_config, data] = parse_calib_config(data)
     % Distortion refinement
     field_info(end+1) = struct('field', 'distortion_refinement_it_cutoff'               , 'required', false, 'default', 1                              , 'validation_fun', @validate_pos_scalar_int);
 
+    % Frontal refinement
+    field_info(end+1) = struct('field', 'frontal_refinement_it_cutoff'                  , 'required', false, 'default', 1                              , 'validation_fun', @validate_pos_scalar_int);
+    field_info(end+1) = struct('field', 'frontal_refinement_samples_per_unit'           , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_or_nan);
+    field_info(end+1) = struct('field', 'frontal_refinement_interp'                     , 'required', false, 'default', 'spline'                       , 'validation_fun', @validate_interp);
+
     % Homography computation
     field_info(end+1) = struct('field', 'homography_p2p_it_cutoff'                      , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'homography_p2p_norm_cutoff'                    , 'required', false, 'default', 1e-6                           , 'validation_fun', @validate_pos_scalar);
@@ -195,7 +200,7 @@ function calib_config = validate_calib_optimization(calib_config, field)
     % field needs to be a string
     calib_config = validate_string(calib_config, field);
 
-    if ~any(strcmp(param, {'distortion_refinement'}))
+    if ~any(strcmp(param, {'distortion_refinement', 'frontal_refinement'}))
         field_class_error(field, param, 'calibration optimization');
     end
 end

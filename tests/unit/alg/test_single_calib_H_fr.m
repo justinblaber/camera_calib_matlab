@@ -1,10 +1,10 @@
-function test_single_calib_H_dr
+function test_single_calib_H_fr
     % Checker ------------------------------------------------------------%
     % Get tests path
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 
     % Read calibration config
-    calib_config = intf.load_calib_config(fullfile(tests_path, 'data', 'checker', 'checker_dr.conf'));
+    calib_config = intf.load_calib_config(fullfile(tests_path, 'data', 'checker', 'checker_fr.conf'));
 
     % Set images
     path_cbs = {fullfile(tests_path, 'data', 'checker', '1.jpg'), ...
@@ -32,14 +32,14 @@ function test_single_calib_H_dr
                                  calib_config);
 
     % Perform single calibration
-    calib_test = alg.single_calib_H_dr(obj_calib, ...
+    calib_test = alg.single_calib_H_fr(obj_calib, ...
                                        calib_config.obj_cb_geom, ...
                                        img_cbs, ...
                                        H_w2ps, ...
                                        calib_config);
 
     % Assert
-    load(fullfile(tests_path, 'data', 'checker', 'calib_dr.mat'));
+    load(fullfile(tests_path, 'data', 'checker', 'calib_fr.mat'));
     assert(all(all(abs(calib_test.cam.intrin.A - calib.cam.intrin.A) < 1e-4)));
     assert(all(all(abs(calib_test.cam.intrin.d - calib.cam.intrin.d) < 1e-4)));
     for i = 1:numel(img_cbs)
@@ -54,7 +54,7 @@ function test_single_calib_H_dr
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 
     % Read calibration config
-    calib_config = intf.load_calib_config(fullfile(tests_path, 'data', 'circle', 'circle_dr.conf'));
+    calib_config = intf.load_calib_config(fullfile(tests_path, 'data', 'circle', 'circle_fr.conf'));
 
     % Set images
     path_cbs = {fullfile(tests_path, 'data', 'circle', '1.jpg'), ...
@@ -82,14 +82,14 @@ function test_single_calib_H_dr
                                  calib_config);
 
     % Perform single calibration
-    calib_test = alg.single_calib_H_dr(obj_calib, ...
+    calib_test = alg.single_calib_H_fr(obj_calib, ...
                                        calib_config.obj_cb_geom, ...
                                        img_cbs, ...
                                        H_w2ps, ...
                                        calib_config);
 
     % Assert
-    load(fullfile(tests_path, 'data', 'circle', 'calib_dr.mat'));
+    load(fullfile(tests_path, 'data', 'circle', 'calib_fr.mat'));
     assert(all(all(abs(calib_test.cam.intrin.A - calib.cam.intrin.A) < 1e-4)));
     assert(all(all(abs(calib_test.cam.intrin.d - calib.cam.intrin.d) < 1e-4)));
     for i = 1:numel(img_cbs)

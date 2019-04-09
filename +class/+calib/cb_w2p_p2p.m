@@ -16,7 +16,7 @@ classdef cb_w2p_p2p < class.calib.cb_w2p_base
         end
 
         function jacob = dp_cb_p_dH(obj, p_cb_ws, H) %#ok<INUSL>
-            jacob = alg.dp_dH_p2p(p_cb_ws, H);
+            jacob = alg.dp_2_dH_p2p(p_cb_ws, H);
         end
 
         function H_w2p = homography_cb_w2p(obj, p_cb_ws, p_cb_ps, cov)

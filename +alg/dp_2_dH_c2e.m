@@ -1,4 +1,4 @@
-function jacob = dp_dH_c2e(p_1s, H_12, r_1)
+function jacob = dp_2_dH_c2e(p_1s, H_12, r_1)
     % This will compute the jacobian of the points in perspective "2",
     % which are centers of ellipses, with respect to the input homography
     % and evaluated at points in perspective "1", which are centers of

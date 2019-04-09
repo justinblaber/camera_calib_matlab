@@ -87,6 +87,10 @@ function [e_cb_p, cov_cb_p] = dualconic(p_cb_p_init, boundary_p_center, array_cb
     sub_array_dx = alg.get_sub_array_bb(array_cb_dx, bb_sub_p);
     sub_array_dy = alg.get_sub_array_bb(array_cb_dy, bb_sub_p);
 
+    % Apply mask
+    sub_array_dx(~mask_sub) = 0;
+    sub_array_dy(~mask_sub) = 0;
+
     % Fit ellipse using dual conic method; note that coordinates will be
     % WRT sub_array.
     e_cb_p_sub = alg.refine_ellipse_dualconic(sub_array_dx, ...
@@ -130,6 +134,10 @@ function [e_cb_p, cov_cb_p] = edges(p_cb_p_init, boundary_p_center, array_cb, ar
     % Get sub arrays
     sub_array_dx = alg.get_sub_array_bb(array_cb_dx, bb_sub_p);
     sub_array_dy = alg.get_sub_array_bb(array_cb_dy, bb_sub_p);
+
+    % Apply mask
+    sub_array_dx(~mask_sub) = 0;
+    sub_array_dy(~mask_sub) = 0;
 
     % Get refined ellipse; note that coordinates will be WRT sub_array.
     e_cb_p_sub = e_cb_p;

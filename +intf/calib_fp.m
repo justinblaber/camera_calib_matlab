@@ -20,6 +20,8 @@ function calib = calib_fp(img_cbs, p_fp_p_dss, calib_config, intrins)
     switch calib_config.calib_optimization
         case 'distortion_refinement'
             f_single_calib_H = @alg.single_calib_H_dr;
+        case 'frontal_refinement'
+            f_single_calib_H = @alg.single_calib_H_fr;
         otherwise
             error(['Unknown calibration optimization: "' calib_config.calib_optimization '"']);
     end
@@ -27,10 +29,13 @@ function calib = calib_fp(img_cbs, p_fp_p_dss, calib_config, intrins)
     % Get world to pixel stuff
     switch calib_config.calib_optimization
         case 'distortion_refinement'
+            % Dispatch based on target type
             switch calib_config.target
                 case 'checker'
+                    % Point to point
                     obj_cb_w2p = class.calib.cb_w2p_p2p(calib_config);
                 case 'circle'
+                    % Center of circle to center of ellipse
                     obj_cb_w2p = class.calib.cb_w2p_c2e(calib_config);
                 otherwise
                     error(['Cannot obtain world to pixel parameterization ' ...
@@ -38,6 +43,9 @@ function calib = calib_fp(img_cbs, p_fp_p_dss, calib_config, intrins)
                            'optimization with ' calib_config.target ' ' ...
                            'target.']);
             end
+        case 'frontal_refinement'
+            % All frontal refinement targets should be point to point
+            obj_cb_w2p = class.calib.cb_w2p_p2p(calib_config);
         otherwise
             error(['Cannot obtain world to pixel parameterization for ' ...
                    calib_config.calib_optimization ' optimization.']);

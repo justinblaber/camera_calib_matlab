@@ -1,4 +1,4 @@
-function test_dp_dH_p2p
+function test_dp_2_dH_p2p
     p_1s = [0 0;
             0 1;
             1 0;
@@ -21,5 +21,5 @@ function test_dp_dH_p2p
     end
 
     % Assert
-    assert(all(all(abs(dp_dH - alg.dp_dH_p2p(p_1s, H_12)) < 1e-4)));
+    assert(all(all(abs(dp_dH - alg.dp_2_dH_p2p(p_1s, H_12)) < 1e-4)));
 end

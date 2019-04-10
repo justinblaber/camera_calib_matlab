@@ -1,11 +1,11 @@
-function calib = single_calib_H_dr(obj_calib, obj_cb_geom, img_cbs, H_w2ps, calib_config, intrin)
-    % Performs single camera calibration using "homography distortion
+function calib = single_calib_H_fr(obj_calib, obj_cb_geom, img_cbs, H_w2ps, calib_config, intrin)
+    % Performs single camera calibration using "homography frontal
     % refinement" method.
     %
     % Inputs:
     %   obj_calib - class.calib.base; calibration object
-    %   obj_cb_geom - class.cb_geom.target_intf; calibration board target
-    %       geometry interface.
+    %   obj_cb_geom - class.cb_geom.size_intf & class.cb_geom.target_intf;
+    %       calibration board size and target geometry interface.
     %   img_cbs - class.img.intf; Nx1 calibration board image interfaces.
     %   H_w2ps - cell; Nx1 cell of initial guesses of homographies which
     %       map world coordinates to pixel coordinates
@@ -39,7 +39,7 @@ function calib = single_calib_H_dr(obj_calib, obj_cb_geom, img_cbs, H_w2ps, cali
     %               this camera
 
     util.verbose_disp('------', 1, calib_config);
-    util.verbose_disp('Performing single calibration with distortion refinement method...', 1, calib_config);
+    util.verbose_disp('Performing single calibration with frontal refinement method...', 1, calib_config);
 
     % Perform single calibration -----------------------------------------%
 
@@ -61,19 +61,35 @@ function calib = single_calib_H_dr(obj_calib, obj_cb_geom, img_cbs, H_w2ps, cali
         optimization_type = 'full';      % Optimize intrinsics and extrinsics
     end
 
-    % Get distortion refinement iterations
-    if exist('intrin', 'var') || obj_calib.get_num_params_d() == 0
-        % Do not perform distortion refinement if intrinsics are already
-        % passed in or if distortion function has no distortion parameters.
-        distortion_refinement_it_cutoff = 1;
+    % Get frontal refinement iterations
+    frontal_refinement_it_cutoff = calib_config.frontal_refinement_it_cutoff;
+
+    % Get frontal array world coordinates --------------------------------%
+
+    % Get samples per unit
+    if ~isnan(calib_config.frontal_refinement_samples_per_unit)
+        samples_per_unit = calib_config.frontal_refinement_samples_per_unit;
     else
-        distortion_refinement_it_cutoff = calib_config.distortion_refinement_it_cutoff;
+        samples_per_unit = max((img_cbs(1).get_size()-1)./([calib_config.obj_cb_geom.get_cb_height() calib_config.obj_cb_geom.get_cb_width()]));
     end
 
+    % Get number of height and width samples
+    num_samples_height = ceil(calib_config.obj_cb_geom.get_cb_height()*samples_per_unit+1);
+    num_samples_width = ceil(calib_config.obj_cb_geom.get_cb_width()*samples_per_unit+1);
+
+    % Get height and width of frontal array in world coordinates
+    array_frontal_height_w = (num_samples_height-1)/samples_per_unit;
+    array_frontal_width_w = (num_samples_width-1)/samples_per_unit;
+
+    % Get samples
+    [y_frontal_w, x_frontal_w] = ndgrid(linspace(0, array_frontal_height_w, num_samples_height), ...
+                                        linspace(0, array_frontal_width_w,  num_samples_width));
+    p_frontal_w = [x_frontal_w(:) y_frontal_w(:)];
+
     % Iterate
-    for it = 1:distortion_refinement_it_cutoff
+    for it = 1:frontal_refinement_it_cutoff
         util.verbose_disp('---', 1, calib_config);
-        util.verbose_disp(['Performing distortion refinement iteration: ' num2str(it) '...'], 1, calib_config);
+        util.verbose_disp(['Performing frontal refinement iteration: ' num2str(it) '...'], 1, calib_config);
         util.verbose_disp('---', 2, calib_config);
 
         % Get calibration board pixel points -----------------------------%
@@ -86,28 +102,57 @@ function calib = single_calib_H_dr(obj_calib, obj_cb_geom, img_cbs, H_w2ps, cali
             t = tic;
             util.verbose_fprintf(['Refining "' calib_config.target '" points with method: "' calib_config.target_optimization '" for: ' img_cbs(i).get_name() '. '], 2, calib_config);
 
-            % Get undistorted calibration board image array
+            % Get frontal calibration board image array
             if exist('A', 'var') && exist('d', 'var')
-                util.verbose_fprintf('Intrinsics available... undistorting image. ', 2, calib_config);
-
-                % undistort array
-                array_cb_undistorted = alg.undistort_array(img_cbs(i).get_array_gs(), ...
-                                                           obj_calib, ...
-                                                           A, ...
-                                                           d, ...
-                                                           calib_config);
+                p_frontal_p_d = obj_calib.p_p2p_p_d(alg.apply_homography_p2p(p_frontal_w, H_w2ps{i}), ...
+                                                    A, ...
+                                                    d);
             else
                 % If intrinsics arent available, assume distortion is small
-                array_cb_undistorted = img_cbs(i).get_array_gs();
+                p_frontal_p_d = alg.apply_homography_p2p(p_frontal_w, H_w2ps{i});
             end
 
+            % Resample array
+            array_cb_frontal = alg.interp_array(img_cbs(i).get_array_gs(), ...
+                                                p_frontal_p_d, ...
+                                                calib_config.frontal_refinement_interp);
+            array_cb_frontal = reshape(array_cb_frontal, num_samples_height, num_samples_width);
+
             % Refine points
-            [p_cb_pss{i}, cov_cb_pss{i}, idx_valids{i}, debug{i}] = alg.refine_target_points_cb_w2p(p_cb_ws, ...
-                                                                                                    boundary_ws, ...
-                                                                                                    array_cb_undistorted, ...
-                                                                                                    @(p)obj_calib.p_cb_w2p_cb_p(p, H_w2ps{i}), ...
-                                                                                                    @(p)alg.apply_homography_p2p(p, H_w2ps{i}), ...
-                                                                                                    calib_config);
+            [p_cb_frontals, cov_cb_frontals, idx_valids{i}, debug{i}] = alg.refine_target_points_cb_w2p(p_cb_ws, ...
+                                                                                                        boundary_ws, ...
+                                                                                                        array_cb_frontal, ...
+                                                                                                        @(p)(p.*samples_per_unit+1), ...
+                                                                                                        @(p)(p.*samples_per_unit+1), ...
+                                                                                                        calib_config);
+
+            % Convert to pixel coordinates -------------------------------%
+
+            % Update points
+            p_cb_pss{i} = obj_calib.p_cb_w2p_cb_p((p_cb_frontals-1)./samples_per_unit, ... % Convert to world coordinates
+                                                  H_w2ps{i});
+            % Update covariances
+            cov_cb_pss{i} = cell(size(p_cb_pss{i}, 1), 1);
+            for j = 1:numel(cov_cb_frontals)
+                if idx_valids{i}(j)
+                    % Use taylor series to approximate covariance of
+                    % distorted coordinates; from:
+                    %
+                    %   http://www.stat.cmu.edu/~hseltman/files/ratio.pdf
+                    %   https://en.wikipedia.org/wiki/Propagation_of_uncertainty#Non-linear_combinations
+                    %
+                    % Note that only covariances from x_cb_w and y_cb_w are used
+                    p_cb_w = (p_cb_frontals(j, :)-1)./samples_per_unit;    % Note this is the MEASURED calibration board world point
+                    cov_cb_w = cov_cb_frontals{j}./(samples_per_unit^2);   % Must square scaling factor for covariance
+
+                    % Get Jacobian
+                    dp_cb_p_dp_cb_w = obj_calib.dp_cb_p_dp_cb_w(p_cb_w, H_w2ps{i});
+                    dp_cb_p_dp_cb_w = full(dp_cb_p_dp_cb_w);
+
+                    % Update covariance
+                    cov_cb_pss{i}{j} = dp_cb_p_dp_cb_w*cov_cb_w*dp_cb_p_dp_cb_w';
+                end
+            end
 
             time = toc(t);
             util.verbose_fprintf(['Time ellapsed: %f seconds.' newline], time, 2, calib_config);

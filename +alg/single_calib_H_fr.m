@@ -70,12 +70,12 @@ function calib = single_calib_H_fr(obj_calib, obj_cb_geom, img_cbs, H_w2ps, cali
     if ~isnan(calib_config.frontal_refinement_samples_per_unit)
         samples_per_unit = calib_config.frontal_refinement_samples_per_unit;
     else
-        samples_per_unit = max(img_cbs(1).get_size()./([calib_config.obj_cb_geom.get_cb_height() calib_config.obj_cb_geom.get_cb_width()]));
+        samples_per_unit = max((img_cbs(1).get_size()-1)./([calib_config.obj_cb_geom.get_cb_height() calib_config.obj_cb_geom.get_cb_width()]));
     end
 
     % Get number of height and width samples
-    num_samples_height = ceil(calib_config.obj_cb_geom.get_cb_height()*samples_per_unit);
-    num_samples_width = ceil(calib_config.obj_cb_geom.get_cb_width()*samples_per_unit);
+    num_samples_height = ceil(calib_config.obj_cb_geom.get_cb_height()*samples_per_unit+1);
+    num_samples_width = ceil(calib_config.obj_cb_geom.get_cb_width()*samples_per_unit+1);
 
     % Get height and width of frontal array in world coordinates
     array_frontal_height_w = (num_samples_height-1)/samples_per_unit;

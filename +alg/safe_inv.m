@@ -5,7 +5,7 @@ function Y = safe_inv(X)
     %   X - array; input to inv()
     %
     % Outputs:
-    %   Y; array; output of inv()
+    %   Y - array; output of inv()
 
     % Initialize
     safe = true;

@@ -82,9 +82,9 @@ function calib = single_calib_H_fr(obj_calib, obj_cb_geom, img_cbs, H_w2ps, cali
     array_frontal_width_w = (num_samples_width-1)/samples_per_unit;
 
     % Get samples
-    [y_frontal_w, x_frontal_w] = ndgrid(linspace(0, array_frontal_height_w, num_samples_height), ...
-                                        linspace(0, array_frontal_width_w,  num_samples_width));
-    p_frontal_w = [x_frontal_w(:) y_frontal_w(:)];
+    [y_frontal_ws, x_frontal_ws] = ndgrid(linspace(0, array_frontal_height_w, num_samples_height), ...
+                                          linspace(0, array_frontal_width_w,  num_samples_width));
+    p_frontal_ws = [x_frontal_ws(:) y_frontal_ws(:)];
 
     % Iterate
     for it = 1:frontal_refinement_it_cutoff
@@ -104,17 +104,17 @@ function calib = single_calib_H_fr(obj_calib, obj_cb_geom, img_cbs, H_w2ps, cali
 
             % Get frontal calibration board image array
             if exist('A', 'var') && exist('d', 'var')
-                p_frontal_p_d = obj_calib.p_p2p_p_d(alg.apply_homography_p2p(p_frontal_w, H_w2ps{i}), ...
-                                                    A, ...
-                                                    d);
+                p_frontal_p_ds = obj_calib.p_p2p_p_d(alg.apply_homography_p2p(p_frontal_ws, H_w2ps{i}), ...
+                                                     A, ...
+                                                     d);
             else
                 % If intrinsics arent available, assume distortion is small
-                p_frontal_p_d = alg.apply_homography_p2p(p_frontal_w, H_w2ps{i});
+                p_frontal_p_ds = alg.apply_homography_p2p(p_frontal_ws, H_w2ps{i});
             end
 
             % Resample array
             array_cb_frontal = alg.interp_array(img_cbs(i).get_array_gs(), ...
-                                                p_frontal_p_d, ...
+                                                p_frontal_p_ds, ...
                                                 calib_config.frontal_refinement_interp);
             array_cb_frontal = reshape(array_cb_frontal, num_samples_height, num_samples_width);
 
@@ -131,6 +131,7 @@ function calib = single_calib_H_fr(obj_calib, obj_cb_geom, img_cbs, H_w2ps, cali
             % Update points
             p_cb_pss{i} = obj_calib.p_cb_w2p_cb_p((p_cb_frontals-1)./samples_per_unit, ... % Convert to world coordinates
                                                   H_w2ps{i});
+
             % Update covariances
             cov_cb_pss{i} = cell(size(p_cb_pss{i}, 1), 1);
             for j = 1:numel(cov_cb_frontals)

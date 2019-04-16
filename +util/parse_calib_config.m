@@ -41,7 +41,7 @@ function [calib_config, data] = parse_calib_config(data)
 
     % Calibration optimization
     field_info(end+1) = struct('field', 'calib_optimization'                            , 'required', true , 'default', ''                             , 'validation_fun', @validate_calib_optimization);
-    field_info(end+1) = struct('field', 'apply_covariance_optimization'                 , 'required', false, 'default', true                           , 'validation_fun', @validate_logical_scalar);
+    field_info(end+1) = struct('field', 'apply_covariance_optimization'                 , 'required', false, 'default', false                          , 'validation_fun', @validate_logical_scalar);
 
     % Distortion refinement
     field_info(end+1) = struct('field', 'distortion_refinement_it_cutoff'               , 'required', false, 'default', 1                              , 'validation_fun', @validate_pos_scalar_int);

@@ -1,5 +1,5 @@
 function plot_cb_geom(obj_cb_geom, a)
-    % This will plot calibration board class
+    % This will plot a calibration board geometry object
 
     if ~exist('a', 'var')
         f = figure();

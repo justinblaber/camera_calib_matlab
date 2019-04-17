@@ -1,4 +1,4 @@
-function plot_cb_3D(xform_w2s, color, alpha, opts, a)
+function plot_cb_3D(obj_cb_geom, xform_w2s, color, alpha, a)
     % This will plot a calibration board in 3D given an affine transform
 
     % Matlab's 3D plot is not very good; to get it in the orientation I want,
@@ -12,7 +12,7 @@ function plot_cb_3D(xform_w2s, color, alpha, opts, a)
         a = axes(f);
     end
 
-    if ~isa(opts.obj_cb_geom, 'class.cb_geom.size_intf')
+    if ~isa(obj_cb_geom, 'class.cb_geom.size_intf')
         error('calibration board geometry must inherit from size interface to use this function');
     end
 
@@ -21,8 +21,8 @@ function plot_cb_3D(xform_w2s, color, alpha, opts, a)
     %    p1 - p3
     %     |    |
     %    p2 - p4
-    h = opts.obj_cb_geom.get_cb_height();
-    w = opts.obj_cb_geom.get_cb_width();
+    h = obj_cb_geom.get_cb_height();
+    w = obj_cb_geom.get_cb_width();
     box_w = [0 0; ...
              0 h; ...
              w 0; ...

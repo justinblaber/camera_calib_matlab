@@ -155,7 +155,7 @@ function gui_fp_detect(p_fpss, img_cbs, debug_fp, calib_config, f)
                 p_fps = alg.p2imresize(p_fpss{idx_board, i}, sf);
 
                 % Plot four points
-                debug.plot_single_fp_detect(array, p_fps, axes_cbs(i));
+                debug.plot_fp(array, p_fps, axes_cbs(i));
 
                 if strcmp(calib_config.fp_detector, 'LoG')
                     % Plot blobs and ellipses

@@ -1,4 +1,4 @@
-function plot_single_fp_detect(array, p_fps, a)
+function plot_fp(array, p_fps, a)
     % This plots debugging info for four point detection
 
     if ~exist('a', 'var')

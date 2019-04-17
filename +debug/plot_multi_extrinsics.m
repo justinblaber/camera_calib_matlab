@@ -19,20 +19,50 @@ function plot_multi_extrinsics(Rs, ts, R_1s, t_1s, colors, alphas, opts, a)
     num_cams = numel(R_1s);
     num_boards = numel(Rs);
 
-    % Plot calibration boards; xform is applied to get the calibration
-    % boards in the coordinates of the first camera.
+    % Plot calibration boards --------------------------------------------%
+
+    % xform is applied to get the calibration boards in the coordinates of
+    % the first camera.
     for i = 1:num_boards
         % Get affine xform
         xform = [Rs{i} ts{i}; zeros(1, 3) 1];
 
         % Plot calibration board
-        debug.plot_cb_3D(xform, colors(i, :), alphas(i), opts, a);
+        debug.plot_cb_3D(opts.obj_cb_geom, ...
+                         xform, ...
+                         colors(i, :), ...
+                         alphas(i), ...
+                         a);
     end
 
-    % Plot cameras
+    % Plot cameras -------------------------------------------------------%
+
+    % If camera size is not set (i.e. nan), then set the camera size to a
+    % scalefactor of the calibration board target size.
+    if isnan(opts.camera_size)
+        if ~isa(opts.obj_cb_geom, 'class.cb_geom.size_intf')
+            error('calibration board geometry must inherit from size interface to use default camera size');
+        end
+
+        camera_size = min(opts.obj_cb_geom.get_cb_height(), opts.obj_cb_geom.get_cb_width())/4;
+    else
+        camera_size = opts.camera_size;
+    end
+
     for i = 1:num_cams
+        % Get affine xform
         xform = inv([R_1s{i} t_1s{i}; zeros(1, 3) 1]);
-        debug.plot_cam_3D(xform, 'k', 0.5, 1, 'r', 2, 10, opts, a);
+
+        % Plot camera
+        debug.plot_cam_3D(camera_size, ...
+                          xform, ...
+                          'k', ...
+                          0.5, ...
+                          1, ...
+                          'r', ...
+                          2, ...
+                          10, ...
+                          a);
     end
 
     % Format plot

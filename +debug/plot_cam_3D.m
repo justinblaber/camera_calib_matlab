@@ -1,4 +1,4 @@
-function plot_cam_3D(xform_12, face_color, face_alpha, edge_alpha, axes_color, axes_line_width, axes_font_size, opts, a)
+function plot_cam_3D(camera_size, xform_12, face_color, face_alpha, edge_alpha, axes_color, axes_line_width, axes_font_size, a)
     % This will plot a camera in 3D given an affine transform
 
     % Matlab's 3D plot is not very good; to get it in the orientation I want,
@@ -10,18 +10,6 @@ function plot_cam_3D(xform_12, face_color, face_alpha, edge_alpha, axes_color, a
     if ~exist('a', 'var')
         f = figure();
         a = axes(f);
-    end
-
-    % If camera size is not set (i.e. nan), then set the camera size to a
-    % scalefactor of the calibration board target size.
-    if isnan(opts.camera_size)
-        if ~isa(opts.obj_cb_geom, 'class.cb_geom.size_intf')
-            error('calibration board geometry must inherit from size interface to use default camera size');
-        end
-
-        camera_size = min(opts.obj_cb_geom.get_cb_height(), opts.obj_cb_geom.get_cb_width())/4;
-    else
-        camera_size = opts.camera_size;
     end
 
     % Set position of axes

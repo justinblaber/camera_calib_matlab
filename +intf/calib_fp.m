@@ -76,10 +76,10 @@ function calib = calib_fp(img_cbs, p_fp_p_dss, calib_config, intrins)
             % Get four point box in pixel coordinates
             if exist('intrins', 'var')
                 % If intrinsics are passed in, undistort four point box
-                p_fp_ps = obj_distortion.p_p_d2p_p(p_fp_p_dss{j, i}, ...
-                                                   p_fp_p_dss{j, i}, ...     % Use distorted points for initial guess
-                                                   intrins(i).A, ...
-                                                   intrins(i).d);
+                p_fp_ps = obj_calib.p_p_d2p_p(p_fp_p_dss{j, i}, ...
+                                              p_fp_p_dss{j, i}, ...     % Use distorted points for initial guess
+                                              intrins(i).A, ...
+                                              intrins(i).d);
             else
                 % If intrinsics arent available, assume distortion is small
                 p_fp_ps = p_fp_p_dss{j, i};

@@ -45,10 +45,10 @@ function [calib_config, data] = parse_calib_config(data)
 
     % Distortion refinement
     field_info(end+1) = struct('field', 'distortion_refinement_it_cutoff'               , 'required', false, 'default', 1                              , 'validation_fun', @validate_pos_scalar_int);
+    field_info(end+1) = struct('field', 'distortion_refinement_interp'                  , 'required', false, 'default', 'spline'                       , 'validation_fun', @validate_interp);
 
     % Frontal refinement
     field_info(end+1) = struct('field', 'frontal_refinement_it_cutoff'                  , 'required', false, 'default', 1                              , 'validation_fun', @validate_pos_scalar_int);
-    field_info(end+1) = struct('field', 'frontal_refinement_samples_per_unit'           , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_or_nan);
     field_info(end+1) = struct('field', 'frontal_refinement_interp'                     , 'required', false, 'default', 'spline'                       , 'validation_fun', @validate_interp);
 
     % Homography computation
@@ -79,12 +79,6 @@ function [calib_config, data] = parse_calib_config(data)
     % p_p_d2p_p
     field_info(end+1) = struct('field', 'p_p_d2p_p_it_cutoff'                           , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'p_p_d2p_p_norm_cutoff'                         , 'required', false, 'default', 1e-6                           , 'validation_fun', @validate_pos_scalar);
-
-    % Undistort array
-    field_info(end+1) = struct('field', 'undistort_array_interp'                        , 'required', false, 'default', 'spline'                       , 'validation_fun', @validate_interp);
-
-    % Distort array
-    field_info(end+1) = struct('field', 'distort_array_interp'                          , 'required', false, 'default', 'spline'                       , 'validation_fun', @validate_interp);
 
     % Calibration
     field_info(end+1) = struct('field', 'refine_calib_params_it_cutoff'                 , 'required', false, 'default', 200                            , 'validation_fun', @validate_pos_scalar_int);

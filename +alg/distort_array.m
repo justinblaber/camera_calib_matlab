@@ -1,4 +1,4 @@
-function array_d = distort_array(array, obj_distortion, A, d, opts)
+function array_d = distort_array(array, obj_distortion, A, d, distort_array_interp)
     % Distorts array.
     %
     % Since points are optimized non-linearly, this function is pretty
@@ -10,8 +10,7 @@ function array_d = distort_array(array, obj_distortion, A, d, opts)
     %       between pixel coordinates and distorted pixel coordinates.
     %   A - array; 3x3 camera matrix
     %   d - array; Mx1 array of distortion coefficients
-    %   opts - struct;
-    %       .distort_array_interp - string; type of interpolation to use
+    %   distort_array_interp - string; type of interpolation to use
     %
     % Outputs:
     %   array_d - array; array containing distorted image
@@ -27,6 +26,6 @@ function array_d = distort_array(array, obj_distortion, A, d, opts)
                                     d);
 
     % Resample
-    array_d = alg.interp_array(array, p_ps, opts.distort_array_interp);
+    array_d = alg.interp_array(array, p_ps, distort_array_interp);
     array_d = reshape(array_d, size(array));
 end

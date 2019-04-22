@@ -64,28 +64,6 @@ function calib = single_calib_H_fr(obj_calib, obj_cb_geom, img_cbs, H_w2ps, cali
     % Get frontal refinement iterations
     frontal_refinement_it_cutoff = calib_config.frontal_refinement_it_cutoff;
 
-    % Get frontal array world coordinates --------------------------------%
-
-    % Get samples per unit
-    if ~isnan(calib_config.frontal_refinement_samples_per_unit)
-        samples_per_unit = calib_config.frontal_refinement_samples_per_unit;
-    else
-        samples_per_unit = max((img_cbs(1).get_size()-1)./([calib_config.obj_cb_geom.get_cb_height() calib_config.obj_cb_geom.get_cb_width()]));
-    end
-
-    % Get number of height and width samples
-    num_samples_height = ceil(calib_config.obj_cb_geom.get_cb_height()*samples_per_unit+1);
-    num_samples_width = ceil(calib_config.obj_cb_geom.get_cb_width()*samples_per_unit+1);
-
-    % Get height and width of frontal array in world coordinates
-    array_frontal_height_w = (num_samples_height-1)/samples_per_unit;
-    array_frontal_width_w = (num_samples_width-1)/samples_per_unit;
-
-    % Get samples
-    [y_frontal_ws, x_frontal_ws] = ndgrid(linspace(0, array_frontal_height_w, num_samples_height), ...
-                                          linspace(0, array_frontal_width_w,  num_samples_width));
-    p_frontal_ws = [x_frontal_ws(:) y_frontal_ws(:)];
-
     % Iterate
     for it = 1:frontal_refinement_it_cutoff
         util.verbose_disp('---', 1, calib_config);
@@ -101,6 +79,51 @@ function calib = single_calib_H_fr(obj_calib, obj_cb_geom, img_cbs, H_w2ps, cali
         for i = 1:num_boards
             t = tic;
             util.verbose_fprintf(['Refining "' calib_config.target '" points with method: "' calib_config.target_optimization '" for: ' img_cbs(i).get_name() '. '], 2, calib_config);
+
+            % Get samples per unit
+
+            % Form box
+            % Note:
+            %    p1 - p3
+            %     |    |
+            %    p2 - p4
+            h_w = obj_cb_geom.get_cb_height();
+            w_w = obj_cb_geom.get_cb_width();
+            box_w = [0   0; ...
+                     0   h_w; ...
+                     w_w 0; ...
+                     w_w h_w];
+            if exist('A', 'var') && exist('d', 'var')
+                box_p_d = obj_calib.p_p2p_p_d(alg.apply_homography_p2p(box_w, H_w2ps{i}), ...
+                                              A, ...
+                                              d);
+            else
+                % If intrinsics arent available, assume distortion is small
+                box_p_d = alg.apply_homography_p2p(box_w, H_w2ps{i});
+            end
+
+            h_p_d_1 = norm(box_p_d(2, :) - box_p_d(1, :));
+            h_p_d_2 = norm(box_p_d(4, :) - box_p_d(3, :));
+            w_p_d_1 = norm(box_p_d(3, :) - box_p_d(1, :));
+            w_p_d_2 = norm(box_p_d(4, :) - box_p_d(2, :));
+
+            samples_per_unit = max([h_p_d_1/h_w ...
+                                    h_p_d_2/h_w ...
+                                    w_p_d_1/w_w ...
+                                    w_p_d_2/w_w]);
+
+            % Get number of height and width samples
+            num_samples_height = ceil(h_w*samples_per_unit+1);
+            num_samples_width = ceil(w_w*samples_per_unit+1);
+
+            % Get height and width of frontal array in world coordinates
+            h_frontal_w = (num_samples_height-1)/samples_per_unit;
+            w_frontal_w = (num_samples_width-1)/samples_per_unit;
+
+            % Get samples
+            [y_frontal_ws, x_frontal_ws] = ndgrid(linspace(0, h_frontal_w, num_samples_height), ...
+                                                  linspace(0, w_frontal_w, num_samples_width));
+            p_frontal_ws = [x_frontal_ws(:) y_frontal_ws(:)];
 
             % Get frontal calibration board image array
             if exist('A', 'var') && exist('d', 'var')

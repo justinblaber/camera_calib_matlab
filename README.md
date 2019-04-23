@@ -51,9 +51,9 @@ addpath('~/camera_calib');
 %% Read calibration config
 calib_config = intf.load_calib_config('dot_vision.conf');
 
-%% Stereo Calibration
+%% Stereo calibration
 
-cb_img_paths.L = {
+img_cb_paths.L = {
 '16276941_2018-07-12_01:34:06_883766_1_L.png', ...
 '16276941_2018-07-12_01:34:19_464618_2_L.png', ...
 '16276941_2018-07-12_01:34:37_254931_3_L.png', ...
@@ -66,7 +66,7 @@ cb_img_paths.L = {
 '16276941_2018-07-12_01:36:10_280953_10_L.png'
 };
 
-cb_img_paths.R = {
+img_cb_paths.R = {
 '16276942_2018-07-12_01:34:06_885104_1_R.png', ...
 '16276942_2018-07-12_01:34:19_465629_2_R.png', ...
 '16276942_2018-07-12_01:34:37_255926_3_R.png', ...
@@ -80,15 +80,15 @@ cb_img_paths.R = {
 };
 
 % Validate all calibration board images
-cb_imgs = intf.validate_stereo_path_imgs(cb_img_paths);
-                 
-% Get four points
-[p_fpss, debug_fp] = intf.fp_detect(cb_imgs, calib_config);
+imgs_cbs = intf.validate_stereo_path_imgs(img_cb_paths);
 
-intf.gui_fp_detect(p_fpss, cb_imgs, debug_fp, calib_config);
-                                
+% Get four points
+[p_fpss, debug_fp] = intf.fp_detect(imgs_cbs, calib_config);
+
+intf.gui_fp_detect(p_fpss, imgs_cbs, debug_fp, calib_config);
+
 % Perform calibration
-calib = intf.calib_fp(cb_imgs, p_fpss, calib_config);
+calib = intf.calib_fp(imgs_cbs, p_fpss, calib_config);
 
 intf.gui_calib(calib);
 ```

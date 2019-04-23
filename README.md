@@ -10,7 +10,7 @@ This is a camera calibration toolbox. It's partly based on [Bouguet's toolbox](h
 * Supports custom calibration board geometries by overriding an abstract calibration board geometry class.
 * Supports (optional) covariance optimization (i.e. generalized least squares) based on uncertanties computed during target localization.
 * Supports calibration board going partially "out of frame" which improves robustness and allows for bigger calibration boards to be used.
-* Code is organized and documented and also utilizes oriented principles for code reuse.
+* Code is organized, documented, and utilizes object oriented principles for code reuse.
 
 Some of the theory is discussed [here](http://justinblaber.org/camera-calibration-theory/).
 

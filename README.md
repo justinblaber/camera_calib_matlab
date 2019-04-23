@@ -1,16 +1,16 @@
 # camera_calib
-This is a camera calibration toolbox. It's partly based on [Bouguet's toolbox](http://www.vision.caltech.edu/bouguetj/calib_doc/) and Zhang's camera calibration paper, but with more functionality; added functionality include:
+This is a camera calibration toolbox. It's partly based on [Bouguet's toolbox](http://www.vision.caltech.edu/bouguetj/calib_doc/) and Zhang's camera calibration paper, but with more functionality:
 
 * Setup is based on an input configuration file which allows for easy tweaking and modification of algorithms and allows for greater reproducibility. If you save the images, configuration file, and script, the calibration will be repeatable.
 * Includes fiducial marker recognition which makes the calibration fully automatic.
 * The distortion function is input as a symbolic function (via configuration file) and is therefore very easily modifiable. Two distortion functions are provided already - "heikkila97" and "wang08"; this toolbox uses symbolic differentiation to compute the updated jacobians/hessians/gradients automatically.
-* Supports multi camera calibration.
+* Supports multi-camera calibration.
 * Implements both "distortion refinement" and "frontal refinement" techniques.
-* Supports multiple calibration board targets (checkers, circles, etc...) and correctly accounts for "center of ellipse" vs "projected center of circle" for circular targets depending on the type of calibration (i.e. "frontal refinement" or "distortion refinement") used.
-* Supports custom calibration board geometries by overriding anabstract calibration board geometry class.
+* Supports multiple calibration board targets (checkers, circles, etc...) and correctly accounts for "center of ellipse" vs "projected center of circle" for circular targets depending on the type of calibration (i.e. "frontal refinement" or "distortion refinement").
+* Supports custom calibration board geometries by overriding an abstract calibration board geometry class.
 * Supports (optional) covariance optimization (i.e. generalized least squares) based on uncertanties computed during target localization.
-* Supports calibration board going partially "out of frame" which allows for bigger calibration targets to be used.
-* Code is organized and documented and also utilizes some object oriented principles for code reuse.
+* Supports calibration board going partially "out of frame" which improves robustness and allows for bigger calibration targets to be used.
+* Code is organized and documented and also utilizes oriented principles for code reuse.
 
 Some of the theory is discussed [here](http://justinblaber.org/camera-calibration-theory/).
 

@@ -42,6 +42,7 @@ obj_cb_geom         = class.cb_geom.csgrid_cfp
 calib_optimization  = distortion_refinement
 ```
 The targets are checkers, and the target optimization is a cool "edges" refinement algorithm from Mallon07. The calibration board geometry class used is "csgrid_cfp" which is a centered target grid with centered "four point" fiducial markers.
+
 3. Next, open the `dot_vision_stereo.m` script in matlab, which should include:
 ```
 %% Set environment

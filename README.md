@@ -8,7 +8,7 @@ This is a camera calibration toolbox. It's partly based on [Bouguet's toolbox](h
 * Implements both "distortion refinement" and "frontal refinement" techniques.
 * Supports multiple calibration board targets (checkers, circles, etc...) and correctly accounts for "center of ellipse" vs "projected center of circle" for circular targets depending on the type of calibration (i.e. "frontal refinement" or "distortion refinement").
 * Supports custom calibration board geometries by overriding an abstract calibration board geometry class.
-* Supports (optional) covariance optimization (i.e. generalized least squares) based on uncertanties computed during target localization.
+* Supports (optional) covariance optimization (i.e. generalized least squares) based on uncertainties computed during target localization.
 * Supports calibration board going partially "out of frame" which improves robustness and allows for bigger calibration boards to be used.
 * Code is organized, documented, and utilizes object oriented principles for code reuse.
 

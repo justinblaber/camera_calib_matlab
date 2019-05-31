@@ -12,8 +12,6 @@ This is a camera calibration toolbox. It's partly based on [Bouguet's toolbox](h
 * Supports calibration board going partially "out of frame" which improves robustness and allows for bigger calibration boards to be used.
 * Code is organized, documented, and utilizes object oriented principles for code reuse.
 
-Some of the theory is discussed [here](http://justinblaber.org/camera-calibration-theory/).
-
 # Installation instructions:
 1) Clone the repo:
 ```

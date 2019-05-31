@@ -115,7 +115,7 @@ calib = intf.calib_fp(img_cbs, p_fpss, calib_config);
 % Calib gui
 intf.gui_calib(calib);
 ```
-Make sure to first add the library to path with something like: `addpath('~/camera_calib');`.
+Make sure to first add the library to path with something like: `addpath('~/camera_calib')`.
 
 After running this script, the first figure to appear should be:
 ![four point detector](https://i.imgur.com/mTd2DGF.png)

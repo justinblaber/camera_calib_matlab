@@ -109,7 +109,7 @@ intf.plot_cb_geom(calib_config);
 % four point gui
 intf.gui_fp_detect(p_fpss, img_cbs, debug_fp, calib_config)
 
-% Perform single calibration
+% Perform calibration
 calib = intf.calib_fp(img_cbs, p_fpss, calib_config);
                            
 % Calib gui

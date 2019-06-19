@@ -13,7 +13,7 @@ function test_refine_ellipse_edges
     %{
     % Plot example
     f = figure;
-    imshow(array_dx.^2 + array_dy.^2, []);
+    imshow(array, []);
     hold on;
     external.ellipse(e(3), e(4), e(5), e(1), e(2), 'g');
     pause(1);
@@ -21,9 +21,9 @@ function test_refine_ellipse_edges
     %}
 
     % Assert
-    assert(all(all(abs(e - [20.253604509006859
-                            17.613583001193255
-                             7.593012567512997
-                             6.331723918056811
-                             2.137541639539977]) < 1e-4)));
+    assert(all(all(abs(e - [12.948135949893175
+                            12.832869003131211
+                             5.822077561012249
+                             5.045534542908317
+                             2.964473871654429]) < 1e-4)));
 end

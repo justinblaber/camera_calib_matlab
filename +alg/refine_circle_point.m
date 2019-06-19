@@ -26,6 +26,8 @@ function [p_cb_p, cov_cb_p, debug] = refine_circle_point(p_cb_p_init, boundary_p
             f_refine_target_point = @dualconic;
         case 'edges'
             f_refine_target_point = @edges;
+        case 'dot'
+            f_refine_target_point = @dot;
         otherwise
             error(['Unsupported target optimization: "' opts.target_optimization '" for circle target.']);
     end
@@ -147,6 +149,53 @@ function [e_cb_p, cov_cb_p] = edges(p_cb_p_init, boundary_p_center, array_cb, ar
                                                       e_cb_p_sub, ...
                                                       opts, ...
                                                       double(mask_sub));
+
+    % Get covariance of center
+    cov_cb_p = cov_cb_e(1:2, 1:2);
+
+    % Get ellipse in array coordinates.
+    e_cb_p = e_cb_p_sub;
+    e_cb_p(1:2) = e_cb_p_sub(1:2) + bb_sub_p(1, :)' - 1;
+
+    % Make sure point did not go outside of original bounding box
+    if ~alg.is_p_in_bb(e_cb_p(1:2)', bb_sub_p)
+        e_cb_p(:) = nan;
+        cov_cb_p(:) = nan;
+        return
+    end
+end
+
+function [e_cb_p, cov_cb_p] = dot(p_cb_p_init, boundary_p_center, array_cb, array_cb_dx, array_cb_dy, opts)
+    % Initialize ellipse by using dualconic method
+    e_cb_p = dualconic(p_cb_p_init, boundary_p_center, array_cb, array_cb_dx, array_cb_dy, opts);
+    cov_cb_p = nan(2, 2);
+
+    % Get bb of array
+    bb_array_p = alg.bb_array(array_cb);
+
+    % Get bounding box and mask of sub arrays
+    [bb_sub_p, mask_sub] = calc_bb_and_mask(boundary_p_center + e_cb_p(1:2)');
+
+    % Check bounds
+    if ~alg.is_bb_in_bb(bb_sub_p, bb_array_p)
+        e_cb_p(:) = nan;
+        cov_cb_p(:) = nan;
+        return
+    end
+
+    % Get sub array
+    sub_array = alg.get_sub_array_bb(array_cb, bb_sub_p);
+
+    % Apply mask
+    sub_array(~mask_sub) = 0;
+
+    % Get refined ellipse; note that coordinates will be WRT sub_array.
+    e_cb_p_sub = e_cb_p;
+    e_cb_p_sub(1:2) = e_cb_p(1:2) - bb_sub_p(1, :)' + 1;
+    [e_cb_p_sub, cov_cb_e] = alg.refine_ellipse_dot(sub_array, ...
+                                                    e_cb_p_sub, ...
+                                                    opts, ...
+                                                    double(mask_sub));
 
     % Get covariance of center
     cov_cb_p = cov_cb_e(1:2, 1:2);

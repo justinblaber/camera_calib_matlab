@@ -10,7 +10,7 @@ function test_refine_ellipse_dualconic
     %{
     % Plot example
     f = figure;
-    imshow(array_dx.^2 + array_dy.^2, []);
+    imshow(array, []);
     hold on;
     external.ellipse(e(3), e(4), e(5), e(1), e(2), 'g');
     pause(1);
@@ -18,9 +18,9 @@ function test_refine_ellipse_dualconic
     %}
 
     % Assert
-    assert(all(all(abs(e - [20.251035697598265
-                            17.606971564906960
-                             7.649813708973468
-                             6.380724599824798
-                             2.133246481371850]) < 1e-4)));
+    assert(all(all(abs(e - [12.941116151474535
+                            12.834138458460759
+                             5.901990645761262
+                             5.057674901422744
+                             2.980935941780454]) < 1e-4)));
 end

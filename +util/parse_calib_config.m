@@ -75,6 +75,9 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'refine_ellipse_edges_it_cutoff'                , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'refine_ellipse_edges_norm_cutoff'              , 'required', false, 'default', 0.001                          , 'validation_fun', @validate_pos_scalar);
     field_info(end+1) = struct('field', 'refine_ellipse_edges_h2_init'                  , 'required', false, 'default', 0.75                           , 'validation_fun', @validate_pos_scalar);
+    field_info(end+1) = struct('field', 'refine_ellipse_dot_it_cutoff'                  , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
+    field_info(end+1) = struct('field', 'refine_ellipse_dot_norm_cutoff'                , 'required', false, 'default', 0.001                          , 'validation_fun', @validate_pos_scalar);
+    field_info(end+1) = struct('field', 'refine_ellipse_dot_h2_init'                    , 'required', false, 'default', 1                              , 'validation_fun', @validate_pos_scalar);
 
     % p_p_d2p_p
     field_info(end+1) = struct('field', 'p_p_d2p_p_it_cutoff'                           , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
@@ -183,7 +186,7 @@ function calib_config = validate_target_optimization(calib_config, field)
     % field needs to be a string
     calib_config = validate_string(calib_config, field);
 
-    if ~any(strcmp(param, {'opencv', 'dualconic', 'edges'}))
+    if ~any(strcmp(param, {'opencv', 'dualconic', 'edges', 'dot'}))
         field_class_error(field, param, 'calibration target optimization');
     end
 end

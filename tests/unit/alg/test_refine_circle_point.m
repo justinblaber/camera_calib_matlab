@@ -28,8 +28,8 @@ function test_refine_circle_point
     assert(all(all(abs(p_cb_p - 1.0e+02 * [0.472510247867144   4.586069781632518]) < 1e-4)));
     assert(all(all(abs(cov_cb_p - [1 0;
                                    0 1]) < 1e-4)));
-                               
- 	clear
+
+    clear
 
     % Get tests path
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
@@ -64,8 +64,8 @@ function test_refine_circle_point
     assert(all(all(abs(cov_cb_p - 1.0e-04 * [0.305699412205980  -0.039657431351037;
                                             -0.039657431351037   0.341407540539564]) < 1e-4)));
 
- 	clear
-    
+    clear
+
     % Get tests path
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 
@@ -97,5 +97,5 @@ function test_refine_circle_point
     % Assert
     assert(all(all(abs(p_cb_p - 1.0e+02 * [0.471983259324348   4.587376616432542]) < 1e-4)));
     assert(all(all(abs(cov_cb_p - [0.001323877842323  -0.000205903284934
-                                  -0.000205903284934   0.001488172773363]) < 1e-4)));                              
+                                  -0.000205903284934   0.001488172773363]) < 1e-4)));
 end

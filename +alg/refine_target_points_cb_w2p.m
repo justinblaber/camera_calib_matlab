@@ -27,7 +27,7 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debugs] = refine_target_points_cb_w2p(p
         case 'checker'
             f_refine_target_point = @alg.refine_checker_point;
         case 'circle'
-            f_refine_target_point = @alg.refine_circle_point;
+            f_refine_target_point = @alg.refine_ellipse_point;
         case 'ring'
             f_refine_target_point = @alg.refine_ring_point;
         otherwise
@@ -52,13 +52,12 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debugs] = refine_target_points_cb_w2p(p
         % f_p_cb_w2p_cb_p() transform.
         p_cb_p_init = f_p_cb_w2p_cb_p(p_cb_ws(i, :));
 
-        % Get boundary in pixel coordinates centered around point; use
-        % f_p_w2p_p() transform.
-        boundary_p_center = f_p_w2p_p(boundary_ws{i}) - p_cb_p_init;
+        % Get boundary in pixel coordinates; use f_p_w2p_p() transform.
+        boundary_p = f_p_w2p_p(boundary_ws{i});
 
         % Refine target point
         [p_cb_p, cov_cb_p, debug] = f_refine_target_point(p_cb_p_init, ...
-                                                          boundary_p_center, ...
+                                                          boundary_p, ...
                                                           array_cb, ...
                                                           array_cb_dx, ...
                                                           array_cb_dy, ...

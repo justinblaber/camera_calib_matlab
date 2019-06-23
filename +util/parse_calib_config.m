@@ -14,6 +14,7 @@ function [calib_config, data] = parse_calib_config(data)
 
     % Calibration board target
     field_info        = struct('field', 'target'                                        , 'required', true , 'default', ''                             , 'validation_fun', @validate_target);
+    field_info(end+1) = struct('field', 'circle_radius'                                 , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_or_nan);
     field_info(end+1) = struct('field', 'target_optimization'                           , 'required', true , 'default', ''                             , 'validation_fun', @validate_target_optimization);
 
     % Calibration board geometry
@@ -71,7 +72,6 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'refine_checker_edges_h2_init'                  , 'required', false, 'default', 0.75                           , 'validation_fun', @validate_pos_scalar);
 
     % Ellipse refinement
-    field_info(end+1) = struct('field', 'circle_radius'                                 , 'required', false, 'default', nan                            , 'validation_fun', @validate_pos_scalar_or_nan);
     field_info(end+1) = struct('field', 'refine_ellipse_edges_it_cutoff'                , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'refine_ellipse_edges_norm_cutoff'              , 'required', false, 'default', 0.001                          , 'validation_fun', @validate_pos_scalar);
     field_info(end+1) = struct('field', 'refine_ellipse_edges_h2_init'                  , 'required', false, 'default', 0.75                           , 'validation_fun', @validate_pos_scalar);

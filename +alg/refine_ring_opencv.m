@@ -1,11 +1,11 @@
 function [p, cov_p] = refine_ring_opencv(array_dx, array_dy, W)
     % Performs "opencv" refinement of a ring center on input array
     % gradients; it is assumed the ring is circular (i.e. flat, without
-    % perspective transform).
+    % perspective transform or distortion).
     %
     % This is the same technique as the "opencv" method for checkers,
     % except it's done on the orthogonal gradient. This will also
-    % technically work on a circle, but I'll consider an circle a subset
+    % technically work on a circle, but I'll consider a circle a subset
     % of a ring.
     %
     % Inputs:

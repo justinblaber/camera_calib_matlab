@@ -175,7 +175,7 @@ function calib_config = validate_target(calib_config, field)
     % field needs to be a string
     calib_config = validate_string(calib_config, field);
 
-    if ~any(strcmp(param, {'checker', 'circle'}))
+    if ~any(strcmp(param, {'checker', 'circle', 'ring'}))
         field_class_error(field, param, 'calibration target');
     end
 end

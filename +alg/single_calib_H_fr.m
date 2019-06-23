@@ -102,15 +102,13 @@ function calib = single_calib_H_fr(obj_calib, obj_cb_geom, img_cbs, H_w2ps, cali
                 box_p_d = alg.apply_homography_p2p(box_w, H_w2ps{i});
             end
 
-            h_p_d_1 = norm(box_p_d(2, :) - box_p_d(1, :));
-            h_p_d_2 = norm(box_p_d(4, :) - box_p_d(3, :));
-            w_p_d_1 = norm(box_p_d(3, :) - box_p_d(1, :));
-            w_p_d_2 = norm(box_p_d(4, :) - box_p_d(2, :));
-
-            samples_per_unit = max([h_p_d_1/h_w ...
-                                    h_p_d_2/h_w ...
-                                    w_p_d_1/w_w ...
-                                    w_p_d_2/w_w]);
+            % Make areas the same
+            area_box_w = h_w*w_w;
+            area_box_p_d = abs(((box_p_d(1, 1)*box_p_d(2, 2) - box_p_d(1, 2)*box_p_d(2, 1)) + ...
+                                (box_p_d(2, 1)*box_p_d(4, 2) - box_p_d(2, 2)*box_p_d(4, 1)) + ...
+                                (box_p_d(4, 1)*box_p_d(3, 2) - box_p_d(4, 2)*box_p_d(3, 1)) + ...
+                                (box_p_d(3, 1)*box_p_d(1, 2) - box_p_d(3, 2)*box_p_d(1, 1)))/2);
+            samples_per_unit = sqrt(area_box_p_d/area_box_w);
 
             % Get number of height and width samples
             num_samples_height = ceil(h_w*samples_per_unit+1);

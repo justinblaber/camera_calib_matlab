@@ -28,6 +28,8 @@ function [p_cb_ps, cov_cb_ps, idx_valid, debugs] = refine_target_points_cb_w2p(p
             f_refine_target_point = @alg.refine_checker_point;
         case 'circle'
             f_refine_target_point = @alg.refine_circle_point;
+        case 'ring'
+            f_refine_target_point = @alg.refine_ring_point;
         otherwise
             error(['Unsupported calibration target: "' opts.target '"']);
     end

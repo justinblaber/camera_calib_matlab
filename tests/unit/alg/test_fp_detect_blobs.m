@@ -4,21 +4,6 @@ function test_fp_detect_blobs
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 
     % Set opts
-    opts.blob_detect_LoG_r_range1 = 1;
-    opts.blob_detect_LoG_r_range2 = 15;
-    opts.blob_detect_LoG_step = 0.5;
-    opts.blob_detect_LoG_num_cutoff = 1000;
-    opts.blob_detect_LoG_val_cutoff = 0.1;
-    opts.blob_detect_LoG_interp = 'cubic';
-    opts.blob_detect_LoG_eccentricity_cutoff = 5;
-    opts.blob_detect_LoG_lambda = 0.01;
-    opts.blob_detect_LoG_maxima_it_cutoff = 10;
-    opts.blob_detect_LoG_maxima_norm_cutoff = 1e-6;
-    opts.blob_detect_LoG_centroid_it_cutoff = 10;
-    opts.blob_detect_LoG_centroid_norm_cutoff = 0.1;
-    opts.blob_detect_LoG_d_cluster = 2;
-    opts.blob_detect_LoG_r1_cluster = 2;
-    opts.blob_detect_LoG_r2_cluster = 2;
     opts.ellipse_detect_num_samples_theta = 100;
     opts.ellipse_detect_interp = 'cubic';
     opts.ellipse_detect_sf_cost = 2;
@@ -104,21 +89,6 @@ function test_fp_detect_blobs
     tests_path = fileparts(fileparts(fileparts(mfilename('fullpath'))));
 
     % Set opts
-    opts.blob_detect_LoG_r_range1 = 1;
-    opts.blob_detect_LoG_r_range2 = 15;
-    opts.blob_detect_LoG_step = 0.5;
-    opts.blob_detect_LoG_num_cutoff = 1000;
-    opts.blob_detect_LoG_val_cutoff = 0.1;
-    opts.blob_detect_LoG_interp = 'cubic';
-    opts.blob_detect_LoG_eccentricity_cutoff = 5;
-    opts.blob_detect_LoG_lambda = 0.01;
-    opts.blob_detect_LoG_maxima_it_cutoff = 10;
-    opts.blob_detect_LoG_maxima_norm_cutoff = 1e-6;
-    opts.blob_detect_LoG_centroid_it_cutoff = 10;
-    opts.blob_detect_LoG_centroid_norm_cutoff = 0.1;
-    opts.blob_detect_LoG_d_cluster = 2;
-    opts.blob_detect_LoG_r1_cluster = 2;
-    opts.blob_detect_LoG_r2_cluster = 2;
     opts.ellipse_detect_num_samples_theta = 100;
     opts.ellipse_detect_interp = 'cubic';
     opts.ellipse_detect_sf_cost = 2;
@@ -178,7 +148,7 @@ function test_fp_detect_blobs
 
     for i = 1:3
         array = img_cbs(i).get_array_gs();
-        p_fp_ps = alg.fp_detect_LoG(array, opts);
+        p_fp_ps = alg.fp_detect_blobs(array, blobs{i}, opts);
 
         %{
         % Plot example

@@ -33,7 +33,7 @@ function test_refine_checker_point
     assert(all(all(abs(p_p - 1.0e+02 * [3.537408536492807   2.943930834735747]) < 1e-4)));
     assert(all(all(abs(cov_p - [0.012269068621633   0.001925870026662;
                                 0.001925870026662   0.016480525165822]) < 1e-4)));
-                               
+
     clear;
 
     % Get tests path

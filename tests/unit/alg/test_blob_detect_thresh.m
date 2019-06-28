@@ -14,7 +14,7 @@ function test_blob_detect_thresh
     opts.blob_detect_thresh_d_cluster = 2;
     opts.blob_detect_thresh_r1_cluster = 2;
     opts.blob_detect_thresh_r2_cluster = 2;
-    
+
     % Set images
     path_cbs = {fullfile(tests_path, 'data', 'circle', '1.jpg')};
 

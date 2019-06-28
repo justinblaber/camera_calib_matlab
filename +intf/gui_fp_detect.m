@@ -1,5 +1,5 @@
 function gui_fp_detect(p_fpss, img_cbs, debug_fp, calib_config, f)
-    % GUI for debugging four point LoG detection
+    % GUI for debugging four point detection
 
     if ~exist('f', 'var')
         f = figure();
@@ -157,7 +157,7 @@ function gui_fp_detect(p_fpss, img_cbs, debug_fp, calib_config, f)
                 % Plot four points
                 debug.plot_fp(array, p_fps, axes_cbs(i));
 
-                if strcmp(calib_config.fp_detector, 'LoG')
+                if any(strcmp(calib_config.fp_detector, {'LoG', 'thresh'}))
                     % Plot blobs and ellipses
                     axes(axes_cbs(i)); %#ok<LAXES>
                     hold(axes_cbs(i), 'on');
@@ -191,7 +191,7 @@ function gui_fp_detect(p_fpss, img_cbs, debug_fp, calib_config, f)
 
             for i = 1:num_cams
                 for j = 1:4
-                    if strcmp(calib_config.fp_detector, 'LoG')
+                    if any(strcmp(calib_config.fp_detector, {'LoG', 'thresh'}))
                         debug.plot_patch_match(debug_fp{idx_board, i}.patch_matches(j).patch, ...
                                                debug_fp{idx_board, i}.patch_matches(j).template, ...
                                                axes_patches(j, i));
@@ -211,7 +211,7 @@ function gui_fp_detect(p_fpss, img_cbs, debug_fp, calib_config, f)
             % Set name
             set(f, 'Name', ['Board: ' num2str(idx_board) ' of ' num2str(num_boards) '; mode: ' mode '; (NOTE: press left, right, "1", "2", "3", "4", "w", and "esc" key arrows to toggle)']);
 
-            if strcmp(calib_config.fp_detector, 'LoG')
+            if any(strcmp(calib_config.fp_detector, {'LoG', 'thresh'}))
                 % Set bounding box
                 for i = 1:num_cams
                     switch mode

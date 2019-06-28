@@ -104,10 +104,19 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'blob_detect_LoG_centroid_norm_cutoff'          , 'required', false, 'default', 0.1                            , 'validation_fun', @validate_pos_scalar);
     field_info(end+1) = struct('field', 'blob_detect_LoG_d_cluster'                     , 'required', false, 'default', 2                              , 'validation_fun', @validate_pos_scalar);
     field_info(end+1) = struct('field', 'blob_detect_LoG_r1_cluster'                    , 'required', false, 'default', 2                              , 'validation_fun', @validate_pos_scalar);
-    field_info(end+1) = struct('field', 'blob_detect_LoG_r2_cluster'                    , 'required', false, 'default', 2                              , 'validation_fun', @validate_pos_scalar);
+    field_info(end+1) = struct('field', 'blob_detect_LoG_r2_cluster'                    , 'required', false, 'default', 2                              , 'validation_fun', @validate_pos_scalar);   
+    field_info(end+1) = struct('field', 'blob_detect_thresh_range1'                     , 'required', false, 'default', 0.2                            , 'validation_fun', @validate_pos_scalar);
+    field_info(end+1) = struct('field', 'blob_detect_thresh_range2'                     , 'required', false, 'default', 0.8                            , 'validation_fun', @validate_pos_scalar);
+    field_info(end+1) = struct('field', 'blob_detect_thresh_step'                       , 'required', false, 'default', 0.15                           , 'validation_fun', @validate_pos_scalar);
+    field_info(end+1) = struct('field', 'blob_detect_thresh_solidity_cutoff'            , 'required', false, 'default', 0.80                           , 'validation_fun', @validate_pos_scalar);
+    field_info(end+1) = struct('field', 'blob_detect_thresh_area_cutoff'                , 'required', false, 'default', 10                             , 'validation_fun', @validate_pos_scalar);
+    field_info(end+1) = struct('field', 'blob_detect_thresh_majoraxis_cutoff'           , 'required', false, 'default', 2                              , 'validation_fun', @validate_pos_scalar);
+    field_info(end+1) = struct('field', 'blob_detect_thresh_minoraxis_cutoff'           , 'required', false, 'default', 2                              , 'validation_fun', @validate_pos_scalar);
+    field_info(end+1) = struct('field', 'blob_detect_thresh_d_cluster'                  , 'required', false, 'default', 2                              , 'validation_fun', @validate_pos_scalar);
+    field_info(end+1) = struct('field', 'blob_detect_thresh_r1_cluster'                 , 'required', false, 'default', 2                              , 'validation_fun', @validate_pos_scalar);
+    field_info(end+1) = struct('field', 'blob_detect_thresh_r2_cluster'                 , 'required', false, 'default', 2                              , 'validation_fun', @validate_pos_scalar);
 
     % Four point detection
-    field_info(end+1) = struct('field', 'fp_detector'                                   , 'required', false, 'default', 'LoG'                          , 'validation_fun', @validate_fp_detector);
     field_info(end+1) = struct('field', 'ellipse_detect_num_samples_theta'              , 'required', false, 'default', 100                            , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'ellipse_detect_interp'                         , 'required', false, 'default', 'cubic'                        , 'validation_fun', @validate_interp);
     field_info(end+1) = struct('field', 'ellipse_detect_sf_cost'                        , 'required', false, 'default', 2                              , 'validation_fun', @validate_pos_scalar_int);
@@ -124,6 +133,7 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'fp_detect_mse_cutoff'                          , 'required', false, 'default', 0.2                            , 'validation_fun', @validate_pos_scalar);
     field_info(end+1) = struct('field', 'fp_detect_padding_radial'                      , 'required', false, 'default', 5                              , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'fp_detect_array_min_size'                      , 'required', false, 'default', 400                            , 'validation_fun', @validate_pos_scalar_int_or_nan);
+    field_info(end+1) = struct('field', 'fp_detector'                                   , 'required', false, 'default', 'thresh'                       , 'validation_fun', @validate_fp_detector);
 
     % Verbosity
     field_info(end+1) = struct('field', 'verbosity'                                     , 'required', false, 'default', 3                              , 'validation_fun', @validate_int_scalar);
@@ -289,7 +299,7 @@ function calib_config = validate_fp_detector(calib_config, field)
     % field needs to be a string
     calib_config = validate_string(calib_config, field);
 
-    if ~any(strcmp(param, {'LoG'}))
+    if ~any(strcmp(param, {'LoG', 'thresh'}))
         field_class_error(field, param, 'four point detector');
     end
 end

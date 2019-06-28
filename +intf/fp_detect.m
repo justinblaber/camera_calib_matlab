@@ -14,6 +14,8 @@ function [p_fp_pss, debug] = fp_detect(img_cbs, calib_config)
     switch calib_config.fp_detector
         case 'LoG'
             f_fp_detect = @alg.fp_detect_LoG;
+        case 'thresh'
+            f_fp_detect = @alg.fp_detect_thresh;
         otherwise
             error(['Unknown four point detector: "' calib_config.fp_detector '"']);
     end

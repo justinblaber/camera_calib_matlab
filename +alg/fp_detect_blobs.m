@@ -259,7 +259,7 @@ function [p_fps, debug] = fp_detect_blobs(array, blobs, opts)
         end
 
         % Make sure samples are in bounds and valid
-        if any(~isfinite(polar_patch))
+        if any(~isfinite(polar_patch(:)))
             continue
         end
 

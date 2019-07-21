@@ -289,7 +289,7 @@ function params = refine_LoG_maxima_params(params, I_stack_LoG, optimization_typ
         LoG_fd = reshape(I_stack_LoG(y_fd(:), x_fd(:), idx_r_fd(:)), 3, 3, 3);
 
         % Check to make sure all sampled points were in bounds and valid
-        if any(~isfinite(LoG_fd))
+        if any(~isfinite(LoG_fd(:)))
             params(:) = NaN;
             break
         end

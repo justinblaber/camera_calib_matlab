@@ -6,6 +6,8 @@ function test_refine_ellipse_point
     load(fullfile(tests_path, 'data', 'refine_ellipse_point.mat'));
 
     opts.target_optimization = 'dualconic';
+    opts.refine_ellipse_dualconic_it_cutoff = 20;
+    opts.refine_ellipse_dualconic_norm_cutoff = 0.001;
     [p_p, cov_p] = alg.refine_ellipse_point(p_p_init, ...
                                             boundary_p, ...
                                             array, ...
@@ -38,6 +40,8 @@ function test_refine_ellipse_point
     load(fullfile(tests_path, 'data', 'refine_ellipse_point.mat'));
 
     opts.target_optimization = 'edges';
+    opts.refine_ellipse_dualconic_it_cutoff = 20;
+    opts.refine_ellipse_dualconic_norm_cutoff = 0.001;
     opts.refine_ellipse_edges_h2_init = 0.75;
     opts.refine_ellipse_edges_it_cutoff = 20;
     opts.refine_ellipse_edges_norm_cutoff = 1e-6;
@@ -73,6 +77,8 @@ function test_refine_ellipse_point
     load(fullfile(tests_path, 'data', 'refine_ellipse_point.mat'));
 
     opts.target_optimization = 'dot';
+    opts.refine_ellipse_dualconic_it_cutoff = 20;
+    opts.refine_ellipse_dualconic_norm_cutoff = 0.001;
     opts.refine_ellipse_dot_h2_init = 1;
     opts.refine_ellipse_dot_it_cutoff = 20;
     opts.refine_ellipse_dot_norm_cutoff = 1e-6;

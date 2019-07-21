@@ -72,12 +72,18 @@ function [calib_config, data] = parse_calib_config(data)
     field_info(end+1) = struct('field', 'refine_checker_edges_h2_init'                  , 'required', false, 'default', 0.75                           , 'validation_fun', @validate_pos_scalar);
 
     % Ellipse refinement
+    field_info(end+1) = struct('field', 'refine_ellipse_dualconic_it_cutoff'            , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
+    field_info(end+1) = struct('field', 'refine_ellipse_dualconic_norm_cutoff'          , 'required', false, 'default', 0.001                          , 'validation_fun', @validate_pos_scalar);
     field_info(end+1) = struct('field', 'refine_ellipse_edges_it_cutoff'                , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'refine_ellipse_edges_norm_cutoff'              , 'required', false, 'default', 0.001                          , 'validation_fun', @validate_pos_scalar);
     field_info(end+1) = struct('field', 'refine_ellipse_edges_h2_init'                  , 'required', false, 'default', 0.75                           , 'validation_fun', @validate_pos_scalar);
     field_info(end+1) = struct('field', 'refine_ellipse_dot_it_cutoff'                  , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
     field_info(end+1) = struct('field', 'refine_ellipse_dot_norm_cutoff'                , 'required', false, 'default', 0.001                          , 'validation_fun', @validate_pos_scalar);
     field_info(end+1) = struct('field', 'refine_ellipse_dot_h2_init'                    , 'required', false, 'default', 1                              , 'validation_fun', @validate_pos_scalar);
+
+    % Ring refinement
+    field_info(end+1) = struct('field', 'refine_ring_opencv_it_cutoff'                  , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);
+    field_info(end+1) = struct('field', 'refine_ring_opencv_norm_cutoff'                , 'required', false, 'default', 0.001                          , 'validation_fun', @validate_pos_scalar);
 
     % p_p_d2p_p
     field_info(end+1) = struct('field', 'p_p_d2p_p_it_cutoff'                           , 'required', false, 'default', 20                             , 'validation_fun', @validate_pos_scalar_int);

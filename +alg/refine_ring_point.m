@@ -57,7 +57,7 @@ function [bb_p, mask] = calc_bb_and_mask(boundary_p)
                      bb_p(2, 1)-bb_p(1, 1)+1);
 end
 
-function [p_p, cov_p] = opencv(p_p_init, boundary_p_centered, array, array_dx, array_dy, opts) %#ok<INUSD>
+function [p_p, cov_p] = opencv(p_p_init, boundary_p_centered, array, array_dx, array_dy, opts)
     % Initialize point and covariance
     p_p = p_p_init;
     cov_p = nan(2, 2);
@@ -65,33 +65,45 @@ function [p_p, cov_p] = opencv(p_p_init, boundary_p_centered, array, array_dx, a
     % Get bb of array
     bb_array_p = alg.bb_array(array);
 
-    % Get bounding box and mask of sub array
-    [bb_sub_p, mask_sub] = calc_bb_and_mask(boundary_p_centered + p_p_init);
+    % Perform iterations until convergence
+    for it = 1:opts.refine_ring_opencv_it_cutoff
+        % Cache previous point
+        p_p_prev = p_p;
 
-    % Check bounds
-    if ~alg.is_bb_in_bb(bb_sub_p, bb_array_p)
-        p_p(:) = nan;
-        cov_p(:) = nan;
-        return
-    end
+        % Get bounding box and mask of sub array
+        [bb_sub_p, mask_sub] = calc_bb_and_mask(boundary_p_centered + p_p_init);
 
-    % Get sub arrays
-    sub_array_dx = alg.get_sub_array_bb(array_dx, bb_sub_p);
-    sub_array_dy = alg.get_sub_array_bb(array_dy, bb_sub_p);
+        % Check bounds
+        if ~alg.is_bb_in_bb(bb_sub_p, bb_array_p)
+            p_p(:) = nan;
+            cov_p(:) = nan;
+            return
+        end
 
-    % Fit ring using opencv method; note that coordinates will be
-    % WRT sub_array.
-    [p_p_sub, cov_p] = alg.refine_ring_opencv(sub_array_dx, ...
-                                              sub_array_dy, ...
-                                              double(mask_sub));
+        % Get sub arrays
+        sub_array_dx = alg.get_sub_array_bb(array_dx, bb_sub_p);
+        sub_array_dy = alg.get_sub_array_bb(array_dy, bb_sub_p);
 
-    % Get point in array coordinates.
-    p_p = p_p_sub + bb_sub_p(1, :) - 1;
+        % Fit ring using opencv method; note that coordinates will be
+        % WRT sub_array.
+        [p_p_sub, cov_p] = alg.refine_ring_opencv(sub_array_dx, ...
+                                                  sub_array_dy, ...
+                                                  double(mask_sub));
 
-    % Make sure point did not go outside of original bounding box
-    if ~alg.is_p_in_bb(p_p, bb_sub_p)
-        p_p(:) = nan;
-        cov_p(:) = nan;
-        return
+        % Get point in array coordinates.
+        p_p = p_p_sub + bb_sub_p(1, :) - 1;
+
+        % Make sure point did not go outside of original bounding box
+        if ~alg.is_p_in_bb(p_p, bb_sub_p)
+            p_p(:) = nan;
+            cov_p(:) = nan;
+            return
+        end
+
+        % Exit if change in distance is small
+        diff_norm = norm(p_p_prev - p_p);
+        if diff_norm < opts.refine_ring_opencv_norm_cutoff
+            break
+        end
     end
 end

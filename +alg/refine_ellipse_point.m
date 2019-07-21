@@ -65,47 +65,59 @@ function [bb_p, mask] = calc_bb_and_mask(boundary_p)
                      bb_p(2, 1)-bb_p(1, 1)+1);
 end
 
-function [e_p, cov_p] = dualconic(p_p_init, boundary_p_centered, array, array_dx, array_dy, opts) %#ok<INUSD>
+function [e_p, cov_p] = dualconic(p_p_init, boundary_p_centered, array, array_dx, array_dy, opts)
     % Initialize ellipse and covariance
-    e_p = nan(5, 1);
+    e_p = [p_p_init nan(1, 3)]';
     cov_p = nan(2, 2);
 
     % Get bb of array
     bb_array_p = alg.bb_array(array);
 
-    % Get bounding box and mask of sub array
-    [bb_sub_p, mask_sub] = calc_bb_and_mask(boundary_p_centered + p_p_init);
+    % Perform iterations until convergence
+    for it = 1:opts.refine_ellipse_dualconic_it_cutoff
+        % Cache previous ellipse
+        e_p_prev = e_p;
 
-    % Check bounds
-    if ~alg.is_bb_in_bb(bb_sub_p, bb_array_p)
-        e_p(:) = nan;
-        cov_p(:) = nan;
-        return
-    end
+        % Get bounding box and mask of sub array
+        [bb_sub_p, mask_sub] = calc_bb_and_mask(boundary_p_centered + e_p(1:2)');
 
-    % Get sub arrays
-    sub_array_dx = alg.get_sub_array_bb(array_dx, bb_sub_p);
-    sub_array_dy = alg.get_sub_array_bb(array_dy, bb_sub_p);
+        % Check bounds
+        if ~alg.is_bb_in_bb(bb_sub_p, bb_array_p)
+            e_p(:) = nan;
+            cov_p(:) = nan;
+            return
+        end
 
-    % Fit ellipse using dual conic method; note that coordinates will be
-    % WRT sub_array.
-    e_p_sub = alg.refine_ellipse_dualconic(sub_array_dx, ...
-                                           sub_array_dy, ...
-                                           double(mask_sub));
+        % Get sub arrays
+        sub_array_dx = alg.get_sub_array_bb(array_dx, bb_sub_p);
+        sub_array_dy = alg.get_sub_array_bb(array_dy, bb_sub_p);
 
-    % TODO: update refine_ellipse_dualconic to return covariance of ellipse
-    % center; for now just return an identity matrix.
-    cov_p = eye(2);
+        % Fit ellipse using dual conic method; note that coordinates will be
+        % WRT sub_array.
+        e_p_sub = alg.refine_ellipse_dualconic(sub_array_dx, ...
+                                               sub_array_dy, ...
+                                               double(mask_sub));
 
-    % Get ellipse in array coordinates.
-    e_p = e_p_sub;
-    e_p(1:2) = e_p(1:2) + bb_sub_p(1, :)' - 1;
+        % TODO: update refine_ellipse_dualconic to return covariance of ellipse
+        % center; for now just return an identity matrix.
+        cov_p = eye(2);
 
-    % Make sure point did not go outside of original bounding box
-    if ~alg.is_p_in_bb(e_p(1:2)', bb_sub_p)
-        e_p(:) = nan;
-        cov_p(:) = nan;
-        return
+        % Get ellipse in array coordinates.
+        e_p = e_p_sub;
+        e_p(1:2) = e_p(1:2) + bb_sub_p(1, :)' - 1;
+
+        % Make sure point did not go outside of original bounding box
+        if ~alg.is_p_in_bb(e_p(1:2)', bb_sub_p)
+            e_p(:) = nan;
+            cov_p(:) = nan;
+            return
+        end
+
+        % Exit if change in distance is small
+        diff_norm = norm(e_p_prev - e_p);
+        if diff_norm < opts.refine_ellipse_dualconic_norm_cutoff
+            break
+        end
     end
 end
 

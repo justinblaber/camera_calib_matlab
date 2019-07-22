@@ -65,13 +65,16 @@ function [p_p, cov_p] = opencv(p_p_init, boundary_p_centered, array, array_dx, a
     % Get bb of array
     bb_array_p = alg.bb_array(array);
 
+    % Get initial bounding box
+    bb_sub_p_init = calc_bb_and_mask(boundary_p_centered + p_p_init);
+
     % Perform iterations until convergence
     for it = 1:opts.refine_ring_opencv_it_cutoff
         % Cache previous point
         p_p_prev = p_p;
 
         % Get bounding box and mask of sub array
-        [bb_sub_p, mask_sub] = calc_bb_and_mask(boundary_p_centered + p_p_init);
+        [bb_sub_p, mask_sub] = calc_bb_and_mask(boundary_p_centered + p_p);
 
         % Check bounds
         if ~alg.is_bb_in_bb(bb_sub_p, bb_array_p)
@@ -94,7 +97,7 @@ function [p_p, cov_p] = opencv(p_p_init, boundary_p_centered, array, array_dx, a
         p_p = p_p_sub + bb_sub_p(1, :) - 1;
 
         % Make sure point did not go outside of original bounding box
-        if ~alg.is_p_in_bb(p_p, bb_sub_p)
+        if ~alg.is_p_in_bb(p_p, bb_sub_p_init)
             p_p(:) = nan;
             cov_p(:) = nan;
             return

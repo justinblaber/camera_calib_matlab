@@ -73,6 +73,9 @@ function [e_p, cov_p] = dualconic(p_p_init, boundary_p_centered, array, array_dx
     % Get bb of array
     bb_array_p = alg.bb_array(array);
 
+    % Get initial bounding box
+    bb_sub_p_init = calc_bb_and_mask(boundary_p_centered + p_p_init);
+
     % Perform iterations until convergence
     for it = 1:opts.refine_ellipse_dualconic_it_cutoff
         % Cache previous ellipse
@@ -98,8 +101,8 @@ function [e_p, cov_p] = dualconic(p_p_init, boundary_p_centered, array, array_dx
                                                sub_array_dy, ...
                                                double(mask_sub));
 
-        % TODO: update refine_ellipse_dualconic to return covariance of ellipse
-        % center; for now just return an identity matrix.
+        % TODO: update refine_ellipse_dualconic to return covariance of
+        % ellipse center; for now just return an identity matrix.
         cov_p = eye(2);
 
         % Get ellipse in array coordinates.
@@ -107,7 +110,7 @@ function [e_p, cov_p] = dualconic(p_p_init, boundary_p_centered, array, array_dx
         e_p(1:2) = e_p(1:2) + bb_sub_p(1, :)' - 1;
 
         % Make sure point did not go outside of original bounding box
-        if ~alg.is_p_in_bb(e_p(1:2)', bb_sub_p)
+        if ~alg.is_p_in_bb(e_p(1:2)', bb_sub_p_init)
             e_p(:) = nan;
             cov_p(:) = nan;
             return

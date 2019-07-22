@@ -73,7 +73,7 @@ function [e_p, cov_p] = dualconic(p_p_init, boundary_p_centered, array, array_dx
     % Get bb of array
     bb_array_p = alg.bb_array(array);
 
-    % Get initial bounding box
+    % Get initial bounding box of sub array
     bb_sub_p_init = calc_bb_and_mask(boundary_p_centered + p_p_init);
 
     % Perform iterations until convergence

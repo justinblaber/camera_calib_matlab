@@ -1,4 +1,4 @@
-# camera_calib
+# camera_calib_matlab
 This is a camera calibration toolbox. It's partly based on [Bouguet's toolbox](http://www.vision.caltech.edu/bouguetj/calib_doc/) and Zhang's camera calibration paper, but with more functionality:
 
 * Setup is based on an input configuration file which allows for easy tweaking and modification of algorithms and allows for greater reproducibility. If you save the images, configuration file, and script, the calibration will be repeatable.
@@ -15,7 +15,7 @@ This is a camera calibration toolbox. It's partly based on [Bouguet's toolbox](h
 # Installation instructions:
 1) Clone the repo:
 ```
-git clone https://github.com/justinblaber/camera_calib.git
+git clone https://github.com/justinblaber/camera_calib_matlab.git
 ```
 
 # Example:
